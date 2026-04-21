@@ -22,14 +22,18 @@ public class MedicoRepositoryImpl implements IMedicoRepository {
 
     @Override
     public Medico guardar(Medico medico) {
-        PersonaEntity personaEntity = springDataPersonaRepository.findById(medico.getPersonaId())
-                .orElseThrow(() -> new IllegalStateException(
-                        "No existe PersonaEntity para personaId: " + medico.getPersonaId()
-                ));
+        MedicoEntity entity = springDataMedicoRepository.findById(medico.getPersonaId())
+                .orElseGet(() -> {
+                    PersonaEntity personaEntity = springDataPersonaRepository.findById(medico.getPersonaId())
+                            .orElseThrow(() -> new IllegalStateException(
+                                    "No existe PersonaEntity para personaId: " + medico.getPersonaId()
+                            ));
 
-        MedicoEntity entity = new MedicoEntity();
-        entity.setPersonaId(medico.getPersonaId());
-        entity.setPersona(personaEntity);
+                    MedicoEntity nuevo = new MedicoEntity();
+                    nuevo.setPersona(personaEntity);
+                    return nuevo;
+                });
+
         entity.setTipoProfesional(medico.getTipoProfesional());
         entity.setEstado(medico.getEstado());
 

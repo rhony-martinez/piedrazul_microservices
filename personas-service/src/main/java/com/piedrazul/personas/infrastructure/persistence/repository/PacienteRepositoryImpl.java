@@ -21,14 +21,17 @@ public class PacienteRepositoryImpl implements IPacienteRepository {
 
     @Override
     public Paciente guardar(Paciente paciente) {
-        PersonaEntity personaEntity = springDataPersonaRepository.findById(paciente.getPersonaId())
-                .orElseThrow(() -> new IllegalStateException(
-                        "No existe PersonaEntity para personaId: " + paciente.getPersonaId()
-                ));
+        PacienteEntity entity = springDataPacienteRepository.findById(paciente.getPersonaId())
+                .orElseGet(() -> {
+                    PersonaEntity personaEntity = springDataPersonaRepository.findById(paciente.getPersonaId())
+                            .orElseThrow(() -> new IllegalStateException(
+                                    "No existe PersonaEntity para personaId: " + paciente.getPersonaId()
+                            ));
 
-        PacienteEntity entity = new PacienteEntity();
-        entity.setPersonaId(paciente.getPersonaId());
-        entity.setPersona(personaEntity);
+                    PacienteEntity nuevo = new PacienteEntity();
+                    nuevo.setPersona(personaEntity);
+                    return nuevo;
+                });
 
         PacienteEntity saved = springDataPacienteRepository.save(entity);
         return pacienteMapper.toDomain(saved);
