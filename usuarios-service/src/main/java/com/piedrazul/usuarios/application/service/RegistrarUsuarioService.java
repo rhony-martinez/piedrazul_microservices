@@ -1,5 +1,6 @@
 package com.piedrazul.usuarios.application.service;
 
+import com.piedrazul.usuarios.application.exception.PersonaNoEncontradaException;
 import com.piedrazul.usuarios.application.security.PasswordHasher;
 import com.piedrazul.usuarios.application.security.PasswordPolicyValidator;
 import com.piedrazul.usuarios.domain.model.EstadoUsuario;
@@ -7,6 +8,7 @@ import com.piedrazul.usuarios.domain.model.Rol;
 import com.piedrazul.usuarios.domain.model.Usuario;
 import com.piedrazul.usuarios.domain.repository.IRolRepository;
 import com.piedrazul.usuarios.domain.repository.IUsuarioRepository;
+import com.piedrazul.usuarios.service.client.PersonaServiceClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,17 +24,29 @@ public class RegistrarUsuarioService {
     private final IRolRepository rolRepository;
     private final PasswordHasher passwordHasher;
     private final PasswordPolicyValidator passwordPolicyValidator;
+    private final PersonaServiceClient personaServiceClient;
 
     public RegistrarUsuarioService(
             IUsuarioRepository usuarioRepository,
             IRolRepository rolRepository,
             PasswordHasher passwordHasher,
-            PasswordPolicyValidator passwordPolicyValidator
+            PasswordPolicyValidator passwordPolicyValidator,
+            PersonaServiceClient personaServiceClient
     ) {
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.passwordHasher = passwordHasher;
         this.passwordPolicyValidator = passwordPolicyValidator;
+        this.personaServiceClient = personaServiceClient;
+    }
+
+    public void ejecutar(Integer personaId, String username, String password, List<String> nombresRoles) {
+        if (!personaServiceClient.existePersona(personaId, true)) { // Aquí se valida que la persona exista y que sea un usuario (si corresponde)
+            throw new PersonaNoEncontradaException("Persona con id " + personaId + " no encontrada");
+        }
+
+        // Llamamos al metodo registrar para proceder con el registro del usuario
+        registrar(personaId, username, password, nombresRoles);
     }
 
     public Usuario registrar(
