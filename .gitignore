@@ -1,0 +1,95 @@
+# =========================
+# 🔹 JAVA / MAVEN / GRADLE
+# =========================
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven
+.mvn/
+!mvnw
+!mvnw.cmd
+
+# Gradle
+.gradle/
+
+# =========================
+# 🔹 SPRING BOOT
+# =========================
+
+# Configuración sensible (NO subir)
+application.properties
+application.yml
+application-*.properties
+application-*.yml
+
+# Variables de entorno
+.env
+.env.*
+
+# =========================
+# 🔹 BASE DE DATOS
+# =========================
+
+# Archivos locales (por si usas pruebas)
+*.db
+*.sqlite
+
+# Dumps
+*.sql
+
+# =========================
+# 🔹 DOCKER
+# =========================
+
+# Overrides locales (estos SI se ignoran)
+docker-compose.override.yml
+
+# Archivos temporales de Docker
+*.pid
+*.seed
+
+# Logs de contenedores
+docker-logs/
+*.log
+
+# =========================
+# 🔹 IDEs
+# =========================
+
+# IntelliJ
+.idea/
+*.iml
+
+# NetBeans
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# VS Code
+.vscode/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# =========================
+# 🔹 SISTEMA OPERATIVO
+# =========================
+
+Thumbs.db
+desktop.ini
+.DS_Store
+*~
+
+# =========================
+# 🔹 TEST / COVERAGE
+# =========================
+coverage/
