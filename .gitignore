@@ -25,6 +25,7 @@ out/
 application.properties
 application.yml
 application-*.properties
+!application-example.properties
 application-*.yml
 
 # Variables de entorno
