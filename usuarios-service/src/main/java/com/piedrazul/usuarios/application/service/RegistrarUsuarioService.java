@@ -41,8 +41,7 @@ public class RegistrarUsuarioService {
             String password,
             List<String> nombresRoles
     ) {
-        // Validaciones y normalizaciones iniciales
-        passwordPolicyValidator.validar(password);
+
         String usernameNormalizado = username == null ? null : username.trim();
 
         if (personaId == null) {
@@ -57,11 +56,13 @@ public class RegistrarUsuarioService {
             throw new IllegalArgumentException("password es obligatorio");
         }
 
+        passwordPolicyValidator.validar(password);
+
         if (nombresRoles == null || nombresRoles.isEmpty()) {
             throw new IllegalArgumentException("Debe asignarse al menos un rol");
         }
 
-        if (usuarioRepository.existePorUsername(username)) {
+        if (usuarioRepository.existePorUsername(usernameNormalizado)) {
             throw new IllegalArgumentException("El username ya existe");
         }
 
@@ -71,14 +72,18 @@ public class RegistrarUsuarioService {
 
         Set<Rol> roles = new HashSet<>();
         for (String nombreRol : nombresRoles) {
-            Rol rol = rolRepository.buscarPorNombre(nombreRol)
-                    .orElseThrow(() -> new IllegalArgumentException("Rol no encontrado: " + nombreRol));
+            String nombreRolNormalizado = nombreRol == null ? null : nombreRol.trim();
+            if (nombreRolNormalizado == null || nombreRolNormalizado.isBlank()) {
+                throw new IllegalArgumentException("Nombre de rol inválido");
+            }
+            Rol rol = rolRepository.buscarPorNombre(nombreRolNormalizado)
+                    .orElseThrow(() -> new IllegalArgumentException("Rol no encontrado: " + nombreRolNormalizado));
             roles.add(rol);
         }
 
         Usuario usuario = Usuario.builder()
                 .personaId(personaId)
-                .username(username)
+                .username(usernameNormalizado)
                 .passwordHash(passwordHasher.hash(password))
                 .estado(EstadoUsuario.ACTIVO)
                 .intentosFallidos(0)
