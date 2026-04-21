@@ -40,13 +40,13 @@ public class RegistrarUsuarioService {
         this.personaServiceClient = personaServiceClient;
     }
 
-    public void ejecutar(Integer personaId, String username, String password, List<String> nombresRoles) {
+    public Usuario ejecutar(Integer personaId, String username, String password, List<String> nombresRoles) {
         if (!personaServiceClient.existePersona(personaId, true)) { // Aquí se valida que la persona exista y que sea un usuario (si corresponde)
             throw new PersonaNoEncontradaException("Persona con id " + personaId + " no encontrada");
         }
 
         // Llamamos al metodo registrar para proceder con el registro del usuario
-        registrar(personaId, username, password, nombresRoles);
+        return registrar(personaId, username, password, nombresRoles);
     }
 
     public Usuario registrar(
