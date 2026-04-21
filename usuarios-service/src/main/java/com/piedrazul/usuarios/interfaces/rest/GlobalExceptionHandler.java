@@ -1,5 +1,6 @@
 package com.piedrazul.usuarios.interfaces.rest;
 
+import com.piedrazul.usuarios.application.exception.CredencialesInvalidasException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -57,6 +58,16 @@ public class GlobalExceptionHandler {
                 "timestamp", LocalDateTime.now(),
                 "status", 500,
                 "error", "Internal Server Error",
+                "message", ex.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(CredencialesInvalidasException.class)
+    public ResponseEntity<Map<String, Object>> handleCredencialesInvalidas(CredencialesInvalidasException ex) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "timestamp", LocalDateTime.now(),
+                "status", 400,
+                "error", "Bad Request",
                 "message", ex.getMessage()
         ));
     }

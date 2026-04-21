@@ -11,6 +11,7 @@ import com.piedrazul.usuarios.infrastructure.persistence.mapper.UsuarioMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -45,11 +46,14 @@ public class UsuarioRepositoryImpl implements IUsuarioRepository {
                     .estado(usuario.getEstado().name())
                     .personaId(usuario.getPersonaId())
                     .intentosFallidos(usuario.getIntentosFallidos())
+                    .roles(new HashSet<>())
                     .build();
 
             usuarioEntity = usuarioRepository.save(usuarioEntity);
 
-            guardarRoles(usuarioEntity, usuario.getRoles());
+            reconstruirRoles(usuarioEntity, usuario.getRoles());
+
+            usuarioEntity = usuarioRepository.save(usuarioEntity);
 
             UsuarioEntity recargado = usuarioRepository.findById(usuarioEntity.getId())
                     .orElseThrow(() -> new RuntimeException("No se pudo recargar el usuario guardado"));
@@ -67,14 +71,32 @@ public class UsuarioRepositoryImpl implements IUsuarioRepository {
         usuarioEntity.setIntentosFallidos(usuario.getIntentosFallidos());
 
         usuarioEntity.getRoles().clear();
-        usuarioRepository.save(usuarioEntity);
+        reconstruirRoles(usuarioEntity, usuario.getRoles());
 
-        guardarRoles(usuarioEntity, usuario.getRoles());
+        usuarioEntity = usuarioRepository.save(usuarioEntity);
 
         UsuarioEntity recargado = usuarioRepository.findById(usuarioEntity.getId())
                 .orElseThrow(() -> new RuntimeException("No se pudo recargar el usuario actualizado"));
 
         return UsuarioMapper.toDomain(recargado);
+    }
+
+    private void reconstruirRoles(UsuarioEntity usuarioEntity, Set<Rol> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return;
+        }
+
+        for (Rol rol : roles) {
+            RolEntity rolEntity = obtenerRolEntity(rol);
+
+            UsuarioRolEntity usuarioRolEntity = UsuarioRolEntity.builder()
+                    .id(new UsuarioRolId(usuarioEntity.getId(), rolEntity.getId()))
+                    .usuario(usuarioEntity)
+                    .rol(rolEntity)
+                    .build();
+
+            usuarioEntity.getRoles().add(usuarioRolEntity);
+        }
     }
 
     private void guardarRoles(UsuarioEntity usuarioEntity, Set<Rol> roles) {
@@ -91,8 +113,10 @@ public class UsuarioRepositoryImpl implements IUsuarioRepository {
                     .rol(rolEntity)
                     .build();
 
-            usuarioRolRepository.save(usuarioRolEntity);
+            usuarioEntity.getRoles().add(usuarioRolEntity);
         }
+
+        usuarioRepository.save(usuarioEntity);
     }
 
     private RolEntity obtenerRolEntity(Rol rol) {

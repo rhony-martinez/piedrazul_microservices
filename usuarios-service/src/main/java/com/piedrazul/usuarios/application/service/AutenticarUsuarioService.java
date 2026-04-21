@@ -1,5 +1,6 @@
 package com.piedrazul.usuarios.application.service;
 
+import com.piedrazul.usuarios.application.exception.CredencialesInvalidasException;
 import com.piedrazul.usuarios.application.security.PasswordHasher;
 import com.piedrazul.usuarios.domain.model.Usuario;
 import com.piedrazul.usuarios.domain.repository.IUsuarioRepository;
@@ -7,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
 public class AutenticarUsuarioService {
 
     private final IUsuarioRepository usuarioRepository;
@@ -21,6 +21,7 @@ public class AutenticarUsuarioService {
         this.passwordHasher = passwordHasher;
     }
 
+    @Transactional(noRollbackFor = CredencialesInvalidasException.class)
     public Usuario autenticar(String username, String password) {
         if (username == null || username.isBlank()) {
             throw new IllegalArgumentException("username es obligatorio");
@@ -33,7 +34,7 @@ public class AutenticarUsuarioService {
         String usernameNormalizado = username.trim();
 
         Usuario usuario = usuarioRepository.buscarPorUsername(usernameNormalizado)
-                .orElseThrow(() -> new IllegalArgumentException("Credenciales inválidas"));
+                .orElseThrow(() -> new CredencialesInvalidasException("Credenciales inválidas"));
 
         if (!usuario.estaActivo()) {
             throw new IllegalStateException("El usuario está inactivo");
@@ -44,7 +45,7 @@ public class AutenticarUsuarioService {
         if (!passwordValido) {
             usuario.incrementarIntentosFallidos();
             usuarioRepository.guardar(usuario);
-            throw new IllegalArgumentException("Credenciales inválidas");
+            throw new CredencialesInvalidasException("Credenciales inválidas");
         }
 
         usuario.resetearIntentosFallidos();
