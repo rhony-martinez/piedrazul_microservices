@@ -33,7 +33,7 @@ public class UsuarioController {
 
     @PostMapping
     public ResponseEntity<UsuarioResponse> crearUsuario(@Valid @RequestBody CrearUsuarioRequest request) {
-        Usuario usuario = registrarUsuarioService.registrar(
+        Usuario usuario = registrarUsuarioService.ejecutar(
                 request.getPersonaId(),
                 request.getUsername(),
                 request.getPassword(),

@@ -1,6 +1,8 @@
 package com.piedrazul.usuarios.interfaces.rest;
 
 import com.piedrazul.usuarios.application.exception.CredencialesInvalidasException;
+import com.piedrazul.usuarios.application.exception.DependenciaExternaException;
+import com.piedrazul.usuarios.application.exception.PersonaNoEncontradaException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -70,5 +72,15 @@ public class GlobalExceptionHandler {
                 "error", "Bad Request",
                 "message", ex.getMessage()
         ));
+    }
+
+    @ExceptionHandler(PersonaNoEncontradaException.class)
+    public ResponseEntity<?> handlePersonaNotFoundException(RuntimeException ex) {
+        return ResponseEntity.status(404).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(DependenciaExternaException.class)
+    public ResponseEntity<?> handleDependencyError(RuntimeException ex) {
+        return ResponseEntity.status(503).body(Map.of("error", ex.getMessage()));
     }
 }
