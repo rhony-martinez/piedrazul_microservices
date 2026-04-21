@@ -1,10 +1,19 @@
 package com.piedrazul.personas.domain.repository;
 
+import com.piedrazul.personas.domain.model.Medico;
+
+import java.util.List;
+import java.util.Optional;
+
 public interface IMedicoRepository {
-    Medico save(Medico medico);
-    Medico update(Medico medico);
-    Optional<Medico> findByPersonaId(Long personaId);
-    boolean existsByPersonaId(Long personaId);
-    List<Medico> findAll();
-    List<Medico> findAllActivos();
+
+    Medico guardar(Medico medico);
+
+    Optional<Medico> buscarPorPersonaId(Long personaId);
+
+    boolean existePorPersonaId(Long personaId);
+
+    List<Medico> listarTodos();
+
+    List<Medico> listarActivos();
 }
