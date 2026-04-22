@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -32,10 +33,10 @@ public class CitaCanceladaEvent {
     }
 
     public static CitaCanceladaEvent create(String citaId, Long pacienteId, String pacienteEmail,
-                                            Long medicoId, String medicoEmail, LocalDateTime fechaHoraOriginal,
-                                            String motivo) {
+                                            Long medicoId, String medicoEmail,
+                                            LocalDateTime fechaHoraOriginal, String motivo) {
         return CitaCanceladaEvent.builder()
-                .eventId(java.util.UUID.randomUUID().toString())
+                .eventId(UUID.randomUUID().toString())
                 .eventType("CITA_CANCELADA")
                 .timestamp(LocalDateTime.now())
                 .data(CitaCanceladaData.builder()

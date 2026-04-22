@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -32,9 +33,10 @@ public class CitaReagendadaEvent {
 
     public static CitaReagendadaEvent create(String citaId, Long pacienteId, String pacienteEmail,
                                              Long medicoId, String medicoEmail,
-                                             LocalDateTime fechaHoraOriginal, LocalDateTime nuevaFechaHora) {
+                                             LocalDateTime fechaHoraOriginal,
+                                             LocalDateTime nuevaFechaHora) {
         return CitaReagendadaEvent.builder()
-                .eventId(java.util.UUID.randomUUID().toString())
+                .eventId(UUID.randomUUID().toString())
                 .eventType("CITA_REAGENDADA")
                 .timestamp(LocalDateTime.now())
                 .data(CitaReagendadaData.builder()

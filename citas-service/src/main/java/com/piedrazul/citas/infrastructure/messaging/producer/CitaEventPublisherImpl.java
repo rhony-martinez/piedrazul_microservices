@@ -2,8 +2,6 @@ package com.piedrazul.citas.infrastructure.messaging.producer;
 
 import com.piedrazul.citas.application.port.outgoing.CitaEventPublisherPort;
 import com.piedrazul.citas.domain.model.Cita;
-import com.piedrazul.citas.domain.model.MedicoSnapshot;
-import com.piedrazul.citas.domain.model.PacienteSnapshot;
 import com.piedrazul.citas.infrastructure.messaging.event.CitaAgendadaEvent;
 import com.piedrazul.citas.infrastructure.messaging.event.CitaCanceladaEvent;
 import com.piedrazul.citas.infrastructure.messaging.event.CitaReagendadaEvent;
@@ -12,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Component
@@ -36,16 +35,14 @@ public class CitaEventPublisherImpl implements CitaEventPublisherPort {
     public void publicarCitaAgendada(Cita cita) {
         log.info("Publicando evento CITA_AGENDADA para cita: {}", cita.getId());
 
-        // Aquí normalmente buscarías los snapshots para obtener emails y nombres
-        // Por ahora simulamos con datos básicos
         CitaAgendadaEvent event = CitaAgendadaEvent.create(
                 cita.getId().toString(),
                 cita.getPacienteId().value(),
-                "Paciente Nombre", // Esto vendría del snapshot
-                "paciente@email.com", // Esto vendría del snapshot
+                "Paciente Nombre",
+                "paciente@email.com",
                 cita.getMedicoId().value(),
-                "Médico Nombre", // Esto vendría del snapshot
-                "medico@email.com", // Esto vendría del snapshot
+                "Médico Nombre",
+                "medico@email.com",
                 cita.getFechaHora(),
                 cita.getEstado().getDescripcion()
         );
@@ -61,9 +58,9 @@ public class CitaEventPublisherImpl implements CitaEventPublisherPort {
         CitaCanceladaEvent event = CitaCanceladaEvent.create(
                 cita.getId().toString(),
                 cita.getPacienteId().value(),
-                "paciente@email.com", // Esto vendría del snapshot
+                "paciente@email.com",
                 cita.getMedicoId().value(),
-                "medico@email.com", // Esto vendría del snapshot
+                "medico@email.com",
                 cita.getFechaHora(),
                 cita.getMotivoCancelacion()
         );
@@ -78,9 +75,9 @@ public class CitaEventPublisherImpl implements CitaEventPublisherPort {
         CitaReagendadaEvent event = CitaReagendadaEvent.create(
                 cita.getId().toString(),
                 cita.getPacienteId().value(),
-                "paciente@email.com", // Esto vendría del snapshot
+                "paciente@email.com",
                 cita.getMedicoId().value(),
-                "medico@email.com", // Esto vendría del snapshot
+                "medico@email.com",
                 fechaHoraOriginal,
                 cita.getFechaHora()
         );
