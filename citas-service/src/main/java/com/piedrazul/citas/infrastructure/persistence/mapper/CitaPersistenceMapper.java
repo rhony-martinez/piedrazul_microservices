@@ -1,4 +1,3 @@
-// infrastructure/persistence/mapper/CitaPersistenceMapper.java
 package com.piedrazul.citas.infrastructure.persistence.mapper;
 
 import com.piedrazul.citas.domain.model.Cita;
@@ -6,6 +5,7 @@ import com.piedrazul.citas.domain.model.EstadoCita;
 import com.piedrazul.citas.domain.valueobjects.*;
 import com.piedrazul.citas.infrastructure.persistence.entity.CitaEntity;
 import org.springframework.stereotype.Component;
+import java.util.UUID;
 
 @Component
 public class CitaPersistenceMapper {
@@ -14,7 +14,7 @@ public class CitaPersistenceMapper {
         if (cita == null) return null;
 
         return CitaEntity.builder()
-                .id(cita.getId().toString())
+                .id(UUID.fromString(cita.getId().toString()))
                 .pacienteId(cita.getPacienteId().value())
                 .medicoId(cita.getMedicoId().value())
                 .creadoPor(cita.getCreadoPor().value())
@@ -32,7 +32,7 @@ public class CitaPersistenceMapper {
         if (entity == null) return null;
 
         return Cita.reconstruir(
-                CitaId.fromString(entity.getId()),
+                CitaId.fromString(entity.getId().toString()),
                 PacienteId.of(entity.getPacienteId()),
                 MedicoId.of(entity.getMedicoId()),
                 UsuarioId.of(entity.getCreadoPor()),

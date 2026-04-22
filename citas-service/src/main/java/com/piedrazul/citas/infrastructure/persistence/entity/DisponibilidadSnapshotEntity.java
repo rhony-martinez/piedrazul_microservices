@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Set;
 
 @Entity
 @Table(name = "disponibilidad_snapshot")
@@ -20,11 +18,12 @@ public class DisponibilidadSnapshotEntity {
     @Id
     private Long medicoId;
 
-    @Column(columnDefinition = "jsonb")
-    private Map<String, Object> horariosSemanales;
+    // Usar TEXT en lugar de JSONB
+    @Column(columnDefinition = "TEXT")
+    private String horariosSemanales;
 
-    @Column(columnDefinition = "jsonb")
-    private Set<LocalDateTime> bloqueosEspecificos;
+    @Column(columnDefinition = "TEXT")
+    private String bloqueosEspecificos;
 
     @Column(name = "actualizado_en", nullable = false)
     private LocalDateTime actualizadoEn;

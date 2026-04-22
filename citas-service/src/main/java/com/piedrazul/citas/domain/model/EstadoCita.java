@@ -1,6 +1,7 @@
 package com.piedrazul.citas.domain.model;
 
 public enum EstadoCita {
+    PROGRAMADA("Programada"),
     CONFIRMADA("Confirmada"),
     ATENDIDA("Atendida"),
     CANCELADA("Cancelada"),
@@ -18,10 +19,10 @@ public enum EstadoCita {
     }
 
     public boolean puedeCancelarse() {
-        return this == CONFIRMADA || this == REAGENDADA;
+        return this == PROGRAMADA || this == CONFIRMADA || this == REAGENDADA;
     }
 
     public boolean puedeReagendarse() {
-        return this == CONFIRMADA;
+        return this == PROGRAMADA || this == CONFIRMADA;
     }
 }

@@ -23,7 +23,7 @@ public class PacienteController {
 
     @PostMapping
     public PacienteResponse registrar(@Valid @RequestBody RegistrarPacienteRequest request) {
-        Paciente paciente = registrarPacienteService.ejecutar(request.getPersonaId());
+        Paciente paciente = registrarPacienteService.registrarPaciente(request);
         return mapper.toResponse(paciente);
     }
 

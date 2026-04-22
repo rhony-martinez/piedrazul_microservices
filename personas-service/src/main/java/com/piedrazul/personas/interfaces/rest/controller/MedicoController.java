@@ -23,10 +23,8 @@ public class MedicoController {
 
     @PostMapping
     public MedicoResponse registrar(@Valid @RequestBody RegistrarMedicoRequest request) {
-        Medico medico = registrarMedicoService.ejecutar(
-                request.getPersonaId(),
-                request.getTipoProfesional()
-        );
+        // Cambiar de ejecutar() a registrarMedico()
+        Medico medico = registrarMedicoService.registrarMedico(request);
         return mapper.toResponse(medico);
     }
 

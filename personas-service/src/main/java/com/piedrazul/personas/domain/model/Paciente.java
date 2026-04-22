@@ -14,10 +14,6 @@ public class Paciente {
         this.personaId = personaId;
     }
 
-    public static Paciente crear(Long personaId) {
-        return new Paciente(personaId);
-    }
-
     private void validarPersonaId(Long personaId) {
         if (personaId == null || personaId <= 0) {
             throw new IllegalArgumentException("El personaId del paciente es obligatorio");

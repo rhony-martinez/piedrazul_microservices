@@ -1,7 +1,10 @@
+// infrastructure/persistence/repository/DisponibilidadSnapshotRepositoryImpl.java
 package com.piedrazul.citas.infrastructure.persistence.repository;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.piedrazul.citas.application.port.outgoing.DisponibilidadSnapshotRepositoryPort;
 import com.piedrazul.citas.domain.model.DisponibilidadSnapshot;
 import com.piedrazul.citas.domain.model.TimeRange;
@@ -24,6 +27,9 @@ public class DisponibilidadSnapshotRepositoryImpl implements DisponibilidadSnaps
     private final SpringDataDisponibilidadSnapshotRepository repository;
     private final ObjectMapper objectMapper;
 
+    // No necesitas constructor manual, @RequiredArgsConstructor lo crea automáticamente
+    // Spring inyectará tanto repository como objectMapper
+
     @Override
     public Optional<DisponibilidadSnapshot> findByMedicoId(MedicoId medicoId) {
         return repository.findById(medicoId.value())
@@ -38,49 +44,69 @@ public class DisponibilidadSnapshotRepositoryImpl implements DisponibilidadSnaps
     }
 
     private DisponibilidadSnapshotEntity toEntity(DisponibilidadSnapshot snapshot) {
-        Map<String, Object> horariosMap = new HashMap<>();
-        snapshot.getHorariosSemanales().forEach((dia, rangos) -> {
-            List<Map<String, String>> rangosList = rangos.stream()
-                    .map(rango -> {
-                        Map<String, String> rangoMap = new HashMap<>();
-                        rangoMap.put("start", rango.getStart().toString());
-                        rangoMap.put("end", rango.getEnd().toString());
-                        return rangoMap;
-                    })
-                    .collect(Collectors.toList());
-            horariosMap.put(dia.name(), rangosList);
-        });
+        DisponibilidadSnapshotEntity entity = new DisponibilidadSnapshotEntity();
+        entity.setMedicoId(snapshot.getMedicoId().value());
 
-        return DisponibilidadSnapshotEntity.builder()
-                .medicoId(snapshot.getMedicoId().value())
-                .horariosSemanales(horariosMap)
-                .bloqueosEspecificos(snapshot.getBloqueosEspecificos())
-                .build();
+        // Convertir horarios semanales a JSON string
+        try {
+            Map<String, List<Map<String, String>>> horariosMap = new HashMap<>();
+            snapshot.getHorariosSemanales().forEach((dia, rangos) -> {
+                List<Map<String, String>> rangosList = rangos.stream()
+                        .map(rango -> {
+                            Map<String, String> rangoMap = new HashMap<>();
+                            rangoMap.put("start", rango.getStart().toString());
+                            rangoMap.put("end", rango.getEnd().toString());
+                            return rangoMap;
+                        })
+                        .collect(Collectors.toList());
+                horariosMap.put(dia.name(), rangosList);
+            });
+            entity.setHorariosSemanales(objectMapper.writeValueAsString(horariosMap));
+
+            // Convertir bloqueos a JSON string
+            entity.setBloqueosEspecificos(objectMapper.writeValueAsString(snapshot.getBloqueosEspecificos()));
+
+        } catch (JsonProcessingException e) {
+            log.error("Error converting to JSON", e);
+            entity.setHorariosSemanales("{}");
+            entity.setBloqueosEspecificos("[]");
+        }
+
+        return entity;
     }
 
     private DisponibilidadSnapshot toDomain(DisponibilidadSnapshotEntity entity) {
         DisponibilidadSnapshot snapshot = new DisponibilidadSnapshot(MedicoId.of(entity.getMedicoId()));
 
-        // Restaurar horarios semanales
-        if (entity.getHorariosSemanales() != null) {
-            entity.getHorariosSemanales().forEach((diaStr, rangosObj) -> {
-                try {
+        // Restaurar horarios semanales desde JSON
+        try {
+            if (entity.getHorariosSemanales() != null && !entity.getHorariosSemanales().isEmpty()) {
+                Map<String, List<Map<String, String>>> horariosMap = objectMapper.readValue(
+                        entity.getHorariosSemanales(),
+                        new TypeReference<Map<String, List<Map<String, String>>>>() {}
+                );
+
+                horariosMap.forEach((diaStr, rangosList) -> {
                     DayOfWeek dia = DayOfWeek.valueOf(diaStr);
-                    List<Map<String, String>> rangosList = (List<Map<String, String>>) rangosObj;
                     rangosList.forEach(rangoMap -> {
                         LocalTime start = LocalTime.parse(rangoMap.get("start"));
                         LocalTime end = LocalTime.parse(rangoMap.get("end"));
                         snapshot.agregarHorarioSemanal(dia, new TimeRange(start, end));
                     });
-                } catch (Exception e) {
-                    log.error("Error restaurando horarios semanales: {}", e.getMessage());
-                }
-            });
-        }
+                });
+            }
 
-        // Restaurar bloqueos específicos
-        if (entity.getBloqueosEspecificos() != null) {
-            entity.getBloqueosEspecificos().forEach(snapshot::agregarBloqueo);
+            // Restaurar bloqueos desde JSON
+            if (entity.getBloqueosEspecificos() != null && !entity.getBloqueosEspecificos().isEmpty()) {
+                Set<LocalDateTime> bloqueos = objectMapper.readValue(
+                        entity.getBloqueosEspecificos(),
+                        new TypeReference<Set<LocalDateTime>>() {}
+                );
+                bloqueos.forEach(snapshot::agregarBloqueo);
+            }
+
+        } catch (JsonProcessingException e) {
+            log.error("Error converting from JSON", e);
         }
 
         return snapshot;
