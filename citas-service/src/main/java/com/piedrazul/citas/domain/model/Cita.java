@@ -23,7 +23,7 @@ public class Cita {
         this.medicoId = medicoId;
         this.creadoPor = creadoPor;
         this.fechaHora = fechaHora;
-        this.estado = EstadoCita.CONFIRMADA;
+        this.estado = EstadoCita.PROGRAMADA;
         this.audit = AuditMetadata.crear();
     }
 

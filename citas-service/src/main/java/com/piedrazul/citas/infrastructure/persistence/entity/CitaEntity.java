@@ -1,4 +1,3 @@
-// infrastructure/persistence/entity/CitaEntity.java
 package com.piedrazul.citas.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
@@ -7,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "citas")
@@ -18,7 +18,7 @@ public class CitaEntity {
 
     @Id
     @Column(name = "id", columnDefinition = "UUID")
-    private String id;
+    private UUID id;  // ← Cambiar de String a UUID
 
     @Column(name = "paciente_id", nullable = false)
     private Long pacienteId;
@@ -52,6 +52,9 @@ public class CitaEntity {
 
     @PrePersist
     protected void onCreate() {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (createdBy == null) {

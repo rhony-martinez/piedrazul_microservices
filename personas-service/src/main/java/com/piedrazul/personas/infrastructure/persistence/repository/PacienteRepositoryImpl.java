@@ -44,8 +44,8 @@ public class PacienteRepositoryImpl implements IPacienteRepository {
     }
 
     @Override
-    public boolean existePorPersonaId(Long personaId) {
-        return springDataPacienteRepository.existsByPersonaId(personaId);
+    public boolean existsByPersonaId(Long personaId) {
+        return springDataPacienteRepository.existsById(personaId);
     }
 
     @Override

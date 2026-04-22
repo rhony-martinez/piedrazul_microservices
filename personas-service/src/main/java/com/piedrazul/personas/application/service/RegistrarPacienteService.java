@@ -1,35 +1,55 @@
 package com.piedrazul.personas.application.service;
 
-import com.piedrazul.personas.application.exception.PacienteYaRegistradoException;
-import com.piedrazul.personas.application.exception.PersonaNoEncontradaException;
 import com.piedrazul.personas.domain.model.Paciente;
+import com.piedrazul.personas.domain.model.Persona;
 import com.piedrazul.personas.domain.repository.IPacienteRepository;
 import com.piedrazul.personas.domain.repository.IPersonaRepository;
+import com.piedrazul.personas.infrastructure.messaging.publisher.PacienteEventPublisher;
+import com.piedrazul.personas.interfaces.rest.dto.request.RegistrarPacienteRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class RegistrarPacienteService {
 
     private final IPersonaRepository personaRepository;
     private final IPacienteRepository pacienteRepository;
+    private final PacienteEventPublisher pacienteEventPublisher;
 
-    @Transactional
-    public Paciente ejecutar(Long personaId) {
-        personaRepository.buscarPorId(personaId)
-                .orElseThrow(() -> new PersonaNoEncontradaException(
-                        "No existe una persona con id: " + personaId
-                ));
+    public Paciente registrarPaciente(RegistrarPacienteRequest request) {
+        log.info("Registrando nuevo paciente con personaId: {}", request.getPersonaId());
 
-        if (pacienteRepository.existePorPersonaId(personaId)) {
-            throw new PacienteYaRegistradoException(
-                    "La persona con id " + personaId + " ya está registrada como paciente"
-            );
+        // Validar que la persona existe
+        Persona persona = personaRepository.buscarPorId(request.getPersonaId())
+                .orElseThrow(() -> new RuntimeException("Persona no encontrada con ID: " + request.getPersonaId()));
+
+        // Validar que no sea ya un paciente
+        if (pacienteRepository.existsByPersonaId(request.getPersonaId())) {
+            throw new RuntimeException("La persona ya está registrada como paciente");
         }
 
-        Paciente paciente = Paciente.crear(personaId);
-        return pacienteRepository.guardar(paciente);
+        // Crear paciente
+        Paciente paciente = new Paciente(request.getPersonaId());
+        Paciente pacienteGuardado = pacienteRepository.guardar(paciente);
+
+        log.info("Paciente registrado exitosamente con ID: {}", request.getPersonaId());
+
+        // Publicar evento para citas-service (ASÍNCRONO)
+        String nombreCompleto = persona.getPrimerNombre() + " " + persona.getPrimerApellido();
+        pacienteEventPublisher.publicarPacienteCreado(
+                request.getPersonaId(),
+                nombreCompleto,
+                persona.getCorreo(),
+                persona.getTelefono()
+        );
+
+        log.info("Evento PacienteCreado publicado para ID: {}", request.getPersonaId());
+
+        return pacienteGuardado;  // ← Devuelve el paciente creado
     }
 }

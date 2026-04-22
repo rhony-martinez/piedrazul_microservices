@@ -1,5 +1,6 @@
 package com.piedrazul.citas.infrastructure.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -18,7 +19,6 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.exchange.personas}")
     private String personasExchange;
 
-    // Routing Keys para eventos de citas
     @Value("${rabbitmq.routing.cita-agendada}")
     private String routingKeyCitaAgendada;
 
@@ -28,7 +28,6 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.routing.cita-reagendada}")
     private String routingKeyCitaReagendada;
 
-    // Queues para consumir eventos de personas-service
     @Value("${rabbitmq.queue.paciente-creado}")
     private String queuePacienteCreado;
 
@@ -41,7 +40,6 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.queue.disponibilidad-actualizada}")
     private String queueDisponibilidadActualizada;
 
-    // 1. Configuración de Exchanges
     @Bean
     public TopicExchange citasExchange() {
         return new TopicExchange(citasExchange);
@@ -52,7 +50,6 @@ public class RabbitMQConfig {
         return new TopicExchange(personasExchange);
     }
 
-    // 2. Configuración de Queues para consumir eventos de personas-service
     @Bean
     public Queue pacienteCreadoQueue() {
         return new Queue(queuePacienteCreado, true);
@@ -73,7 +70,6 @@ public class RabbitMQConfig {
         return new Queue(queueDisponibilidadActualizada, true);
     }
 
-    // 3. Binding de Queues a Exchanges
     @Bean
     public Binding pacienteCreadoBinding() {
         return BindingBuilder
@@ -106,17 +102,15 @@ public class RabbitMQConfig {
                 .with("disponibilidad.actualizada");
     }
 
-    // 4. Configuración de Message Converter para JSON
     @Bean
-    public MessageConverter messageConverter() {
-        return new Jackson2JsonMessageConverter();
+    public MessageConverter messageConverter(ObjectMapper objectMapper) {
+        return new Jackson2JsonMessageConverter(objectMapper);
     }
 
-    // 5. Configuración de RabbitTemplate
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setMessageConverter(messageConverter());
+        rabbitTemplate.setMessageConverter(messageConverter);
         return rabbitTemplate;
     }
 }
