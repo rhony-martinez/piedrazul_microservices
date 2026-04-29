@@ -37,7 +37,7 @@ public class DataInitializer {
             log.info("🚀 Iniciando carga de datos iniciales...");
 
             // ======================
-            // 1. CREAR PERSONAS (sin duplicar por DNI)
+            // 1. CREAR PERSONAS
             // ======================
 
             Long persona1 = crearPersonaSiNoExiste(
