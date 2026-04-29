@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="15" alignment="CENTER"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.piedrazul.frontend.controller.LoginController">
+
+    <padding>
+        <Insets top="30" right="30" bottom="30" left="30"/>
+    </padding>
+
+    <Label text="PIEDRAZUL" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+
+    <TextField fx:id="txtUsername" promptText="Usuario"/>
+
+    <PasswordField fx:id="txtPassword" promptText="Contraseña"/>
+
+    <Button text="Iniciar Sesión" onAction="#handleLogin"/>
+
+    <Button text="Registrarse" onAction="#onGoRegister"/>
+
+    <Label fx:id="lblMensaje" style="-fx-text-fill: red;"/>
+
+</VBox>
