@@ -8,7 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
-public class PacienteDashboardController {
+public class AgendadorDashboardController {
 
     @FXML
     private Label lblBienvenida;

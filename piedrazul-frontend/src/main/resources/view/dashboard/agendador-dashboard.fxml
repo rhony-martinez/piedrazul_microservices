@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+
+<VBox alignment="CENTER" spacing="20"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.piedrazul.frontend.controller.AgendadorDashboardController">
+
+    <Label fx:id="lblBienvenida" text="Bienvenido"/>
+
+    <Button text="Cerrar sesión" onAction="#handleLogout"/>
+
+</VBox>

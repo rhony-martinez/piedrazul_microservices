@@ -8,7 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
-public class PacienteDashboardController {
+public class MedicoDashboardController {
 
     @FXML
     private Label lblBienvenida;
@@ -16,7 +16,7 @@ public class PacienteDashboardController {
     @FXML
     public void initialize() {
         if (!SessionManager.isLoggedIn()) {
-            loadView("/view/auth_register/loginView.fxml");
+            loadView("/view/auth_register-view.fxml");
         }
         String username = SessionManager.getCurrentUser().getUsername();
         lblBienvenida.setText("Bienvenido " + username);

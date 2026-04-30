@@ -70,7 +70,10 @@ public class LoginController {
                 loadView("/view/dashboard/medico-dashboard.fxml",txtUsername);
                 break;
             case "ADMINISTRADOR":
-                loadView("/view/dashboard/admin-dashboard.fxml",txtUsername);
+                loadView("/view/dashboard/administrador-dashboard.fxml",txtUsername);
+                break;
+            case "AGENDADOR":
+                loadView("/view/dashboard/agendador-dashboard.fxml",txtUsername);
                 break;
             default:
                 throw new RuntimeException("Rol no soportado: " + rol);

@@ -37,7 +37,7 @@ public class AuthClient {
             } else {
                 // leer error del backend
                 String error = new String(conn.getErrorStream().readAllBytes());
-                throw new RuntimeException("Error login: " + error);
+                throw new RuntimeException("Error auth_register: " + error);
             }
 
         } catch (Exception e) {
