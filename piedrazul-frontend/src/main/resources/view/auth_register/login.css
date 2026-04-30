@@ -33,7 +33,7 @@
 /* 🧾 FORMULARIO */
 .form {
     -fx-alignment: center;
-    -fx-max-width: 400px;
+    -fx-max-width: 800px;
 }
 
 /* LABELS */
@@ -43,11 +43,22 @@
 }
 
 /* INPUTS */
+/* INPUT BASE */
 .input {
+    -fx-background-color: #eee8e8;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: #24c0eb;
+    -fx-border-width: 1px;
+    -fx-padding: 10px;
+    -fx-pref-width: 280px;
+    -fx-pref-height: 40px;
+}
+
+/* INPUT DENTRO DE CONTENEDOR (CON ICONO) */
+.input-container .input {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-padding: 8px;
-    -fx-pref-width: 220px;
 }
 
 /* CONTENEDOR DE INPUT + ICONO */
@@ -74,7 +85,8 @@
 
 /* FOCUS INPUT */
 .input:focused {
-    -fx-border-color: transparent;
+    -fx-border-color: #24c0eb;
+    -fx-border-width: 2px;
 }
 
 /* 🔵 BOTÓN PRINCIPAL */
@@ -110,4 +122,11 @@
 .error-label {
     -fx-text-fill: #ff5757;
     -fx-font-size: 13px;
+}
+
+/* TITULOS DE SECCIÓN */
+.section-title {
+    -fx-text-fill: #24c0eb;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
 }
