@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+
+<VBox spacing="8" alignment="CENTER"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.piedrazul.frontend.controller.RegisterController">
+
+    <Label text="Registro de Usuario"/>
+
+    <!-- DATOS PERSONA -->
+    <TextField fx:id="txtPrimerNombre" promptText="Primer Nombre"/>
+    <TextField fx:id="txtSegundoNombre" promptText="Segundo Nombre"/>
+    <TextField fx:id="txtPrimerApellido" promptText="Primer Apellido"/>
+    <TextField fx:id="txtSegundoApellido" promptText="Segundo Apellido"/>
+
+    <ComboBox fx:id="cmbGenero" promptText="Género"/>
+    <DatePicker fx:id="dateNacimiento"/>
+
+    <TextField fx:id="txtTelefono" promptText="Teléfono"/>
+    <TextField fx:id="txtDni" promptText="DNI"/>
+    <TextField fx:id="txtCorreo" promptText="Correo"/>
+
+    <!-- DATOS USUARIO -->
+    <TextField fx:id="txtUsername" promptText="Username"/>
+    <PasswordField fx:id="txtPassword" promptText="Password"/>
+
+    <ComboBox fx:id="cmbRol" promptText="Rol"/>
+
+    <Button text="Registrarse" onAction="#handleRegister"/>
+    <Button text="Volver al login" onAction="#goLogin"/>
+
+</VBox>

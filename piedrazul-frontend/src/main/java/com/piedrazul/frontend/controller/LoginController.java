@@ -55,6 +55,7 @@ public class LoginController {
 
     @FXML
     private void onGoRegister() {
+        loadView("/view/auth_register/register-View.fxml",txtUsername);
         System.out.println("Ir a registro (siguiente paso)");
     }
 
