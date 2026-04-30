@@ -1,5 +1,7 @@
 package com.piedrazul.frontend.controller;
 
+import com.piedrazul.frontend.client.MedicoClient;
+import com.piedrazul.frontend.client.PacienteClient;
 import com.piedrazul.frontend.client.PersonaClient;
 import com.piedrazul.frontend.client.UsuarioClient;
 import com.piedrazul.frontend.dto.request.CrearPersonaRequest;
@@ -30,6 +32,8 @@ public class RegisterController {
 
     private final PersonaClient personaClient = new PersonaClient();
     private final UsuarioClient usuarioClient = new UsuarioClient();
+    private final PacienteClient pacienteClient = new PacienteClient();
+    private final MedicoClient medicoClient = new MedicoClient();
 
     @FXML
     public void initialize() {
@@ -41,7 +45,7 @@ public class RegisterController {
     private void handleRegister() {
         try {
 
-            // 🔹 1. Crear Persona
+            //  1. Crear Persona
             CrearPersonaRequest personaRequest = new CrearPersonaRequest();
             personaRequest.setPrimerNombre(txtPrimerNombre.getText());
             personaRequest.setSegundoNombre(txtSegundoNombre.getText());
@@ -54,8 +58,16 @@ public class RegisterController {
             personaRequest.setCorreo(txtCorreo.getText());
 
             Long personaId = personaClient.crearPersona(personaRequest);
+            String rol = cmbRol.getValue();
 
-            // 🔹 2. Crear Usuario
+            // 2. Crear entidad según rol
+            if ("PACIENTE".equals(rol)) {
+                pacienteClient.crearPaciente(personaId);
+            } else if ("MEDICO_TERAPISTA".equals(rol)) {
+                medicoClient.crearMedico(personaId, "MEDICO");
+            }
+
+            //  3. Crear Usuario
             CrearUsuarioRequest usuarioRequest = new CrearUsuarioRequest();
             usuarioRequest.setPersonaId(personaId);
             usuarioRequest.setUsername(txtUsername.getText());
