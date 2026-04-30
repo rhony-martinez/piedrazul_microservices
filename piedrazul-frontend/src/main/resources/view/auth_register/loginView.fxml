@@ -4,24 +4,71 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="15" alignment="CENTER"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.piedrazul.frontend.controller.LoginController">
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.piedrazul.frontend.controller.LoginController"
+            stylesheets="@login.css"
+            styleClass="root">
 
-    <padding>
-        <Insets top="30" right="30" bottom="30" left="30"/>
-    </padding>
+    <!-- 🔵 HEADER -->
+    <top>
+        <HBox styleClass="header">
+            <Label text="PIEDRAZUL" styleClass="logo"/>
+        </HBox>
+    </top>
 
-    <Label text="PIEDRAZUL" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+    <!-- 🧾 CONTENIDO -->
+    <center>
+        <VBox alignment="CENTER" spacing="25" styleClass="container">
 
-    <TextField fx:id="txtUsername" promptText="Usuario"/>
+            <Label text="INICIAR SESIÓN" styleClass="title"/>
 
-    <PasswordField fx:id="txtPassword" promptText="Contraseña"/>
+            <!-- FORMULARIO -->
+            <GridPane hgap="20" vgap="20" styleClass="form">
 
-    <Button text="Iniciar Sesión" onAction="#handleLogin"/>
+                <!-- Usuario -->
+                <Label text="Usuario" styleClass="label"
+                       GridPane.rowIndex="0" GridPane.columnIndex="0"/>
 
-    <Button text="Registrarse" onAction="#onGoRegister"/>
+                <HBox spacing="10" styleClass="input-container"
+                      GridPane.rowIndex="0" GridPane.columnIndex="1">
 
-    <Label fx:id="lblMensaje" style="-fx-text-fill: red;"/>
+                    <Label text="👤" styleClass="input-icon"/>
+                    <TextField fx:id="txtUsername"
+                               promptText="Ingrese su usuario"
+                               styleClass="input"/>
 
-</VBox>
+                </HBox>
+
+                <!-- Contraseña -->
+                <Label text="Contraseña" styleClass="label"
+                       GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+
+                <HBox spacing="10" styleClass="input-container"
+                      GridPane.rowIndex="1" GridPane.columnIndex="1">
+
+                    <Label text="🔒" styleClass="input-icon"/>
+                    <PasswordField fx:id="txtPassword"
+                                   promptText="Ingrese su contraseña"
+                                   styleClass="input"/>
+
+                </HBox>
+
+            </GridPane>
+
+            <!-- BOTÓN PRINCIPAL -->
+            <Button text="Iniciar Sesión"
+                    onAction="#handleLogin"
+                    styleClass="btn-primary"/>
+
+            <!-- ACCIÓN SECUNDARIA -->
+            <Button text="Registrar"
+                    onAction="#onGoRegister"
+                    styleClass="btn-secondary"/>
+
+            <!-- MENSAJE -->
+            <Label fx:id="lblMensaje" styleClass="error-label"/>
+
+        </VBox>
+    </center>
+
+</BorderPane>

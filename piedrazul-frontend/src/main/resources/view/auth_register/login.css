@@ -1,0 +1,113 @@
+/* 🌍 ROOT */
+.root {
+    -fx-background-color: #f1ebeb;
+    -fx-font-family: "Segoe UI", "Arial";
+}
+
+/* 🔵 HEADER */
+.header {
+    -fx-background-color: #24c0eb;
+    -fx-padding: 20px 30px;
+    -fx-alignment: CENTER-LEFT;
+}
+
+.logo {
+    -fx-text-fill: white;
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 2px;
+}
+
+/* 📦 CONTENEDOR */
+.container {
+    -fx-padding: 40px;
+}
+
+/* 🏷️ TÍTULO */
+.title {
+    -fx-text-fill: #5cceee;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+/* 🧾 FORMULARIO */
+.form {
+    -fx-alignment: center;
+    -fx-max-width: 400px;
+}
+
+/* LABELS */
+.label {
+    -fx-text-fill: #5cceee;
+    -fx-font-size: 16px;
+}
+
+/* INPUTS */
+.input {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 8px;
+    -fx-pref-width: 220px;
+}
+
+/* CONTENEDOR DE INPUT + ICONO */
+.input-container {
+    -fx-background-color: #eee8e8;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: #24c0eb;
+    -fx-border-width: 1px;
+    -fx-padding: 5px 10px;
+    -fx-alignment: CENTER-LEFT;
+}
+
+/* FOCUS (cuando el usuario escribe) */
+.input-container:focused {
+    -fx-border-color: #24c0eb;
+    -fx-border-width: 2px;
+}
+
+/* ICONO */
+.input-icon {
+    -fx-font-size: 16px;
+}
+
+/* FOCUS INPUT */
+.input:focused {
+    -fx-border-color: transparent;
+}
+
+/* 🔵 BOTÓN PRINCIPAL */
+.btn-primary {
+    -fx-background-color: #24c0eb;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10px;
+    -fx-padding: 10px 25px;
+    -fx-cursor: hand;
+}
+
+/* HOVER */
+.btn-primary:hover {
+    -fx-background-color: #1aa7cc;
+}
+
+/* BOTÓN SECUNDARIO */
+.btn-secondary {
+    -fx-background-color: #5cceee;
+    -fx-text-fill: white;
+    -fx-background-radius: 8px;
+    -fx-padding: 8px 20px;
+    -fx-cursor: hand;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #4bb8d6;
+}
+
+/* ❌ MENSAJE ERROR */
+.error-label {
+    -fx-text-fill: #ff5757;
+    -fx-font-size: 13px;
+}
