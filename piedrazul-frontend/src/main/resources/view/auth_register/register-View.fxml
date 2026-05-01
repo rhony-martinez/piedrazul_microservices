@@ -6,7 +6,7 @@
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.piedrazul.frontend.controller.RegisterController"
-            stylesheets="@login.css"
+            stylesheets="@../css/login.css"
             styleClass="root">
 
     <!-- HEADER -->

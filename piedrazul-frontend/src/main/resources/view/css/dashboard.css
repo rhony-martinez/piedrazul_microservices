@@ -1,0 +1,154 @@
+/* ===============================
+   DASHBOARDS GENERALES - PIEDRAZUL
+   =============================== */
+
+.dashboard-root {
+    -fx-background-color: #f1ebeb;
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+/* ===============================
+   BARRA SUPERIOR
+   =============================== */
+
+.top-bar {
+    -fx-background-color: #24c0eb;
+    -fx-pref-height: 95px;
+    -fx-min-height: 95px;
+    -fx-padding: 0 0 0 42px;
+}
+
+.logo-label {
+    -fx-text-fill: #f1ebeb;
+    -fx-font-size: 38px;
+    -fx-font-weight: bold;
+    -fx-font-style: italic;
+    -fx-letter-spacing: 3px;
+}
+
+.logout-button {
+    -fx-background-color: #ff5757;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+
+    -fx-pref-width: 190px;
+    -fx-min-width: 190px;
+    -fx-pref-height: 95px;
+
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+    -fx-cursor: hand;
+}
+
+.logout-button:hover {
+    -fx-background-color: #ff4141;
+}
+
+.logout-button:pressed {
+    -fx-background-color: #e63b3b;
+}
+
+.icon-box {
+    -fx-background-color: #f1ebeb;
+    -fx-pref-width: 80px;
+    -fx-min-width: 80px;
+    -fx-pref-height: 95px;
+}
+
+.notification-icon {
+    -fx-font-size: 25px;
+    -fx-text-fill: #222222;
+}
+
+/* ===============================
+   CONTENIDO GENERAL
+   =============================== */
+
+.dashboard-content {
+    -fx-background-color: #f1ebeb;
+    -fx-padding: 42px 55px 22px 55px;
+}
+
+.dashboard-info-row {
+    -fx-min-height: 45px;
+    -fx-pref-height: 45px;
+}
+
+.welcome-label {
+    -fx-text-fill: #24c0eb;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.role-text {
+    -fx-text-fill: #24c0eb;
+    -fx-font-size: 22px;
+    -fx-font-style: italic;
+}
+
+/* ===============================
+   BOTONES PRINCIPALES
+   =============================== */
+
+.main-actions-container {
+    -fx-padding: 20px 0 20px 0;
+}
+
+.main-actions-row {
+    -fx-padding: 0;
+}
+
+.dashboard-main-button {
+    -fx-background-color: #5cceee;
+    -fx-text-fill: white;
+
+    -fx-font-size: 27px;
+    -fx-font-weight: bold;
+
+    -fx-pref-width: 380px;
+    -fx-min-width: 300px;
+    -fx-pref-height: 128px;
+    -fx-min-height: 110px;
+
+    -fx-background-radius: 13px;
+    -fx-border-radius: 13px;
+    -fx-border-width: 3px;
+    -fx-border-color: #24c0eb;
+
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 9, 0.18, 0, 3);
+    -fx-cursor: hand;
+}
+
+.dashboard-main-button:hover {
+    -fx-background-color: #4fc9eb;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 12, 0.22, 0, 4);
+    -fx-scale-x: 1.01;
+    -fx-scale-y: 1.01;
+}
+
+.dashboard-main-button:pressed {
+    -fx-background-color: #24c0eb;
+    -fx-scale-x: 0.99;
+    -fx-scale-y: 0.99;
+}
+
+/* ===============================
+   PIE DE PÁGINA
+   =============================== */
+
+.footer-row {
+    -fx-min-height: 42px;
+    -fx-pref-height: 42px;
+}
+
+.menu-label {
+    -fx-text-fill: #5cceee;
+    -fx-font-size: 25px;
+    -fx-font-weight: bold;
+    -fx-font-style: italic;
+}
+
+.main-actions-grid {
+    -fx-padding: 0 0 10px 0;
+}

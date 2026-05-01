@@ -88,6 +88,9 @@ public class LoginController {
 
             Stage stage = (Stage) node.getScene().getWindow();
             stage.setScene(new Scene(root));
+            stage.setMinWidth(1000);
+            stage.setMinHeight(650);
+            stage.setMaximized(true);
             stage.show();
 
         } catch (Exception e) {
