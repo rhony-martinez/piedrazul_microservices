@@ -3,15 +3,11 @@ package com.piedrazul.frontend.controller;
 import com.piedrazul.frontend.client.AuthClient;
 import com.piedrazul.frontend.dto.response.LoginResponse;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.SceneManager;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 
 public class LoginController {
 
@@ -35,7 +31,6 @@ public class LoginController {
 
             showAlert("Éxito", response.getMessage());
 
-            // 🔥 aquí viene lo importante
             System.out.println("Roles: " + response.getRoles());
 
             redirectByRole(response);
@@ -55,46 +50,50 @@ public class LoginController {
 
     @FXML
     private void onGoRegister() {
-        loadView("/view/auth_register/register-View.fxml",txtUsername);
-        System.out.println("Ir a registro (siguiente paso)");
+        SceneManager.showRegister(
+                "/view/auth_register/register-View.fxml",
+                txtUsername
+        );
     }
 
     private void redirectByRole(LoginResponse response) {
-
         String rol = response.getRoles().getFirst();
 
         switch (rol) {
             case "PACIENTE":
-                loadView("/view/dashboard/paciente-dashboard.fxml",txtUsername);
+                SceneManager.showDashboard(
+                        "/view/dashboard/paciente-dashboard.fxml",
+                        txtUsername,
+                        "PIEDRAZUL - Menú principal"
+                );
                 break;
+
             case "MEDICO_TERAPISTA":
-                loadView("/view/dashboard/medico-dashboard.fxml",txtUsername);
+                SceneManager.showDashboard(
+                        "/view/dashboard/medico-dashboard.fxml",
+                        txtUsername,
+                        "PIEDRAZUL - Menú principal"
+                );
                 break;
+
             case "ADMINISTRADOR":
-                loadView("/view/dashboard/administrador-dashboard.fxml",txtUsername);
+                SceneManager.showDashboard(
+                        "/view/dashboard/administrador-dashboard.fxml",
+                        txtUsername,
+                        "PIEDRAZUL - Menú principal"
+                );
                 break;
+
             case "AGENDADOR":
-                loadView("/view/dashboard/agendador-dashboard.fxml",txtUsername);
+                SceneManager.showDashboard(
+                        "/view/dashboard/agendador-dashboard.fxml",
+                        txtUsername,
+                        "PIEDRAZUL - Menú principal"
+                );
                 break;
+
             default:
                 throw new RuntimeException("Rol no soportado: " + rol);
-        }
-    }
-
-    private void loadView(String fxml, Node node) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
-            Parent root = loader.load();
-
-            Stage stage = (Stage) node.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.setMinWidth(1000);
-            stage.setMinHeight(650);
-            stage.setMaximized(true);
-            stage.show();
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }

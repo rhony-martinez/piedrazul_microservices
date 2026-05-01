@@ -1,6 +1,7 @@
 package com.piedrazul.frontend.controller;
 
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.SceneManager;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -16,7 +17,7 @@ public class MedicoDashboardController {
     @FXML
     public void initialize() {
         if (!SessionManager.isLoggedIn()) {
-            loadView("/view/auth_register-view.fxml");
+            SceneManager.showLogin("/view/auth_register/loginView.fxml",lblBienvenida);
         }
         String username = SessionManager.getCurrentUser().getUsername();
         lblBienvenida.setText("Bienvenido " + username);
@@ -25,20 +26,10 @@ public class MedicoDashboardController {
     @FXML
     private void handleLogout() {
         SessionManager.clear();
-        loadView("/view/auth_register/loginView.fxml");
-    }
 
-    private void loadView(String fxml) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
-            Parent root = loader.load();
-
-            Stage stage = (Stage) lblBienvenida.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        SceneManager.showLogin(
+                "/view/auth_register/loginView.fxml",
+                lblBienvenida
+        );
     }
 }

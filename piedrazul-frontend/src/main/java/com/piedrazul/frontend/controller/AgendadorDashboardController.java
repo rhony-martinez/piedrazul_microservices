@@ -1,12 +1,9 @@
 package com.piedrazul.frontend.controller;
 
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.SceneManager;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
-import javafx.stage.Stage;
 
 public class AgendadorDashboardController {
 
@@ -16,7 +13,7 @@ public class AgendadorDashboardController {
     @FXML
     public void initialize() {
         if (!SessionManager.isLoggedIn()) {
-            loadView("/view/auth_register/loginView.fxml");
+            SceneManager.showLogin("/view/auth_register/loginView.fxml",lblBienvenida);
         }
         String username = SessionManager.getCurrentUser().getUsername();
         lblBienvenida.setText("Bienvenido " + username);
@@ -25,20 +22,11 @@ public class AgendadorDashboardController {
     @FXML
     private void handleLogout() {
         SessionManager.clear();
-        loadView("/view/auth_register/loginView.fxml");
+
+        SceneManager.showLogin(
+                "/view/auth_register/loginView.fxml",
+                lblBienvenida
+        );
     }
 
-    private void loadView(String fxml) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
-            Parent root = loader.load();
-
-            Stage stage = (Stage) lblBienvenida.getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }
