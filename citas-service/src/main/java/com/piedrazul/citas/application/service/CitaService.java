@@ -10,6 +10,7 @@ import com.piedrazul.citas.domain.model.*;
 import com.piedrazul.citas.domain.valueobjects.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,17 +58,20 @@ public class CitaService implements CrearCitaUseCase, CancelarCitaUseCase,
         // 3. Crear cita usando factory method del dominio
         Cita cita = Cita.crear(pacienteId, medicoId, creadoPor, request.getFechaHora(),
                 paciente, medico, disponibilidad);
+        try {
+            // 4. Persistir cita
+            Cita citaGuardada = citaRepository.save(cita);
+            log.info("Cita creada exitosamente con ID: {} en estado: {}",
+                    citaGuardada.getId(), citaGuardada.getEstado().getDescripcion());
 
-        // 4. Persistir cita
-        Cita citaGuardada = citaRepository.save(cita);
-        log.info("Cita creada exitosamente con ID: {} en estado: {}",
-                citaGuardada.getId(), citaGuardada.getEstado().getDescripcion());
+            // 5. Publicar evento (comunicación asíncrona)
+            eventPublisher.publicarCitaAgendada(citaGuardada);
 
-        // 5. Publicar evento (comunicación asíncrona)
-        eventPublisher.publicarCitaAgendada(citaGuardada);
-
-        // 6. Retornar respuesta
-        return mapper.toResponse(citaGuardada, paciente, medico);
+            // 6. Retornar respuesta
+            return mapper.toResponse(citaGuardada, paciente, medico);
+        } catch (DataIntegrityViolationException e) {
+            throw new MedicoNoDisponibleException("El médico ya tiene una cita en ese horario");
+        }
     }
 
     @Override

@@ -11,12 +11,22 @@ public class DisponibilidadSnapshot {
     private final Map<DayOfWeek, List<TimeRange>> horariosSemanales;
     private final Set<LocalDateTime> bloqueosEspecificos;
     private final LocalDateTime actualizadoEn;
+    private Integer intervaloMinutos;
 
-    public DisponibilidadSnapshot(MedicoId medicoId) {
+    public DisponibilidadSnapshot(MedicoId medicoId, Integer intervaloMinutos) {
         this.medicoId = medicoId;
+        this.intervaloMinutos = intervaloMinutos;
         this.horariosSemanales = new HashMap<>();
         this.bloqueosEspecificos = new HashSet<>();
         this.actualizadoEn = LocalDateTime.now();
+    }
+
+    public Integer getIntervaloMinutos() {
+        return intervaloMinutos;
+    }
+
+    public void setIntervaloMinutos(Integer intervaloMinutos) {
+        this.intervaloMinutos = intervaloMinutos;
     }
 
     public void agregarHorarioSemanal(DayOfWeek dia, TimeRange rango) {
@@ -49,6 +59,10 @@ public class DisponibilidadSnapshot {
         }
 
         return rangos.stream().anyMatch(rango -> rango.contiene(hora));
+    }
+
+    public void reemplazarHorariosDelDia(DayOfWeek dia, List<TimeRange> nuevosRangos) {
+        horariosSemanales.put(dia, new ArrayList<>(nuevosRangos));
     }
 
     // Getters

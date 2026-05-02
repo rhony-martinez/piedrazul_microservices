@@ -2,6 +2,7 @@ package com.piedrazul.citas.interfaces.rest.controller;
 
 import com.piedrazul.citas.application.dto.response.CitaResponse;
 import com.piedrazul.citas.application.port.incoming.*;
+import com.piedrazul.citas.domain.valueobjects.MedicoId;
 import com.piedrazul.citas.interfaces.rest.dto.request.*;
 import com.piedrazul.citas.interfaces.rest.dto.response.CitaRestResponse;
 import com.piedrazul.citas.interfaces.rest.mapper.CitaRestMapper;
@@ -11,6 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -22,6 +26,7 @@ public class CitaController {
     private final CancelarCitaUseCase cancelarCitaUseCase;
     private final ReagendarCitaUseCase reagendarCitaUseCase;
     private final MarcarAsistenciaUseCase marcarAsistenciaUseCase;
+    private final ConsultarSlotsDisponiblesUseCase consultarSlotsDisponiblesUseCase;
     private final CitaRestMapper mapper;
 
     @PostMapping
@@ -72,5 +77,10 @@ public class CitaController {
         CitaRestResponse restResponse = mapper.toRestResponse(response);
 
         return ResponseEntity.ok(restResponse);
+    }
+
+    @GetMapping("/medicos/{medicoId}/slots")
+    public List<LocalDateTime> obtenerSlots(@PathVariable Long medicoId) {
+        return consultarSlotsDisponiblesUseCase.consultar(MedicoId.of(medicoId));
     }
 }

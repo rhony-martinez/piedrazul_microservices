@@ -7,6 +7,7 @@ public class Medico {
     private Long personaId;
     private TipoProfesional tipoProfesional;
     private EstadoMedico estado;
+    private Integer intervaloMinutos;
 
     public Medico() {
     }
@@ -77,6 +78,13 @@ public class Medico {
 
     public boolean estaActivo() {
         return EstadoMedico.ACTIVO.equals(this.estado);
+    }
+
+    public void actualizarIntervalo(Integer minutos) {
+        if (minutos == null || minutos <= 0) {
+            throw new IllegalArgumentException("Intervalo inválido");
+        }
+        this.intervaloMinutos = minutos;
     }
 
     @Override

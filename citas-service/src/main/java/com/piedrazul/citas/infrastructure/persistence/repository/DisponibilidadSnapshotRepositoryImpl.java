@@ -46,6 +46,7 @@ public class DisponibilidadSnapshotRepositoryImpl implements DisponibilidadSnaps
     private DisponibilidadSnapshotEntity toEntity(DisponibilidadSnapshot snapshot) {
         DisponibilidadSnapshotEntity entity = new DisponibilidadSnapshotEntity();
         entity.setMedicoId(snapshot.getMedicoId().value());
+        entity.setIntervaloMinutos(snapshot.getIntervaloMinutos());
 
         // Convertir horarios semanales a JSON string
         try {
@@ -76,7 +77,7 @@ public class DisponibilidadSnapshotRepositoryImpl implements DisponibilidadSnaps
     }
 
     private DisponibilidadSnapshot toDomain(DisponibilidadSnapshotEntity entity) {
-        DisponibilidadSnapshot snapshot = new DisponibilidadSnapshot(MedicoId.of(entity.getMedicoId()));
+        DisponibilidadSnapshot snapshot = new DisponibilidadSnapshot(MedicoId.of(entity.getMedicoId()), entity.getIntervaloMinutos());
 
         // Restaurar horarios semanales desde JSON
         try {

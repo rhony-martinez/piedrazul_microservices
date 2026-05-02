@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "disponibilidad_snapshot")
@@ -16,6 +17,10 @@ import java.time.LocalDateTime;
 public class DisponibilidadSnapshotEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name="medico_id", nullable = false)
     private Long medicoId;
 
     // Usar TEXT en lugar de JSONB
@@ -36,4 +41,7 @@ public class DisponibilidadSnapshotEntity {
     protected void onUpdate() {
         actualizadoEn = LocalDateTime.now();
     }
+
+    @Column(name = "intervalo_minutos")
+    private Integer intervaloMinutos;
 }

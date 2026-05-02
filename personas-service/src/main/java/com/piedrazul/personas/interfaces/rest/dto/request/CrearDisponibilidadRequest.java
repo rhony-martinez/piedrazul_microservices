@@ -20,4 +20,7 @@ public class CrearDisponibilidadRequest {
 
     @NotNull
     private LocalTime horaFin;
+
+    @NotNull
+    private Integer intervaloMinutos;
 }

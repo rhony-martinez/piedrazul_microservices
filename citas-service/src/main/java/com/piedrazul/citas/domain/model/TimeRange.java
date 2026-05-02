@@ -15,7 +15,7 @@ public class TimeRange {
     }
 
     public boolean contiene(LocalTime time) {
-        return !time.isBefore(start) && !time.isAfter(end);
+        return !time.isBefore(start) && !time.isBefore(end);
     }
 
     // Getters

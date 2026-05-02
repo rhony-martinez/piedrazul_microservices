@@ -26,6 +26,7 @@ public class DisponibilidadActualizadaEvent {
         private Long medicoId;
         private Map<String, List<TimeRangeData>> horariosSemanales;
         private List<LocalDateTime> bloqueosEspecificos;
+        private Integer intervaloMinutos;
     }
 
     @Data

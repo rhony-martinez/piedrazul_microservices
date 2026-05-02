@@ -9,7 +9,16 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "citas")
+@Table(
+        name = "citas",
+        indexes = {
+                @Index(name = "idx_medico_fecha", columnList = "medico_id, fecha_hora"),
+                @Index(name = "idx_paciente_fecha", columnList = "paciente_id, fecha_hora")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_medico_fecha", columnNames = {"medico_id", "fecha_hora"})
+        }
+)
 @Data
 @Builder
 @NoArgsConstructor
