@@ -78,6 +78,16 @@ public class DisponibilidadSnapshot {
         }
     }
 
+    public boolean esSlotValido(LocalDateTime fechaHora) {
+        if (!estaDisponible(this.medicoId, fechaHora)) {
+            return false;
+        }
+
+        int intervalo = this.intervaloMinutos;
+
+        return fechaHora.getMinute() % intervalo == 0;
+    }
+
     // Getters
     public MedicoId getMedicoId() { return medicoId; }
     public Map<DayOfWeek, List<TimeRange>> getHorariosSemanales() { return horariosSemanales; }

@@ -28,4 +28,9 @@ public class AdministradorDashboardController {
                 lblBienvenida
         );
     }
+
+    @FXML
+    private void handleConfiguracionHorarios() {
+        SceneManager.switchScene("/view/admin/configuracion-disponibilidad.fxml",lblBienvenida,"Configuración de Parámetros");
+    }
 }

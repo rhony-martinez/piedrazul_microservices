@@ -83,7 +83,8 @@
                                 styleClass="dashboard-main-button"/>
 
                         <Button text="CONFIGURACIÓN DE HORARIOS"
-                                styleClass="dashboard-main-button"/>
+                                styleClass="dashboard-main-button"
+                                onAction="#handleConfiguracionHorarios"/>
 
                     </HBox>
 

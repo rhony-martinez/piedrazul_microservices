@@ -55,6 +55,13 @@ public class CitaService implements CrearCitaUseCase, CancelarCitaUseCase,
             throw new DisponibilidadNoDisponibleException("El médico ya tiene una cita en ese horario");
         }
 
+        // VALIDAR QUE EL SLOT EXISTA
+        if (!disponibilidad.esSlotValido(request.getFechaHora())) {
+            throw new DisponibilidadNoDisponibleException(
+                    "El horario no corresponde a un slot válido"
+            );
+        }
+
         // 3. Crear cita usando factory method del dominio
         Cita cita = Cita.crear(pacienteId, medicoId, creadoPor, request.getFechaHora(),
                 paciente, medico, disponibilidad);

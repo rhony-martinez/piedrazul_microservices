@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.*?>
+
+<VBox spacing="10"
+      alignment="CENTER"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.piedrazul.frontend.controller.ConfiguracionDisponibilidadController">
+
+    <Label text="Configurar Disponibilidad" styleClass="title"/>
+
+    <ComboBox fx:id="cmbMedicos" promptText="Seleccione médico"/>
+    <ComboBox fx:id="cmbDiaSemana" promptText="Día"/>
+
+    <HBox spacing="10">
+        <TextField fx:id="txtHoraInicio" promptText="08:00"/>
+        <TextField fx:id="txtHoraFin" promptText="10:00"/>
+    </HBox>
+
+    <TextField fx:id="txtIntervalo" promptText="Intervalo (minutos)"/>
+
+    <Button text="Agregar Disponibilidad" onAction="#handleAgregar"/>
+
+    <TableView fx:id="tablaDisponibilidad"/>
+
+</VBox>

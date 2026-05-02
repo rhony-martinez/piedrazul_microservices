@@ -1,10 +1,12 @@
 package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.piedrazul.frontend.dto.response.MedicoResponse;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 public class MedicoClient {
@@ -40,6 +42,28 @@ public class MedicoClient {
 
         } catch (Exception e) {
             throw new RuntimeException("Error en MedicoClient", e);
+        }
+    }
+
+    public List<MedicoResponse> obtenerMedicos() {
+        try {
+            URL url = new URL(URL_MEDICO);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+            conn.setRequestMethod("GET");
+
+            if (conn.getResponseCode() != 200) {
+                throw new RuntimeException("Error obteniendo médicos");
+            }
+
+            return objectMapper.readValue(
+                    conn.getInputStream(),
+                    objectMapper.getTypeFactory()
+                            .constructCollectionType(List.class, MedicoResponse.class)
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

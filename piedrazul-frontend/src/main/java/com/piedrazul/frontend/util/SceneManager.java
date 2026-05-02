@@ -7,6 +7,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.net.URL;
+
 public class SceneManager {
 
     private static final double LOGIN_WIDTH = 900;
@@ -92,6 +94,31 @@ public class SceneManager {
             Platform.runLater(stage::centerOnScreen);
 
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void switchScene(String fxmlPath, Node node, String title) {
+        try {
+            URL resource = SceneManager.class.getResource(fxmlPath);
+
+            if (resource == null) {
+                throw new RuntimeException("FXML no encontrado: " + fxmlPath);
+            }
+
+            Parent root = FXMLLoader.load(resource);
+
+            Stage stage = (Stage) node.getScene().getWindow();
+            Scene scene = new Scene(root);
+
+            stage.setScene(scene);
+            stage.setTitle(title);
+            stage.show();
+
+            Platform.runLater(stage::centerOnScreen);
+
+        } catch (Exception e) {
+            System.out.println("ERROR CAMBIANDO ESCENA: " + fxmlPath);
             e.printStackTrace();
         }
     }
