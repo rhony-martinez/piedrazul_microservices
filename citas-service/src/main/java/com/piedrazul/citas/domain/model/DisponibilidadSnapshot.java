@@ -65,6 +65,19 @@ public class DisponibilidadSnapshot {
         horariosSemanales.put(dia, new ArrayList<>(nuevosRangos));
     }
 
+    public void agregarHorarioSemanalSinDuplicados(DayOfWeek dia, TimeRange nuevo) {
+        List<TimeRange> existentes = horariosSemanales
+                .computeIfAbsent(dia, k -> new ArrayList<>());
+
+        boolean yaExiste = existentes.stream()
+                .anyMatch(r -> r.getStart().equals(nuevo.getStart())
+                        && r.getEnd().equals(nuevo.getEnd()));
+
+        if (!yaExiste) {
+            existentes.add(nuevo);
+        }
+    }
+
     // Getters
     public MedicoId getMedicoId() { return medicoId; }
     public Map<DayOfWeek, List<TimeRange>> getHorariosSemanales() { return horariosSemanales; }

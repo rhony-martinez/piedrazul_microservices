@@ -65,14 +65,14 @@ public class DisponibilidadEventConsumer {
                     String diaIngles = DIAS_ESPAÑOL_INGLES.getOrDefault(diaEspanol.toUpperCase(), diaEspanol.toUpperCase());
                     DayOfWeek dia = DayOfWeek.valueOf(diaIngles);
 
-                    List<TimeRange> nuevosRangos = rangos.stream()
-                            .map(r -> new TimeRange(
-                                    LocalTime.parse(r.getStart()),
-                                    LocalTime.parse(r.getEnd())
-                            ))
-                            .toList();
+                    rangos.forEach(r -> {
+                        TimeRange nuevo = new TimeRange(
+                                LocalTime.parse(r.getStart()),
+                                LocalTime.parse(r.getEnd())
+                        );
 
-                    snapshot.reemplazarHorariosDelDia(dia, nuevosRangos);
+                        snapshot.agregarHorarioSemanalSinDuplicados(dia, nuevo);
+                    });
                 });
             }
 
