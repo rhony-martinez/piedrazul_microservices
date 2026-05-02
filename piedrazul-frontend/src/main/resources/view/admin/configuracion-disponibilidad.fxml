@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.control.*?>
 
-<VBox spacing="10"
+<VBox spacing="12"
       alignment="CENTER"
       xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
@@ -24,6 +24,20 @@
 
     <Button text="Agregar Disponibilidad" onAction="#handleAgregar"/>
 
-    <TableView fx:id="tablaDisponibilidad"/>
+    <!-- TABLA -->
+    <TableView fx:id="tablaDisponibilidad" prefHeight="200">
+        <columns>
+            <TableColumn fx:id="colMedico" text="Médico"/>
+            <TableColumn fx:id="colDia" text="Día"/>
+            <TableColumn fx:id="colHoraInicio" text="Inicio"/>
+            <TableColumn fx:id="colHoraFin" text="Fin"/>
+            <TableColumn fx:id="colIntervalo" text="Intervalo"/>
+        </columns>
+    </TableView>
+
+    <!-- BOTÓN VOLVER -->
+    <Button text="Volver al Dashboard"
+            onAction="#handleVolver"
+            styleClass="dashboard-secondary-button"/>
 
 </VBox>
