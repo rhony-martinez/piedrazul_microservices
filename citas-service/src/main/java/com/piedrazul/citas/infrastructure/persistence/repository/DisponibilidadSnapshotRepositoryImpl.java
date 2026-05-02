@@ -38,9 +38,52 @@ public class DisponibilidadSnapshotRepositoryImpl implements DisponibilidadSnaps
 
     @Override
     public DisponibilidadSnapshot save(DisponibilidadSnapshot snapshot) {
-        DisponibilidadSnapshotEntity entity = toEntity(snapshot);
-        DisponibilidadSnapshotEntity savedEntity = repository.save(entity);
-        return toDomain(savedEntity);
+
+        // Buscar si ya existe en BD
+        Optional<DisponibilidadSnapshotEntity> existingOpt =
+                repository.findById(snapshot.getMedicoId().value());
+
+        DisponibilidadSnapshotEntity entity;
+
+        if (existingOpt.isPresent()) {
+            // UPDATE (merge)
+            entity = existingOpt.get();
+
+            try {
+                // Convertir horarios
+                Map<String, List<Map<String, String>>> horariosMap = new HashMap<>();
+                snapshot.getHorariosSemanales().forEach((dia, rangos) -> {
+                    List<Map<String, String>> lista = rangos.stream()
+                            .map(r -> {
+                                Map<String, String> m = new HashMap<>();
+                                m.put("start", r.getStart().toString());
+                                m.put("end", r.getEnd().toString());
+                                return m;
+                            })
+                            .toList();
+                    horariosMap.put(dia.name(), lista);
+                });
+
+                entity.setHorariosSemanales(objectMapper.writeValueAsString(horariosMap));
+
+                // Convertir bloqueos
+                entity.setBloqueosEspecificos(
+                        objectMapper.writeValueAsString(snapshot.getBloqueosEspecificos())
+                );
+
+            } catch (JsonProcessingException e) {
+                log.error("Error convirtiendo snapshot a JSON", e);
+            }
+
+            entity.setIntervaloMinutos(snapshot.getIntervaloMinutos());
+
+        } else {
+            // INSERT
+            entity = toEntity(snapshot);
+        }
+
+        DisponibilidadSnapshotEntity saved = repository.save(entity);
+        return toDomain(saved);
     }
 
     private DisponibilidadSnapshotEntity toEntity(DisponibilidadSnapshot snapshot) {

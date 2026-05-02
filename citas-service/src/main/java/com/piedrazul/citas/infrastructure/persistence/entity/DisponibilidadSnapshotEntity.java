@@ -17,9 +17,6 @@ import java.util.UUID;
 public class DisponibilidadSnapshotEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @Column(name="medico_id", nullable = false)
     private Long medicoId;
 
