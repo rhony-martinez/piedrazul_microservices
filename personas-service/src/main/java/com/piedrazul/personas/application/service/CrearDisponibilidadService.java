@@ -44,7 +44,9 @@ public class CrearDisponibilidadService {
                 medico.getPersonaId(),  // ← Usar getPersonaId()
                 request.getDiaSemana(),
                 request.getHoraInicio(),
-                request.getHoraFin()
+                request.getHoraFin(),
+                request.getIntervaloMinutos()
+
         );
 
         log.info("Evento DisponibilidadActualizada publicado para médico: {}", medico.getPersonaId());

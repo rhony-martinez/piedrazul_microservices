@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.piedrazul.frontend.controller.RegisterController"
+            stylesheets="@../css/login.css"
+            styleClass="root">
+
+    <!-- HEADER -->
+    <top>
+        <HBox styleClass="header">
+            <Label text="PIEDRAZUL" styleClass="logo"/>
+        </HBox>
+    </top>
+
+    <!-- CONTENIDO -->
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+            <VBox spacing="25" alignment="CENTER" styleClass="container">
+
+                <Label text="REGISTRO DE USUARIO" styleClass="title"/>
+
+                <!-- DATOS PERSONALES -->
+                <VBox spacing="10">
+                    <Label text="Datos personales" styleClass="section-title"/>
+
+                    <GridPane hgap="30" vgap="15">
+
+                        <!-- COLUMNA IZQUIERDA -->
+                        <Label text="Primer Nombre" styleClass="label"/>
+                        <TextField fx:id="txtPrimerNombre" styleClass="input"
+                                   GridPane.columnIndex="1"/>
+
+                        <Label text="Primer Apellido" styleClass="label" GridPane.rowIndex="1"/>
+                        <TextField fx:id="txtPrimerApellido" styleClass="input"
+                                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                        <Label text="Género" styleClass="label" GridPane.rowIndex="2"/>
+                        <ComboBox fx:id="cmbGenero" styleClass="input"
+                                  GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                        <!-- COLUMNA DERECHA -->
+                        <Label text="Segundo Nombre" styleClass="label"
+                               GridPane.columnIndex="2"/>
+                        <TextField fx:id="txtSegundoNombre" styleClass="input"
+                                   GridPane.columnIndex="3"/>
+
+                        <Label text="Segundo Apellido" styleClass="label"
+                               GridPane.rowIndex="1" GridPane.columnIndex="2"/>
+                        <TextField fx:id="txtSegundoApellido" styleClass="input"
+                                   GridPane.rowIndex="1" GridPane.columnIndex="3"/>
+
+                        <Label text="Fecha Nacimiento" styleClass="label"
+                               GridPane.rowIndex="2" GridPane.columnIndex="2"/>
+                        <DatePicker fx:id="dateNacimiento" styleClass="input"
+                                    GridPane.rowIndex="2" GridPane.columnIndex="3"/>
+
+                    </GridPane>
+                </VBox>
+
+                <!-- CONTACTO -->
+                <VBox spacing="10">
+                    <Label text="Datos de contacto" styleClass="section-title"/>
+
+                    <GridPane hgap="20" vgap="15">
+
+                        <Label text="Teléfono" styleClass="label"/>
+                        <TextField fx:id="txtTelefono"
+                                   styleClass="input"
+                                   GridPane.columnIndex="1"/>
+
+                        <Label text="DNI" styleClass="label" GridPane.rowIndex="1"/>
+                        <TextField fx:id="txtDni"
+                                   styleClass="input"
+                                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                        <Label text="Correo" styleClass="label" GridPane.rowIndex="2"/>
+                        <TextField fx:id="txtCorreo"
+                                   styleClass="input"
+                                   GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                    </GridPane>
+                </VBox>
+
+                <!-- CUENTA -->
+                <VBox spacing="10">
+                    <Label text="Datos de cuenta" styleClass="section-title"/>
+
+                    <GridPane hgap="20" vgap="15">
+
+                        <Label text="Usuario 👤" styleClass="label"/>
+                        <TextField fx:id="txtUsername"
+                                   styleClass="input"
+                                   GridPane.columnIndex="1"/>
+
+                        <Label text="Contraseña 🔒" styleClass="label" GridPane.rowIndex="1"/>
+                        <PasswordField fx:id="txtPassword"
+                                       styleClass="input"
+                                       GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                        <Label text="Rol" styleClass="label" GridPane.rowIndex="2"/>
+                        <ComboBox fx:id="cmbRol"
+                                  styleClass="input"
+                                  GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                    </GridPane>
+                </VBox>
+
+                <!-- BOTONES -->
+                <VBox spacing="10" alignment="CENTER">
+                    <Button text="Registrarse"
+                            onAction="#handleRegister"
+                            styleClass="btn-primary"/>
+
+                    <Button text="Volver al login"
+                            onAction="#goLogin"
+                            styleClass="btn-secondary"/>
+                </VBox>
+
+            </VBox>
+        </ScrollPane>
+    </center>
+
+</BorderPane>

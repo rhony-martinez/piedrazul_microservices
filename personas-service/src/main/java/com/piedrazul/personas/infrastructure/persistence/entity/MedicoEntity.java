@@ -32,4 +32,7 @@ public class MedicoEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "med_estado", nullable = false, length = 20)
     private EstadoMedico estado;
+
+    @Column(name = "intervalo_minutos")
+    private Integer intervaloMinutos;
 }

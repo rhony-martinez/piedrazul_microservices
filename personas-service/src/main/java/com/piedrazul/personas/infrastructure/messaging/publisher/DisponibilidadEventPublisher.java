@@ -21,7 +21,7 @@ public class DisponibilidadEventPublisher {
     @Value("${rabbitmq.exchange.personas}")
     private String personasExchange;
 
-    public void publicarDisponibilidadActualizada(Long medicoId, String diaSemana, LocalTime horaInicio, LocalTime horaFin) {
+    public void publicarDisponibilidadActualizada(Long medicoId, String diaSemana, LocalTime horaInicio, LocalTime horaFin, Integer intervaloMinutos) {
         log.info("Publicando evento DisponibilidadActualizada para médico: {}", medicoId);
 
         // Crear el mapa de horarios semanales
@@ -33,6 +33,10 @@ public class DisponibilidadEventPublisher {
         horarios.add(horario);
         horariosSemanales.put(diaSemana, horarios);
 
+        if (intervaloMinutos == null || intervaloMinutos <= 0) {
+            throw new IllegalArgumentException("El intervalo del médico es inválido");
+        }
+
         DisponibilidadActualizadaEvent event = DisponibilidadActualizadaEvent.builder()
                 .eventId(UUID.randomUUID().toString())
                 .eventType("DISPONIBILIDAD_ACTUALIZADA")
@@ -41,6 +45,7 @@ public class DisponibilidadEventPublisher {
                         .medicoId(medicoId)
                         .horariosSemanales(horariosSemanales)
                         .bloqueosEspecificos(new ArrayList<>())
+                        .intervaloMinutos(intervaloMinutos)
                         .build())
                 .build();
 

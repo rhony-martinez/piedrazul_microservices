@@ -44,20 +44,34 @@ public class DisponibilidadEventConsumer {
         try {
             DisponibilidadActualizadaEvent.DisponibilidadData data = event.getData();
             MedicoId medicoId = MedicoId.of(data.getMedicoId());
+            Integer intervalo = data.getIntervaloMinutos();
 
-            DisponibilidadSnapshot snapshot = new DisponibilidadSnapshot(medicoId);
+            if (intervalo == null || intervalo <= 0) {
+                log.error("Intervalo inválido para médico {}. Evento ignorado.", data.getMedicoId());
+                return;
+            }
+
+            DisponibilidadSnapshot snapshot = disponibilidadSnapshotRepository
+                    .findByMedicoId(medicoId)
+                    .orElse(new DisponibilidadSnapshot(medicoId, intervalo));
+
+            // actualizar intervalo siempre
+            snapshot.setIntervaloMinutos(intervalo);
 
             // Procesar horarios semanales
             if (data.getHorariosSemanales() != null) {
                 data.getHorariosSemanales().forEach((diaEspanol, rangos) -> {
-                    // Convertir día de español a inglés
+
                     String diaIngles = DIAS_ESPAÑOL_INGLES.getOrDefault(diaEspanol.toUpperCase(), diaEspanol.toUpperCase());
                     DayOfWeek dia = DayOfWeek.valueOf(diaIngles);
 
-                    rangos.forEach(rango -> {
-                        LocalTime start = LocalTime.parse(rango.getStart());
-                        LocalTime end = LocalTime.parse(rango.getEnd());
-                        snapshot.agregarHorarioSemanal(dia, new TimeRange(start, end));
+                    rangos.forEach(r -> {
+                        TimeRange nuevo = new TimeRange(
+                                LocalTime.parse(r.getStart()),
+                                LocalTime.parse(r.getEnd())
+                        );
+
+                        snapshot.agregarHorarioSemanalSinDuplicados(dia, nuevo);
                     });
                 });
             }

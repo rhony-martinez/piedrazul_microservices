@@ -11,12 +11,22 @@ public class DisponibilidadSnapshot {
     private final Map<DayOfWeek, List<TimeRange>> horariosSemanales;
     private final Set<LocalDateTime> bloqueosEspecificos;
     private final LocalDateTime actualizadoEn;
+    private Integer intervaloMinutos;
 
-    public DisponibilidadSnapshot(MedicoId medicoId) {
+    public DisponibilidadSnapshot(MedicoId medicoId, Integer intervaloMinutos) {
         this.medicoId = medicoId;
+        this.intervaloMinutos = intervaloMinutos;
         this.horariosSemanales = new HashMap<>();
         this.bloqueosEspecificos = new HashSet<>();
         this.actualizadoEn = LocalDateTime.now();
+    }
+
+    public Integer getIntervaloMinutos() {
+        return intervaloMinutos;
+    }
+
+    public void setIntervaloMinutos(Integer intervaloMinutos) {
+        this.intervaloMinutos = intervaloMinutos;
     }
 
     public void agregarHorarioSemanal(DayOfWeek dia, TimeRange rango) {
@@ -49,6 +59,33 @@ public class DisponibilidadSnapshot {
         }
 
         return rangos.stream().anyMatch(rango -> rango.contiene(hora));
+    }
+
+    public void reemplazarHorariosDelDia(DayOfWeek dia, List<TimeRange> nuevosRangos) {
+        horariosSemanales.put(dia, new ArrayList<>(nuevosRangos));
+    }
+
+    public void agregarHorarioSemanalSinDuplicados(DayOfWeek dia, TimeRange nuevo) {
+        List<TimeRange> existentes = horariosSemanales
+                .computeIfAbsent(dia, k -> new ArrayList<>());
+
+        boolean yaExiste = existentes.stream()
+                .anyMatch(r -> r.getStart().equals(nuevo.getStart())
+                        && r.getEnd().equals(nuevo.getEnd()));
+
+        if (!yaExiste) {
+            existentes.add(nuevo);
+        }
+    }
+
+    public boolean esSlotValido(LocalDateTime fechaHora) {
+        if (!estaDisponible(this.medicoId, fechaHora)) {
+            return false;
+        }
+
+        int intervalo = this.intervaloMinutos;
+
+        return fechaHora.getMinute() % intervalo == 0;
     }
 
     // Getters
