@@ -3,6 +3,7 @@ package com.piedrazul.frontend.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.piedrazul.frontend.dto.request.CrearPersonaRequest;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -22,25 +23,33 @@ public class PersonaClient {
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
 
-            // enviar JSON
             try (OutputStream os = conn.getOutputStream()) {
                 os.write(objectMapper.writeValueAsBytes(request));
             }
 
             int status = conn.getResponseCode();
 
+            InputStream responseStream = (status >= 200 && status < 300)
+                    ? conn.getInputStream()
+                    : conn.getErrorStream();
+
+            String responseBody = new String(responseStream.readAllBytes());
+
+            System.out.println("STATUS: " + status);
+            System.out.println("RESPONSE: " + responseBody);
+
             if (status == 200 || status == 201) {
 
-                // ⚠️ Ajusta esto según tu response real
-                var response = objectMapper.readTree(conn.getInputStream());
+                var json = objectMapper.readTree(responseBody);
 
-                // suponiendo que devuelves algo como:
-                // { "id": 1, ... }
-                return response.get("id").asLong();
+                if (json.has("id")) {
+                    return json.get("id").asLong();
+                } else {
+                    throw new RuntimeException("Respuesta sin 'id': " + responseBody);
+                }
 
             } else {
-                String error = new String(conn.getErrorStream().readAllBytes());
-                throw new RuntimeException("Error creando persona: " + error);
+                throw new RuntimeException("Error creando persona: " + responseBody);
             }
 
         } catch (Exception e) {
