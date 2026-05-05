@@ -4,6 +4,7 @@ import com.piedrazul.citas.application.port.outgoing.CitaRepositoryPort;
 import com.piedrazul.citas.domain.model.Cita;
 import com.piedrazul.citas.domain.valueobjects.CitaId;
 import com.piedrazul.citas.domain.valueobjects.MedicoId;
+import com.piedrazul.citas.domain.valueobjects.PacienteId;
 import com.piedrazul.citas.infrastructure.persistence.entity.CitaEntity;
 import com.piedrazul.citas.infrastructure.persistence.mapper.CitaPersistenceMapper;
 import lombok.RequiredArgsConstructor;
@@ -50,5 +51,47 @@ public class CitaRepositoryImpl implements CitaRepositoryPort {
                 desde,
                 hasta
         );
+    }
+    @Override
+    public List<Cita> findByMedicoIdAndFecha(
+            MedicoId medicoId,
+            LocalDateTime inicio,
+            LocalDateTime fin) {
+
+        return springDataCitaRepository
+                .findByMedicoIdAndFechaHoraBetween(
+                        medicoId.value(),
+                        inicio,
+                        fin
+                )
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+    @Override
+    public List<Cita> findByMedicoId(MedicoId medicoId) {
+        return springDataCitaRepository
+                .findByMedicoId(medicoId.value())
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Cita> findByFecha(LocalDateTime inicio, LocalDateTime fin) {
+        return springDataCitaRepository
+                .findByFechaHoraBetween(inicio, fin)
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Cita> findAll() {
+        return springDataCitaRepository
+                .findAll()
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }

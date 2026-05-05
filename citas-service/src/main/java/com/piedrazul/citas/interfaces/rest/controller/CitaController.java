@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class CitaController {
     private final ReagendarCitaUseCase reagendarCitaUseCase;
     private final MarcarAsistenciaUseCase marcarAsistenciaUseCase;
     private final ConsultarSlotsDisponiblesUseCase consultarSlotsDisponiblesUseCase;
+    private final ListarCitasUseCase listarCitasPorMedicoUseCase;
     private final CitaRestMapper mapper;
 
     @PostMapping
@@ -82,5 +84,32 @@ public class CitaController {
     @GetMapping("/medicos/{medicoId}/slots")
     public List<LocalDateTime> obtenerSlots(@PathVariable Long medicoId) {
         return consultarSlotsDisponiblesUseCase.consultar(MedicoId.of(medicoId));
+    }
+    @GetMapping("/historial")
+    public ResponseEntity<?> listar(
+            @RequestParam(required = false) Long medicoId,
+            @RequestParam(required = false) String fecha) {
+
+        try {
+
+            LocalDate fechaParsed = (fecha != null && !fecha.isEmpty())
+                    ? LocalDate.parse(fecha)
+                    : null;
+
+            List<CitaRestResponse> response =
+                    listarCitasPorMedicoUseCase
+                            .listar(medicoId, fechaParsed)
+                            .stream()
+                            .map(mapper::toRestResponse)
+                            .toList();
+
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
+        }
     }
 }

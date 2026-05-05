@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.piedrazul.frontend.controller.HistorialCitasController"
+            prefWidth="1000" prefHeight="600">
+
+        <!-- TOP -->
+        <top>
+                <VBox spacing="10" alignment="CENTER">
+
+                        <Label text="Historial de Citas" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+                        <HBox spacing="10" alignment="CENTER">
+
+                                <Label text="Médico:"/>
+                                <TextField fx:id="txtMedico" prefWidth="150"/>
+
+                                <Label text="Fecha (YYYY-MM-DD):"/>
+                                <TextField fx:id="txtFecha" prefWidth="150"/>
+
+                                <Button text="LISTAR" onAction="#buscarCitas"/>
+
+                        </HBox>
+
+                </VBox>
+        </top>
+
+        <!-- CENTER -->
+        <center>
+                <TableView fx:id="tablaCitas">
+
+                        <columns>
+                                <TableColumn fx:id="colId" text="ID" prefWidth="60"/>
+                                <TableColumn fx:id="colFecha" text="Fecha" prefWidth="120"/>
+                                <TableColumn fx:id="colPaciente" text="Paciente" prefWidth="150"/>
+                                <TableColumn fx:id="colMedico" text="Médico" prefWidth="150"/>
+                                <TableColumn fx:id="colTipo" text="Tipo" prefWidth="100"/>
+                                <TableColumn fx:id="colEstado" text="Estado" prefWidth="100"/>
+                                <TableColumn fx:id="colMotivo" text="Motivo" prefWidth="200"/>
+                        </columns>
+
+                </TableView>
+        </center>
+
+        <!-- BOTTOM -->
+        <bottom>
+                <VBox alignment="CENTER" spacing="10">
+                        <Button text="Volver" fx:id="btnVolver" onAction="#volver"/>
+                </VBox>
+        </bottom>
+
+</BorderPane>
