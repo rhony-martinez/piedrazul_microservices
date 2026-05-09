@@ -1,6 +1,7 @@
 package com.piedrazul.citas.interfaces.rest.exception;
 
 import com.piedrazul.citas.domain.exception.*;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -130,5 +131,23 @@ public class GlobalExceptionHandler {
     private String getPath() {
         // Esto se puede mejorar obteniendo del request actual
         return "Unknown path";
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException ex,
+            HttpServletRequest request
+    ) {
+
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Solicitud inválida")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .validationErrors(null)
+                .build();
+
+        return ResponseEntity.badRequest().body(error);
     }
 }

@@ -19,4 +19,24 @@ public class ConfiguracionRepositoryImpl implements ConfiguracionRepositoryPort 
 
         return new ConfiguracionSistema(entity.getSemanasDisponibles());
     }
+
+    @Override
+    public ConfiguracionSistema guardar(ConfiguracionSistema configuracion) {
+
+        ConfiguracionSistemaEntity entity =
+                repository.findById(1L)
+                        .orElse(new ConfiguracionSistemaEntity());
+
+        entity.setId(1L);
+        entity.setSemanasDisponibles(
+                configuracion.getSemanasDisponibles()
+        );
+
+        ConfiguracionSistemaEntity saved =
+                repository.save(entity);
+
+        return new ConfiguracionSistema(
+                saved.getSemanasDisponibles()
+        );
+    }
 }
