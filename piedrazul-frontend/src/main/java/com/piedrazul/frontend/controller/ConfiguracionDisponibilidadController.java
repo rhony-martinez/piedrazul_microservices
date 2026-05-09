@@ -15,6 +15,7 @@ import javafx.scene.layout.VBox;
 import lombok.RequiredArgsConstructor;
 import com.piedrazul.frontend.client.ConfiguracionClient;
 import com.piedrazul.frontend.dto.response.ConfiguracionResponse;
+import com.piedrazul.frontend.dto.response.DisponibilidadResponse;
 
 @RequiredArgsConstructor
 public class ConfiguracionDisponibilidadController {
@@ -69,6 +70,7 @@ public class ConfiguracionDisponibilidadController {
         cmbMedicos.getItems().addAll(medicoClient.obtenerMedicos());
 
         cargarConfiguracion();
+        cargarDisponibilidades();
     }
 
     private void cargarMedicos() {
@@ -227,5 +229,46 @@ public class ConfiguracionDisponibilidadController {
 
         btnGuardarConfiguracion.setDisable(true);
         btnEditarConfiguracion.setDisable(false);
+    }
+
+    private void cargarDisponibilidades() {
+
+        try {
+
+            data.clear();
+
+            var disponibilidades =
+                    disponibilidadClient.obtenerDisponibilidades();
+
+            for (DisponibilidadResponse disponibilidad : disponibilidades) {
+
+                String nombreMedico = cmbMedicos.getItems()
+                        .stream()
+                        .filter(m -> m.getPersonaId()
+                                .equals(disponibilidad.getMedicoId()))
+                        .map(MedicoResponse::toString)
+                        .findFirst()
+                        .orElse(
+                                "Médico ID: "
+                                        + disponibilidad.getMedicoId()
+                        );
+
+                data.add(new DisponibilidadRow(
+                        nombreMedico,
+                        disponibilidad.getDiaSemana(),
+                        disponibilidad.getHoraInicio(),
+                        disponibilidad.getHoraFin(),
+                        0
+                ));
+            }
+
+        } catch (Exception e) {
+
+            mostrarAlerta(
+                    "Error",
+                    "No se pudieron cargar las disponibilidades",
+                    Alert.AlertType.ERROR
+            );
+        }
     }
 }

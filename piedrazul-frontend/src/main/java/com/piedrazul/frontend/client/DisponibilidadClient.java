@@ -1,13 +1,19 @@
 package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.piedrazul.frontend.util.HttpClientUtil;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.piedrazul.frontend.dto.response.DisponibilidadResponse;
+
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.List;
 
 public class DisponibilidadClient {
 
@@ -50,5 +56,36 @@ public class DisponibilidadClient {
         );
 
         crearDisponibilidad(body);
+    }
+
+    public List<DisponibilidadResponse> obtenerDisponibilidades() {
+
+        try {
+
+            URL url = new URL("http://localhost:8082/api/disponibilidad");
+
+            HttpURLConnection conn =
+                    (HttpURLConnection) url.openConnection();
+
+            conn.setRequestMethod("GET");
+
+            if (conn.getResponseCode() != 200) {
+                throw new RuntimeException(
+                        "Error obteniendo disponibilidades"
+                );
+            }
+
+            InputStream inputStream = conn.getInputStream();
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            return mapper.readValue(
+                    inputStream,
+                    new TypeReference<List<DisponibilidadResponse>>() {}
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
