@@ -10,6 +10,10 @@ import lombok.Getter;
 public class MedicoResponse {
 
     private Long personaId;
+
+    private String primerNombre;
+    private String primerApellido;
+
     private TipoProfesional tipoProfesional;
     private EstadoMedico estado;
 }
