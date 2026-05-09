@@ -15,4 +15,6 @@ public interface IDisponibilidadRepository {
     void eliminar(Long id);
 
     boolean existePorMedicoIdYDia(Long medicoId, String diaSemana);
+
+    List<Disponibilidad> buscarTodas();
 }

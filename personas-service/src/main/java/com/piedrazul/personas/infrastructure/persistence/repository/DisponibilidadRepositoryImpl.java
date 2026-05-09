@@ -47,4 +47,13 @@ public class DisponibilidadRepositoryImpl implements IDisponibilidadRepository {
     public boolean existePorMedicoIdYDia(Long medicoId, String diaSemana) {
         return springDataRepository.existsByMedicoIdAndDiaSemana(medicoId, diaSemana);
     }
+
+    @Override
+    public List<Disponibilidad> buscarTodas() {
+
+        return springDataRepository.findAll()
+                .stream()
+                .map(mapper::toDomain)
+                .collect(Collectors.toList());
+    }
 }
