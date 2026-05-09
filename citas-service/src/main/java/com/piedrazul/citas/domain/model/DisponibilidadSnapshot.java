@@ -42,23 +42,47 @@ public class DisponibilidadSnapshot {
     }
 
     public boolean estaDisponible(MedicoId medicoId, LocalDateTime fechaHora) {
-        if (!this.medicoId.equals(medicoId)) return false;
 
-        DayOfWeek dia = fechaHora.getDayOfWeek();
-        LocalTime hora = fechaHora.toLocalTime();
-
-        // Verificar si está bloqueado específicamente
-        if (bloqueosEspecificos.contains(fechaHora)) {
+        if (!this.medicoId.equals(medicoId)) {
             return false;
         }
 
-        // Verificar si está en horario semanal
+        // normalizar segundos y nanos
+        fechaHora = fechaHora.withSecond(0).withNano(0);
+
+        // bloqueo específico
+        LocalDateTime finalFechaHora = fechaHora;
+        if (bloqueosEspecificos.stream()
+                .map(b -> b.withSecond(0).withNano(0))
+                .anyMatch(b -> b.equals(finalFechaHora))) {
+            return false;
+        }
+
+        DayOfWeek dia = fechaHora.getDayOfWeek();
+
         List<TimeRange> rangos = horariosSemanales.get(dia);
+
         if (rangos == null || rangos.isEmpty()) {
             return false;
         }
 
-        return rangos.stream().anyMatch(rango -> rango.contiene(hora));
+        LocalTime hora = fechaHora.toLocalTime();
+
+        for (TimeRange rango : rangos) {
+
+            LocalTime actual = rango.getStart();
+
+            while (actual.isBefore(rango.getEnd())) {
+
+                if (actual.equals(hora)) {
+                    return true;
+                }
+
+                actual = actual.plusMinutes(intervaloMinutos);
+            }
+        }
+
+        return false;
     }
 
     public void reemplazarHorariosDelDia(DayOfWeek dia, List<TimeRange> nuevosRangos) {
