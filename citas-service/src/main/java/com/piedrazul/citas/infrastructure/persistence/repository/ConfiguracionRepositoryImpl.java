@@ -14,20 +14,26 @@ public class ConfiguracionRepositoryImpl implements ConfiguracionRepositoryPort 
 
     @Override
     public ConfiguracionSistema obtener() {
-        ConfiguracionSistemaEntity entity = repository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Configuración no encontrada"));
 
-        return new ConfiguracionSistema(entity.getSemanasDisponibles());
+        return repository.findById(1L)
+                .map(entity ->
+                        new ConfiguracionSistema(
+                                entity.getSemanasDisponibles()
+                        )
+                )
+                .orElse(null);
     }
 
     @Override
-    public ConfiguracionSistema guardar(ConfiguracionSistema configuracion) {
+    public ConfiguracionSistema guardar(
+            ConfiguracionSistema configuracion
+    ) {
 
         ConfiguracionSistemaEntity entity =
-                repository.findById(1L)
-                        .orElse(new ConfiguracionSistemaEntity());
+                new ConfiguracionSistemaEntity();
 
         entity.setId(1L);
+
         entity.setSemanasDisponibles(
                 configuracion.getSemanasDisponibles()
         );

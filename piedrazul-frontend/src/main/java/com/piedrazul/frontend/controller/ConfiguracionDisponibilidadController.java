@@ -11,10 +11,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import lombok.RequiredArgsConstructor;
-
-import java.util.List;
-import java.util.Map;
+import com.piedrazul.frontend.client.ConfiguracionClient;
+import com.piedrazul.frontend.dto.response.ConfiguracionResponse;
 
 @RequiredArgsConstructor
 public class ConfiguracionDisponibilidadController {
@@ -24,6 +24,15 @@ public class ConfiguracionDisponibilidadController {
     @FXML private TextField txtHoraInicio;
     @FXML private TextField txtHoraFin;
     @FXML private TextField txtIntervalo;
+
+    @FXML private TextField txtSemanas;
+
+    @FXML private Button btnGuardarConfiguracion;
+    @FXML private Button btnEditarConfiguracion;
+
+    @FXML private Label lblEstadoConfiguracion;
+
+    @FXML private VBox contenedorDisponibilidad;
 
     @FXML private TableView<DisponibilidadRow> tablaDisponibilidad;
     @FXML private TableColumn<DisponibilidadRow, String> colMedico;
@@ -36,6 +45,7 @@ public class ConfiguracionDisponibilidadController {
 
     private final MedicoClient medicoClient = new MedicoClient();
     private final DisponibilidadClient disponibilidadClient = new DisponibilidadClient();
+    private final ConfiguracionClient configuracionClient = new ConfiguracionClient();
 
     @FXML
     public void initialize() {
@@ -57,6 +67,8 @@ public class ConfiguracionDisponibilidadController {
 
         // Médicos
         cmbMedicos.getItems().addAll(medicoClient.obtenerMedicos());
+
+        cargarConfiguracion();
     }
 
     private void cargarMedicos() {
@@ -110,6 +122,58 @@ public class ConfiguracionDisponibilidadController {
         );
     }
 
+    @FXML
+    private void handleGuardarConfiguracion() {
+
+        try {
+
+            Integer semanas =
+                    Integer.parseInt(txtSemanas.getText());
+
+            configuracionClient.guardarConfiguracion(semanas);
+
+            mostrarAlerta(
+                    "Éxito",
+                    "Configuración guardada correctamente",
+                    Alert.AlertType.INFORMATION
+            );
+
+            cargarConfiguracion();
+
+        } catch (NumberFormatException e) {
+
+            mostrarAlerta(
+                    "Error",
+                    "Ingrese un número válido",
+                    Alert.AlertType.ERROR
+            );
+
+        } catch (Exception e) {
+
+            mostrarAlerta(
+                    "Error",
+                    e.getMessage(),
+                    Alert.AlertType.ERROR
+            );
+        }
+    }
+
+    @FXML
+    private void handleEditarConfiguracion() {
+
+        txtSemanas.setEditable(true);
+
+        btnGuardarConfiguracion.setDisable(false);
+
+        lblEstadoConfiguracion.setText(
+                "Modo edición habilitado"
+        );
+
+        lblEstadoConfiguracion.setStyle(
+                "-fx-text-fill: orange; -fx-font-weight: bold;"
+        );
+    }
+
     private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
         Alert alert = new Alert(tipo);
         alert.setTitle(titulo);
@@ -123,5 +187,45 @@ public class ConfiguracionDisponibilidadController {
         txtHoraInicio.clear();
         txtHoraFin.clear();
         txtIntervalo.clear();
+    }
+
+    private void cargarConfiguracion() {
+
+        ConfiguracionResponse config =
+                configuracionClient.obtenerConfiguracion();
+
+        if (config == null) {
+
+            contenedorDisponibilidad.setDisable(true);
+
+            lblEstadoConfiguracion.setText(
+                    "Debe configurar las semanas disponibles"
+            );
+
+            txtSemanas.setEditable(true);
+
+            btnEditarConfiguracion.setDisable(true);
+
+            return;
+        }
+
+        txtSemanas.setText(
+                String.valueOf(config.getSemanasDisponibles())
+        );
+
+        txtSemanas.setEditable(false);
+
+        lblEstadoConfiguracion.setText(
+                "Configuración registrada"
+        );
+
+        lblEstadoConfiguracion.setStyle(
+                "-fx-text-fill: green; -fx-font-weight: bold;"
+        );
+
+        contenedorDisponibilidad.setDisable(false);
+
+        btnGuardarConfiguracion.setDisable(true);
+        btnEditarConfiguracion.setDisable(false);
     }
 }

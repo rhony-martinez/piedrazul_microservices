@@ -19,6 +19,10 @@ public class ConfiguracionController {
 
         ConfiguracionSistema config = service.obtener();
 
+        if (config == null) {
+            return null;
+        }
+
         return new ConfiguracionResponse(
                 config.getSemanasDisponibles()
         );

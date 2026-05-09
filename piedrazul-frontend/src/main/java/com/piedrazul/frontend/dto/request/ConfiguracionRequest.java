@@ -1,6 +1,6 @@
-package com.piedrazul.frontend.dto.response;
+package com.piedrazul.frontend.dto.request;
 
-public class ConfiguracionResponse {
+public class ConfiguracionRequest {
 
     private Integer semanasDisponibles;
 
