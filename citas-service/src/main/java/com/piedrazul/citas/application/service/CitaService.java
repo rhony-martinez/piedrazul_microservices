@@ -13,13 +13,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class CitaService implements CrearCitaUseCase, CancelarCitaUseCase,
-        ReagendarCitaUseCase, MarcarAsistenciaUseCase {
+        ReagendarCitaUseCase, MarcarAsistenciaUseCase, ListarCitasUseCase {
 
     private final CitaRepositoryPort citaRepository;
     private final PacienteSnapshotRepositoryPort pacienteSnapshotRepository;
@@ -159,5 +162,49 @@ public class CitaService implements CrearCitaUseCase, CancelarCitaUseCase,
         MedicoSnapshot medico = medicoSnapshotRepository.findById(cita.getMedicoId()).orElse(null);
 
         return mapper.toResponse(citaActualizada, paciente, medico);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CitaResponse> listar(Long medicoId, LocalDate fecha) {
+
+        List<Cita> citas;
+
+        if (medicoId != null && fecha != null) {
+
+            LocalDateTime inicio = fecha.atStartOfDay();
+            LocalDateTime fin = fecha.atTime(23, 59, 59);
+
+            citas = citaRepository.findByMedicoIdAndFecha(
+                    MedicoId.of(medicoId), inicio, fin
+            );
+
+        } else if (medicoId != null) {
+
+            citas = citaRepository.findByMedicoId(MedicoId.of(medicoId));
+
+        } else if (fecha != null) {
+
+            LocalDateTime inicio = fecha.atStartOfDay();
+            LocalDateTime fin = fecha.atTime(23, 59, 59);
+
+            citas = citaRepository.findByFecha(inicio, fin);
+
+        } else {
+
+            citas = citaRepository.findAll();
+        }
+
+        return citas.stream()
+                .map(cita -> {
+                    PacienteSnapshot paciente = pacienteSnapshotRepository
+                            .findById(cita.getPacienteId()).orElse(null);
+
+                    MedicoSnapshot medico = medicoSnapshotRepository
+                            .findById(cita.getMedicoId()).orElse(null);
+
+                    return mapper.toResponse(cita, paciente, medico);
+                })
+                .toList();
     }
 }

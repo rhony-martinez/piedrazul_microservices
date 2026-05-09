@@ -26,4 +26,12 @@ public interface SpringDataCitaRepository extends JpaRepository<CitaEntity, Stri
             @Param("desde") LocalDateTime desde,
             @Param("hasta") LocalDateTime hasta
     );
+    List<CitaEntity> findByMedicoIdAndFechaHoraBetween(
+            Long medicoId,
+            LocalDateTime inicio,
+            LocalDateTime fin
+    );
+    List<CitaEntity> findByMedicoId(Long medicoId);
+
+    List<CitaEntity> findByFechaHoraBetween(LocalDateTime inicio, LocalDateTime fin);
 }

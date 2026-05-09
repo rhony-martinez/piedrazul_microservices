@@ -29,4 +29,12 @@ public class AgendadorDashboardController {
         );
     }
 
+    @FXML
+    private void handleHistorialCitas() {
+        SceneManager.switchScene(
+                "/view/dashboard/historialCitasView.fxml",
+                lblBienvenida,
+                "Historial"
+        );
+    }
 }
