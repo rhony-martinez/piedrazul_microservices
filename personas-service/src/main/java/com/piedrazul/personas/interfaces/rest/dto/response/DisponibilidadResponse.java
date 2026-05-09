@@ -11,4 +11,5 @@ public class DisponibilidadResponse {
     private String diaSemana;
     private String horaInicio;
     private String horaFin;
+    private Integer intervaloMinutos;
 }

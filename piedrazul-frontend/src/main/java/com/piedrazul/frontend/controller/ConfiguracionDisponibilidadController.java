@@ -258,7 +258,7 @@ public class ConfiguracionDisponibilidadController {
                         disponibilidad.getDiaSemana(),
                         disponibilidad.getHoraInicio(),
                         disponibilidad.getHoraFin(),
-                        0
+                        disponibilidad.getIntervaloMinutos()
                 ));
             }
 

@@ -1,8 +1,13 @@
 package com.piedrazul.personas.domain.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalTime;
 import java.util.Objects;
 
+@Setter
+@Getter
 public class Disponibilidad {
 
     private Long id;
@@ -10,56 +15,17 @@ public class Disponibilidad {
     private String diaSemana;
     private LocalTime horaInicio;
     private LocalTime horaFin;
+    private Integer intervaloMinutos;
 
     public Disponibilidad() {
     }
 
-    public Disponibilidad(Long medicoId, String diaSemana, LocalTime horaInicio, LocalTime horaFin) {
+    public Disponibilidad(Long medicoId, String diaSemana, LocalTime horaInicio, LocalTime horaFin, Integer intervaloMinutos) {
         this.medicoId = medicoId;
         this.diaSemana = diaSemana;
         this.horaInicio = horaInicio;
         this.horaFin = horaFin;
-    }
-
-    // Getters y Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getMedicoId() {
-        return medicoId;
-    }
-
-    public void setMedicoId(Long medicoId) {
-        this.medicoId = medicoId;
-    }
-
-    public String getDiaSemana() {
-        return diaSemana;
-    }
-
-    public void setDiaSemana(String diaSemana) {
-        this.diaSemana = diaSemana;
-    }
-
-    public LocalTime getHoraInicio() {
-        return horaInicio;
-    }
-
-    public void setHoraInicio(LocalTime horaInicio) {
-        this.horaInicio = horaInicio;
-    }
-
-    public LocalTime getHoraFin() {
-        return horaFin;
-    }
-
-    public void setHoraFin(LocalTime horaFin) {
-        this.horaFin = horaFin;
+        this.intervaloMinutos = intervaloMinutos;
     }
 
     @Override

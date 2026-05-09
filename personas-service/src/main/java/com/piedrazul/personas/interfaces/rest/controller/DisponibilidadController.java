@@ -36,7 +36,8 @@ public class DisponibilidadController {
                                 disponibilidad.getMedicoId(),
                                 disponibilidad.getDiaSemana(),
                                 disponibilidad.getHoraInicio().toString(),
-                                disponibilidad.getHoraFin().toString()
+                                disponibilidad.getHoraFin().toString(),
+                                disponibilidad.getIntervaloMinutos()
                         ))
                         .toList();
 

@@ -16,6 +16,7 @@ public class DisponibilidadMapper {
                 .diaSemana(domain.getDiaSemana())
                 .horaInicio(domain.getHoraInicio())
                 .horaFin(domain.getHoraFin())
+                .intervaloMinutos(domain.getIntervaloMinutos())
                 .build();
     }
 
@@ -28,6 +29,7 @@ public class DisponibilidadMapper {
         domain.setDiaSemana(entity.getDiaSemana());
         domain.setHoraInicio(entity.getHoraInicio());
         domain.setHoraFin(entity.getHoraFin());
+        domain.setIntervaloMinutos(entity.getIntervaloMinutos());
         return domain;
     }
 }

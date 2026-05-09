@@ -30,4 +30,7 @@ public class DisponibilidadEntity {
 
     @Column(name = "hora_fin", nullable = false)
     private LocalTime horaFin;
+
+    @Column(name = "intervalo_minutos", nullable = false)
+    private Integer intervaloMinutos;
 }

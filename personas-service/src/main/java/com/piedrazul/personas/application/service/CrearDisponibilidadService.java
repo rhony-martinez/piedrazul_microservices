@@ -34,6 +34,7 @@ public class CrearDisponibilidadService {
         disponibilidad.setDiaSemana(request.getDiaSemana());
         disponibilidad.setHoraInicio(request.getHoraInicio());
         disponibilidad.setHoraFin(request.getHoraFin());
+        disponibilidad.setIntervaloMinutos(request.getIntervaloMinutos());
 
         // Guardar
         disponibilidadRepository.guardar(disponibilidad);
