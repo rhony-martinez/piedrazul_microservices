@@ -8,21 +8,24 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
+
+import com.piedrazul.frontend.client.MedicoClient;
+import com.piedrazul.frontend.dto.response.MedicoResponse;
 
 public class HistorialCitasController {
 
-    @FXML private TextField txtMedico;
-    @FXML private TextField txtFecha;
+    @FXML
+    private ComboBox<MedicoResponse> cmbMedicos;
+    @FXML
+    private DatePicker dpFecha;
     @FXML private Button btnVolver;
 
-    // 🔥 CAMBIO IMPORTANTE
+    // CAMBIO IMPORTANTE
     @FXML private TableView<CitaResponse> tablaCitas;
 
     @FXML private TableColumn<CitaResponse, String> colId;
@@ -36,7 +39,9 @@ public class HistorialCitasController {
     @FXML
     public void initialize() {
 
-        // 🔥 AHORA LAS COLUMNAS USAN DATOS REALES
+        cargarMedicos();
+
+        // AHORA LAS COLUMNAS USAN DATOS REALES
         colId.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getId())
         );
@@ -79,18 +84,39 @@ public class HistorialCitasController {
         );
     }
 
+    private void cargarMedicos() {
+
+        try {
+
+            MedicoClient medicoClient = new MedicoClient();
+
+            List<MedicoResponse> medicos = medicoClient.obtenerMedicos();
+
+            cmbMedicos.setItems(
+                    FXCollections.observableArrayList(medicos)
+            );
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @FXML
     private void buscarCitas() {
 
         try {
 
-            String medico = txtMedico.getText().trim();
-            String fecha = txtFecha.getText().trim();
+            MedicoResponse medicoSeleccionado = cmbMedicos.getValue();
+            String fecha = "";
+
+            if (dpFecha.getValue() != null) {
+                fecha = dpFecha.getValue().toString();
+            }
 
             String url = "http://localhost:8083/api/citas/historial";
 
-            if (!medico.isEmpty()) {
-                url += "?medicoId=" + medico;
+            if (medicoSeleccionado != null) {
+                url += "?medicoId=" + medicoSeleccionado.getPersonaId();
             }
 
             if (!fecha.isEmpty()) {
@@ -117,13 +143,13 @@ public class HistorialCitasController {
 
             System.out.println("RESPONSE: " + response);
 
-            // 🔥 CONVERTIR JSON → OBJETOS
+            // CONVERTIR JSON → OBJETOS
             Gson gson = new Gson();
             Type listType = new TypeToken<List<CitaResponse>>() {}.getType();
 
             List<CitaResponse> citas = gson.fromJson(response.toString(), listType);
 
-            // 🔥 CARGAR TABLA
+            // CARGAR TABLA
             tablaCitas.setItems(FXCollections.observableArrayList(citas));
 
         } catch (Exception e) {

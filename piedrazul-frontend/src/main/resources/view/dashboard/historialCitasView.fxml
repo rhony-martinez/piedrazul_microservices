@@ -17,10 +17,12 @@
                         <HBox spacing="10" alignment="CENTER">
 
                                 <Label text="Médico:"/>
-                                <TextField fx:id="txtMedico" prefWidth="150"/>
+                                <ComboBox fx:id="cmbMedicos" prefWidth="220"/>
 
-                                <Label text="Fecha (YYYY-MM-DD):"/>
-                                <TextField fx:id="txtFecha" prefWidth="150"/>
+                                <Label text="Fecha:"/>
+                                <DatePicker fx:id="dpFecha"
+                                            prefWidth="150"
+                                            promptText="Seleccione fecha"/>
 
                                 <Button text="LISTAR" onAction="#buscarCitas"/>
 
