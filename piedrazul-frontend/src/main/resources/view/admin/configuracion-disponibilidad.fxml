@@ -8,9 +8,8 @@
       xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.piedrazul.frontend.controller.ConfiguracionDisponibilidadController"
-      prefWidth="900"
-      prefHeight="700"
-      style="-fx-padding: 20;">
+      stylesheets="@../css/admin.css"
+      styleClass="root">
 
     <!-- ========================= -->
     <!-- CONFIGURACIÓN SISTEMA -->
@@ -18,10 +17,7 @@
 
     <VBox spacing="10"
           alignment="CENTER"
-          style="-fx-border-color: #DADADA;
-                 -fx-border-radius: 8;
-                 -fx-padding: 15;
-                 -fx-background-radius: 8;">
+          styleClass="card">
 
         <Label text="Configuración del Sistema"
                style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
@@ -57,10 +53,7 @@
     <VBox fx:id="contenedorDisponibilidad"
           spacing="12"
           alignment="CENTER"
-          style="-fx-border-color: #DADADA;
-                 -fx-border-radius: 8;
-                 -fx-padding: 15;
-                 -fx-background-radius: 8;">
+          styleClass="card">
 
         <Label text="Configurar Disponibilidad"
                style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
@@ -73,12 +66,22 @@
                   promptText="Día"
                   prefWidth="250"/>
 
-        <HBox spacing="10" alignment="CENTER">
-            <TextField fx:id="txtHoraInicio"
-                       promptText="08:00"/>
+        <HBox spacing="20" alignment="CENTER">
 
-            <TextField fx:id="txtHoraFin"
-                       promptText="10:00"/>
+            <VBox spacing="5">
+                <Label text="Desde:" styleClass="field-label"/>
+                <TextField fx:id="txtHoraInicio"
+                           promptText="08:00"
+                           styleClass="input-small"/>
+            </VBox>
+
+            <VBox spacing="5">
+                <Label text="Hasta:" styleClass="field-label"/>
+                <TextField fx:id="txtHoraFin"
+                           promptText="10:00"
+                           styleClass="input-small"/>
+            </VBox>
+
         </HBox>
 
         <TextField fx:id="txtIntervalo"

@@ -113,9 +113,13 @@ public class SceneManager {
 
             stage.setScene(scene);
             stage.setTitle(title);
+
             stage.show();
 
-            Platform.runLater(stage::centerOnScreen);
+            // Maximizar correctamente
+            Platform.runLater(() -> {
+                stage.setMaximized(true);
+            });
 
         } catch (Exception e) {
             System.out.println("ERROR CAMBIANDO ESCENA: " + fxmlPath);
