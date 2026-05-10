@@ -1,84 +1,59 @@
 package com.piedrazul.citas.application.service;
 
-import com.piedrazul.citas.application.dto.request.CrearCitaRequest;
-import com.piedrazul.citas.application.dto.response.CitaResponse;
 import com.piedrazul.citas.application.mapper.CitaApplicationMapper;
 import com.piedrazul.citas.application.port.incoming.CrearCitaAutonomaUseCase;
 import com.piedrazul.citas.application.port.outgoing.*;
-import com.piedrazul.citas.application.service.base.BaseCrearCitaService;
-import com.piedrazul.citas.domain.factory.CitaManualFactory;
-import com.piedrazul.citas.domain.model.Cita;
-import com.piedrazul.citas.domain.model.DatosCreacionCita;
-import lombok.extern.slf4j.Slf4j;
+import com.piedrazul.citas.application.service.agendamiento.AbstractAgendamientoService;
+import com.piedrazul.citas.domain.builder.CitaBuilder;
+import com.piedrazul.citas.domain.builder.CitaAutonomaBuilder;
+import com.piedrazul.citas.application.dto.request.CrearCitaRequest;
+import com.piedrazul.citas.domain.model.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
-@Transactional
 public class CrearCitaAutonomaService
-        extends BaseCrearCitaService
+        extends AbstractAgendamientoService
         implements CrearCitaAutonomaUseCase {
-
-    private final CitaManualFactory citaManualFactory;
 
     public CrearCitaAutonomaService(
             CitaRepositoryPort citaRepository,
-            PacienteSnapshotRepositoryPort pacienteSnapshotRepository,
-            MedicoSnapshotRepositoryPort medicoSnapshotRepository,
-            DisponibilidadSnapshotRepositoryPort disponibilidadSnapshotRepository,
+            PacienteSnapshotRepositoryPort pacienteRepository,
+            MedicoSnapshotRepositoryPort medicoRepository,
+            DisponibilidadSnapshotRepositoryPort disponibilidadRepository,
             CitaEventPublisherPort eventPublisher,
-            CitaApplicationMapper mapper,
-            CitaManualFactory citaManualFactory
+            CitaApplicationMapper mapper
     ) {
-
         super(
                 citaRepository,
-                pacienteSnapshotRepository,
-                medicoSnapshotRepository,
-                disponibilidadSnapshotRepository,
+                pacienteRepository,
+                medicoRepository,
+                disponibilidadRepository,
                 eventPublisher,
                 mapper
         );
-
-        this.citaManualFactory = citaManualFactory;
     }
 
     @Override
-    public CitaResponse crearCitaAutonoma(
-            CrearCitaRequest request
+    protected void validarTipoAgendamiento(
+            CrearCitaRequest request,
+            PacienteSnapshot paciente,
+            MedicoSnapshot medico
     ) {
 
-        log.info("Creando cita MANUAL");
+        // ejemplo:
+        // validar que el usuario autenticado
+        // sea el mismo paciente
+    }
 
-        DatosCreacionCita datos =
-                prepararDatos(request);
+    @Override
+    protected CitaBuilder crearBuilder() {
+        return new CitaAutonomaBuilder();
+    }
 
-        Cita cita = citaManualFactory
-                .crearBuilder()
-                .conPaciente(
-                        datos.pacienteId(),
-                        datos.paciente()
-                )
-                .conMedico(
-                        datos.medicoId(),
-                        datos.medico()
-                )
-                .creadaPor(
-                        datos.creadoPor()
-                )
-                .paraFecha(
-                        request.getFechaHora()
-                )
-                .conDisponibilidad(
-                        datos.disponibilidad()
-                )
-                .build();
+    @Override
+    public com.piedrazul.citas.application.dto.response.CitaResponse
+    crearCitaAutonoma(CrearCitaRequest request) {
 
-        return guardar(
-                cita,
-                datos.paciente(),
-                datos.medico()
-        );
+        return super.crearCita(request);
     }
 }
