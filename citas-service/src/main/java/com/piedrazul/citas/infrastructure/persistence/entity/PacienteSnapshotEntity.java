@@ -21,9 +21,10 @@ public class PacienteSnapshotEntity {
     @Column(nullable = false)
     private String nombreCompleto;
 
-    @Column(nullable = false)
+    @Column
     private String email;
 
+    @Column(nullable = false)
     private String telefono;
 
     @Column(nullable = false)
