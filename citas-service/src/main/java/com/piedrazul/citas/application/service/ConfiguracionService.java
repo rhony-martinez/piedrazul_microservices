@@ -2,7 +2,7 @@ package com.piedrazul.citas.application.service;
 
 import com.piedrazul.citas.application.port.incoming.ActualizarConfiguracionUseCase;
 import com.piedrazul.citas.application.port.incoming.ConsultarConfiguracionUseCase;
-import com.piedrazul.citas.application.port.outgoing.ConfiguracionRepositoryPort;
+import com.piedrazul.citas.application.service.singleton.ConfiguracionManager;
 import com.piedrazul.citas.domain.model.ConfiguracionSistema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -13,11 +13,11 @@ public class ConfiguracionService
         implements ConsultarConfiguracionUseCase,
         ActualizarConfiguracionUseCase {
 
-    private final ConfiguracionRepositoryPort configuracionRepository;
+    private final ConfiguracionManager configuracionManager;
 
     @Override
     public ConfiguracionSistema obtener() {
-        return configuracionRepository.obtener();
+        return configuracionManager.obtenerConfiguracion();
     }
 
     @Override
@@ -25,10 +25,8 @@ public class ConfiguracionService
 
         validarSemanas(semanasDisponibles);
 
-        ConfiguracionSistema configuracion =
-                new ConfiguracionSistema(semanasDisponibles);
-
-        return configuracionRepository.guardar(configuracion);
+        return configuracionManager
+                .actualizarConfiguracion(semanasDisponibles);
     }
 
     private void validarSemanas(Integer semanasDisponibles) {
