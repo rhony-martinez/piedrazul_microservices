@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.util.List;
+import javafx.application.Platform;
 
 import com.piedrazul.frontend.client.MedicoClient;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
@@ -36,12 +37,56 @@ public class HistorialCitasController {
     @FXML private TableColumn<CitaResponse, String> colEstado;
     @FXML private TableColumn<CitaResponse, String> colMotivo;
 
+    // Reemplaza TODO tu método initialize() por este:
+
     @FXML
     public void initialize() {
 
+        // Cargar CSS, maximizar y poner pantalla completa
+        tablaCitas.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+
+                // Cargar dashboard.css
+                String css = getClass()
+                        .getResource("/view/css/dashboard.css")
+                        .toExternalForm();
+
+                if (!newScene.getStylesheets().contains(css)) {
+                    newScene.getStylesheets().add(css);
+                }
+
+                // Cuando el Stage esté disponible
+                newScene.windowProperty().addListener((o, oldWindow, newWindow) -> {
+                    if (newWindow instanceof javafx.stage.Stage stage) {
+
+                        // Maximizar ventana
+                        stage.setMaximized(true);
+
+                        // Opcional: ocupar toda la pantalla real
+                        // stage.setFullScreen(true);
+
+                        // Forzar tamaño de pantalla
+                        javafx.geometry.Rectangle2D screenBounds =
+                                javafx.stage.Screen.getPrimary().getVisualBounds();
+
+                        stage.setX(screenBounds.getMinX());
+                        stage.setY(screenBounds.getMinY());
+                        stage.setWidth(screenBounds.getWidth());
+                        stage.setHeight(screenBounds.getHeight());
+                    }
+                });
+            }
+        });
+
+        // Ajustar columnas automáticamente
+        tablaCitas.setColumnResizePolicy(
+                TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS
+        );
+
+        // Cargar médicos
         cargarMedicos();
 
-        // AHORA LAS COLUMNAS USAN DATOS REALES
+        // Configuración de columnas
         colId.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getId())
         );
@@ -66,7 +111,6 @@ public class HistorialCitasController {
                 )
         );
 
-        // (si no tienes tipo en backend, lo dejamos fijo por ahora)
         colTipo.setCellValueFactory(data ->
                 new SimpleStringProperty("General")
         );

@@ -1,30 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.piedrazul.frontend.controller.HistorialCitasController"
-            prefWidth="1000" prefHeight="600">
+            prefWidth="1100"
+            prefHeight="650"
+            style="-fx-background-color: #f1ebeb;">
 
-        <!-- TOP -->
+        <!-- HEADER -->
         <top>
-                <VBox spacing="10" alignment="CENTER">
+                <VBox spacing="15"
+                      alignment="CENTER"
+                      style="-fx-background-color: #24c0eb;">
 
-                        <Label text="Historial de Citas" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+                        <padding>
+                                <Insets top="20" right="20" bottom="20" left="20"/>
+                        </padding>
 
-                        <HBox spacing="10" alignment="CENTER">
+                        <Label text="HISTORIAL DE CITAS"
+                               style="-fx-font-size: 28px;
+                          -fx-font-weight: bold;
+                          -fx-text-fill: white;"/>
 
-                                <Label text="Médico:"/>
-                                <ComboBox fx:id="cmbMedicos" prefWidth="220"/>
+                        <HBox spacing="15" alignment="CENTER">
 
-                                <Label text="Fecha:"/>
-                                <DatePicker fx:id="dpFecha"
-                                            prefWidth="150"
-                                            promptText="Seleccione fecha"/>
+                                <!-- MÉDICOS -->
+                                <VBox spacing="5">
 
-                                <Button text="LISTAR" onAction="#buscarCitas"/>
+                                        <Label text="Médico"
+                                               style="-fx-text-fill: white;
+                                  -fx-font-weight: bold;"/>
+
+                                        <ComboBox fx:id="cmbMedicos"
+                                                  prefWidth="220"
+                                                  style="-fx-background-radius: 8;
+                                     -fx-font-size: 14px;"/>
+                                </VBox>
+
+                                <!-- FECHA -->
+                                <VBox spacing="5">
+
+                                        <Label text="Fecha"
+                                               style="-fx-text-fill: white;
+                                  -fx-font-weight: bold;"/>
+
+                                        <DatePicker fx:id="dpFecha"
+                                                    prefWidth="180"
+                                                    promptText="Seleccione fecha"
+                                                    style="-fx-background-radius: 8;
+                                       -fx-font-size: 14px;"/>
+                                </VBox>
+
+                                <!-- BOTÓN -->
+                                <VBox alignment="BOTTOM_CENTER">
+
+                                        <Button text="LISTAR"
+                                                onAction="#buscarCitas"
+                                                prefWidth="150"
+                                                prefHeight="45"
+                                                style="-fx-background-color: #5cceee;
+                                   -fx-text-fill: white;
+                                   -fx-font-weight: bold;
+                                   -fx-font-size: 16px;
+                                   -fx-background-radius: 10;
+                                   -fx-border-radius: 10;
+                                   -fx-border-color: #24c0eb;
+                                   -fx-border-width: 2;
+                                   -fx-cursor: hand;"/>
+                                </VBox>
 
                         </HBox>
 
@@ -33,26 +80,67 @@
 
         <!-- CENTER -->
         <center>
-                <TableView fx:id="tablaCitas">
 
-                        <columns>
-                                <TableColumn fx:id="colId" text="ID" prefWidth="60"/>
-                                <TableColumn fx:id="colFecha" text="Fecha" prefWidth="120"/>
-                                <TableColumn fx:id="colPaciente" text="Paciente" prefWidth="150"/>
-                                <TableColumn fx:id="colMedico" text="Médico" prefWidth="150"/>
-                                <TableColumn fx:id="colTipo" text="Tipo" prefWidth="100"/>
-                                <TableColumn fx:id="colEstado" text="Estado" prefWidth="100"/>
-                                <TableColumn fx:id="colMotivo" text="Motivo" prefWidth="200"/>
-                        </columns>
+                <VBox spacing="10">
 
-                </TableView>
+                        <padding>
+                                <Insets top="20" right="20" bottom="20" left="20"/>
+                        </padding>
+
+                        <Label text="Resultados"
+                               style="-fx-font-size: 18px;
+                          -fx-font-weight: bold;
+                          -fx-text-fill: #37474f;"/>
+
+                        <TableView fx:id="tablaCitas"
+                                   VBox.vgrow="ALWAYS"
+                                   style="-fx-background-radius: 12;
+                              -fx-border-radius: 12;
+                              -fx-border-color: #d0d0d0;
+                              -fx-border-width: 1;
+                              -fx-font-size: 13px;">
+
+                                <columns>
+                                        <TableColumn fx:id="colId" text="ID" prefWidth="60"/>
+                                        <TableColumn fx:id="colFecha" text="Fecha" prefWidth="120"/>
+                                        <TableColumn fx:id="colPaciente" text="Paciente" prefWidth="170"/>
+                                        <TableColumn fx:id="colMedico" text="Médico" prefWidth="170"/>
+                                        <TableColumn fx:id="colTipo" text="Tipo" prefWidth="120"/>
+                                        <TableColumn fx:id="colEstado" text="Estado" prefWidth="120"/>
+                                        <TableColumn fx:id="colMotivo" text="Motivo" prefWidth="300"/>
+                                </columns>
+
+                        </TableView>
+
+                </VBox>
+
         </center>
 
-        <!-- BOTTOM -->
+        <!-- FOOTER -->
         <bottom>
-                <VBox alignment="CENTER" spacing="10">
-                        <Button text="Volver" fx:id="btnVolver" onAction="#volver"/>
-                </VBox>
+
+                <HBox alignment="CENTER_RIGHT"
+                      spacing="10"
+                      style="-fx-background-color: #f1ebeb;">
+
+                        <padding>
+                                <Insets top="15" right="15" bottom="15" left="15"/>
+                        </padding>
+
+                        <Button text="Volver"
+                                fx:id="btnVolver"
+                                onAction="#volver"
+                                prefWidth="150"
+                                prefHeight="45"
+                                style="-fx-background-color: #ff5757;
+                           -fx-text-fill: white;
+                           -fx-font-weight: bold;
+                           -fx-font-size: 14px;
+                           -fx-background-radius: 10;
+                           -fx-cursor: hand;"/>
+
+                </HBox>
+
         </bottom>
 
 </BorderPane>
