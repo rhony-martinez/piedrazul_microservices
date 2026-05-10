@@ -5,6 +5,7 @@ import com.piedrazul.citas.application.dto.response.CitaResponse;
 import com.piedrazul.citas.application.mapper.CitaApplicationMapper;
 import com.piedrazul.citas.application.port.incoming.*;
 import com.piedrazul.citas.application.port.outgoing.*;
+import com.piedrazul.citas.domain.builder.CitaBuilderFactory;
 import com.piedrazul.citas.domain.exception.*;
 import com.piedrazul.citas.domain.model.*;
 import com.piedrazul.citas.domain.valueobjects.*;
@@ -21,8 +22,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class CitaService implements CrearCitaUseCase, CancelarCitaUseCase,
-        ReagendarCitaUseCase, MarcarAsistenciaUseCase, ListarCitasUseCase {
+public class CitaService implements CancelarCitaUseCase,
+        ReagendarCitaUseCase, MarcarAsistenciaUseCase, ListarCitasUseCase, CrearCitaAutonomaUseCase,
+        CrearCitaManualUseCase {
 
     private final CitaRepositoryPort citaRepository;
     private final PacienteSnapshotRepositoryPort pacienteSnapshotRepository;
@@ -31,57 +33,98 @@ public class CitaService implements CrearCitaUseCase, CancelarCitaUseCase,
     private final CitaEventPublisherPort eventPublisher;
     private final CitaApplicationMapper mapper;
 
-    @Override
-    public CitaResponse crearCita(CrearCitaRequest request) {
-        log.info("Creando nueva cita para paciente: {} con medico: {}",
-                request.getPacienteId(), request.getMedicoId());
+    private CitaResponse crearCita(
+            CrearCitaRequest request,
+            TipoAgendamiento tipo
+    ) {
 
-        // 1. Obtener snapshots locales
+        log.info("Creando nueva cita tipo: {}", tipo);
+
         PacienteId pacienteId = PacienteId.of(request.getPacienteId());
         MedicoId medicoId = MedicoId.of(request.getMedicoId());
         UsuarioId creadoPor = UsuarioId.of(request.getUsuarioCreadorId());
 
         PacienteSnapshot paciente = pacienteSnapshotRepository.findById(pacienteId)
                 .orElseThrow(() -> new PacienteNoExisteException(
-                        "Paciente con ID " + request.getPacienteId() + " no existe"));
+                        "Paciente no encontrado"
+                ));
 
         MedicoSnapshot medico = medicoSnapshotRepository.findById(medicoId)
                 .orElseThrow(() -> new MedicoNoDisponibleException(
-                        "Médico con ID " + request.getMedicoId() + " no existe"));
+                        "Médico no encontrado"
+                ));
 
-        DisponibilidadSnapshot disponibilidad = disponibilidadSnapshotRepository.findByMedicoId(medicoId)
-                .orElseThrow(() -> new DisponibilidadNoDisponibleException(
-                        "No hay disponibilidad configurada para el médico"));
+        DisponibilidadSnapshot disponibilidad =
+                disponibilidadSnapshotRepository.findByMedicoId(medicoId)
+                        .orElseThrow(() ->
+                                new DisponibilidadNoDisponibleException(
+                                        "No hay disponibilidad"
+                                ));
 
-        // 2. Validar no doble agendamiento
-        if (citaRepository.existsByMedicoIdAndFechaHora(medicoId, request.getFechaHora())) {
-            throw new DisponibilidadNoDisponibleException("El médico ya tiene una cita en ese horario");
-        }
+        if (citaRepository.existsByMedicoIdAndFechaHora(
+                medicoId,
+                request.getFechaHora()
+        )) {
 
-        // VALIDAR QUE EL SLOT EXISTA
-        if (!disponibilidad.esSlotValido(request.getFechaHora())) {
             throw new DisponibilidadNoDisponibleException(
-                    "El horario no corresponde a un slot válido"
+                    "Horario ocupado"
             );
         }
 
-        // 3. Crear cita usando factory method del dominio
-        Cita cita = Cita.crear(pacienteId, medicoId, creadoPor, request.getFechaHora(),
-                paciente, medico, disponibilidad);
-        try {
-            // 4. Persistir cita
-            Cita citaGuardada = citaRepository.save(cita);
-            log.info("Cita creada exitosamente con ID: {} en estado: {}",
-                    citaGuardada.getId(), citaGuardada.getEstado().getDescripcion());
+        if (!disponibilidad.esSlotValido(
+                request.getFechaHora()
+        )) {
 
-            // 5. Publicar evento (comunicación asíncrona)
+            throw new DisponibilidadNoDisponibleException(
+                    "Slot inválido"
+            );
+        }
+
+        Cita cita = CitaBuilderFactory
+                .crear(tipo)
+                .conPaciente(pacienteId, paciente)
+                .conMedico(medicoId, medico)
+                .creadaPor(creadoPor)
+                .paraFecha(request.getFechaHora())
+                .conDisponibilidad(disponibilidad)
+                .build();
+
+        try {
+
+            Cita citaGuardada = citaRepository.save(cita);
+
             eventPublisher.publicarCitaAgendada(citaGuardada);
 
-            // 6. Retornar respuesta
-            return mapper.toResponse(citaGuardada, paciente, medico);
+            return mapper.toResponse(
+                    citaGuardada,
+                    paciente,
+                    medico
+            );
+
         } catch (DataIntegrityViolationException e) {
-            throw new MedicoNoDisponibleException("El médico ya tiene una cita en ese horario");
+
+            throw new MedicoNoDisponibleException(
+                    "Horario ya ocupado"
+            );
         }
+    }
+
+    @Override
+    public CitaResponse crearCitaAutonoma(CrearCitaRequest request) {
+
+        return crearCita(
+                request,
+                TipoAgendamiento.AUTONOMO
+        );
+    }
+
+    @Override
+    public CitaResponse crearCitaManual(CrearCitaRequest request) {
+
+        return crearCita(
+                request,
+                TipoAgendamiento.MANUAL
+        );
     }
 
     @Override

@@ -15,9 +15,8 @@ public class Cita {
     private LocalDateTime fechaAsistencia;
     private AuditMetadata audit;
 
-    // Constructor privado para nueva cita
-    private Cita(CitaId id, PacienteId pacienteId, MedicoId medicoId,
-                 UsuarioId creadoPor, LocalDateTime fechaHora) {
+    public Cita(CitaId id, PacienteId pacienteId, MedicoId medicoId,
+                UsuarioId creadoPor, LocalDateTime fechaHora) {
         this.id = id;
         this.pacienteId = pacienteId;
         this.medicoId = medicoId;
@@ -41,31 +40,6 @@ public class Cita {
         this.motivoCancelacion = motivoCancelacion;
         this.fechaAsistencia = fechaAsistencia;
         this.audit = audit;
-    }
-
-    // Factory method para crear nueva cita con validaciones
-    public static Cita crear(PacienteId pacienteId, MedicoId medicoId,
-                             UsuarioId creadoPor, LocalDateTime fechaHora,
-                             PacienteSnapshot paciente,
-                             MedicoSnapshot medico,
-                             DisponibilidadSnapshot disponibilidad) {
-
-        // Validaciones de dominio
-        if (!paciente.existe()) {
-            throw new PacienteNoExisteException("Paciente no encontrado o inactivo");
-        }
-
-        if (!medico.estaActivo()) {
-            throw new MedicoNoDisponibleException("Médico no está activo para atender");
-        }
-
-        if (!disponibilidad.estaDisponible(medicoId, fechaHora)) {
-            throw new DisponibilidadNoDisponibleException("El médico no está disponible en ese horario");
-        }
-
-        CitaId nuevoId = CitaId.generate();
-
-        return new Cita(nuevoId, pacienteId, medicoId, creadoPor, fechaHora);
     }
 
     // Factory method para reconstruir desde base de datos

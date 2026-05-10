@@ -23,23 +23,51 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CitaController {
 
-    private final CrearCitaUseCase crearCitaUseCase;
+    private final CrearCitaManualUseCase crearCitaManualUseCase;
+    private final CrearCitaAutonomaUseCase crearCitaAutonomaUseCase;
+
     private final CancelarCitaUseCase cancelarCitaUseCase;
     private final ReagendarCitaUseCase reagendarCitaUseCase;
     private final MarcarAsistenciaUseCase marcarAsistenciaUseCase;
     private final ConsultarSlotsDisponiblesUseCase consultarSlotsDisponiblesUseCase;
     private final ListarCitasUseCase listarCitasPorMedicoUseCase;
+
     private final CitaRestMapper mapper;
 
-    @PostMapping
-    public ResponseEntity<CitaRestResponse> crearCita(@Valid @RequestBody CrearCitaRestRequest request) {
-        log.info("REST - Solicitud de creación de cita para paciente: {} con médico: {}",
-                request.getPacienteId(), request.getMedicoId());
+    // Endpoint de agendamiento manual
+    @PostMapping("/manual")
+    public ResponseEntity<CitaRestResponse> crearCitaManual(
+            @Valid @RequestBody CrearCitaRestRequest request
+    ) {
 
-        CitaResponse response = crearCitaUseCase.crearCita(mapper.toApplicationRequest(request));
-        CitaRestResponse restResponse = mapper.toRestResponse(response);
+        log.info("REST - Creación MANUAL de cita");
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(restResponse);
+        CitaResponse response =
+                crearCitaManualUseCase.crearCitaManual(
+                        mapper.toApplicationRequest(request)
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(mapper.toRestResponse(response));
+    }
+
+    // Endpoint de agendamiento autónomo
+    @PostMapping("/autonoma")
+    public ResponseEntity<CitaRestResponse> crearCitaAutonoma(
+            @Valid @RequestBody CrearCitaRestRequest request
+    ) {
+
+        log.info("REST - Creación AUTÓNOMA de cita");
+
+        CitaResponse response =
+                crearCitaAutonomaUseCase.crearCitaAutonoma(
+                        mapper.toApplicationRequest(request)
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(mapper.toRestResponse(response));
     }
 
     @PutMapping("/{citaId}/cancelar")
@@ -85,6 +113,7 @@ public class CitaController {
     public List<LocalDateTime> obtenerSlots(@PathVariable Long medicoId) {
         return consultarSlotsDisponiblesUseCase.consultar(MedicoId.of(medicoId));
     }
+
     @GetMapping("/historial")
     public ResponseEntity<?> listar(
             @RequestParam(required = false) Long medicoId,
