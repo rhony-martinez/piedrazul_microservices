@@ -11,6 +11,8 @@ public class CitaResponse {
     private String estado;
     private String motivoCancelacion;
     private String fechaAsistencia;
+    private String createdAt;
+    private String updatedAt;
 
     // GETTERS Y SETTERS
 
@@ -85,4 +87,12 @@ public class CitaResponse {
     public void setFechaAsistencia(String fechaAsistencia) {
         this.fechaAsistencia = fechaAsistencia;
     }
+
+    public String getCreatedAt() { return createdAt; }
+
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public String getUpdatedAt() { return updatedAt; }
+
+    public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 }

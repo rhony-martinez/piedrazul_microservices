@@ -29,4 +29,13 @@ public class PacienteDashboardController {
         );
     }
 
+    // NUEVO MÉTODO PARA AGENDAR CITA
+    @FXML
+    private void handleAgendarCita() {
+        SceneManager.switchScene(
+                "/view/dashboard/agendar-cita-autonoma.fxml",
+                lblBienvenida,
+                "PIEDRAZUL - Agendar Cita"
+        );
+    }
 }
