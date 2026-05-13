@@ -61,7 +61,9 @@
                       spacing="55"
                       styleClass="main-actions-row">
 
+                    <!-- Se agrega onAction AQUÍ -->
                     <Button text="AGENDAR CITA"
+                            onAction="#handleAgendarCita"
                             styleClass="dashboard-main-button"/>
 
                     <Button text="MIS CITAS"
