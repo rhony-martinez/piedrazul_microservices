@@ -1,12 +1,12 @@
 package com.piedrazul.citas.application.service;
 
+import com.piedrazul.citas.application.dto.request.CrearCitaRequest;
+import com.piedrazul.citas.application.dto.response.CitaResponse;
 import com.piedrazul.citas.application.mapper.CitaApplicationMapper;
 import com.piedrazul.citas.application.port.incoming.CrearCitaAutonomaUseCase;
 import com.piedrazul.citas.application.port.outgoing.*;
 import com.piedrazul.citas.application.service.agendamiento.AbstractAgendamientoService;
-import com.piedrazul.citas.domain.builder.CitaBuilder;
-import com.piedrazul.citas.domain.builder.CitaAutonomaBuilder;
-import com.piedrazul.citas.application.dto.request.CrearCitaRequest;
+import com.piedrazul.citas.domain.factory.CitaAutonomaFactory;
 import com.piedrazul.citas.domain.model.*;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +21,8 @@ public class CrearCitaAutonomaService
             MedicoSnapshotRepositoryPort medicoRepository,
             DisponibilidadSnapshotRepositoryPort disponibilidadRepository,
             CitaEventPublisherPort eventPublisher,
-            CitaApplicationMapper mapper
+            CitaApplicationMapper mapper,
+            CitaAutonomaFactory citaAutonomaFactory
     ) {
         super(
                 citaRepository,
@@ -29,7 +30,8 @@ public class CrearCitaAutonomaService
                 medicoRepository,
                 disponibilidadRepository,
                 eventPublisher,
-                mapper
+                mapper,
+                citaAutonomaFactory
         );
     }
 
@@ -46,14 +48,7 @@ public class CrearCitaAutonomaService
     }
 
     @Override
-    protected CitaBuilder crearBuilder() {
-        return new CitaAutonomaBuilder();
-    }
-
-    @Override
-    public com.piedrazul.citas.application.dto.response.CitaResponse
-    crearCitaAutonoma(CrearCitaRequest request) {
-
+    public CitaResponse crearCitaAutonoma(CrearCitaRequest request) {
         return super.crearCita(request);
     }
 }

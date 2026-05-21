@@ -4,8 +4,8 @@ import com.piedrazul.citas.application.dto.request.CrearCitaRequest;
 import com.piedrazul.citas.application.dto.response.CitaResponse;
 import com.piedrazul.citas.application.mapper.CitaApplicationMapper;
 import com.piedrazul.citas.application.port.outgoing.*;
-import com.piedrazul.citas.domain.builder.CitaBuilder;
 import com.piedrazul.citas.domain.exception.*;
+import com.piedrazul.citas.domain.factory.CitaBuilderFactory;
 import com.piedrazul.citas.domain.model.*;
 import com.piedrazul.citas.domain.valueobjects.*;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +22,7 @@ public abstract class AbstractAgendamientoService {
     protected final DisponibilidadSnapshotRepositoryPort disponibilidadRepository;
     protected final CitaEventPublisherPort eventPublisher;
     protected final CitaApplicationMapper mapper;
+    protected final CitaBuilderFactory builderFactory;
 
     // Template Method
     public final CitaResponse crearCita(CrearCitaRequest request) {
@@ -49,7 +50,7 @@ public abstract class AbstractAgendamientoService {
                 medico
         );
 
-        Cita cita = crearBuilder()
+        Cita cita = builderFactory.crearBuilder()
                 .conPaciente(pacienteId, paciente)
                 .conMedico(medicoId, medico)
                 .creadaPor(creadoPor)
@@ -83,8 +84,6 @@ public abstract class AbstractAgendamientoService {
             PacienteSnapshot paciente,
             MedicoSnapshot medico
     );
-
-    protected abstract CitaBuilder crearBuilder();
 
     // MÉTODOS COMUNES
     private PacienteSnapshot obtenerPaciente(PacienteId pacienteId) {
