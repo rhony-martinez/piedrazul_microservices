@@ -17,7 +17,7 @@
         <HBox styleClass="top-bar" alignment="CENTER_LEFT">
             <Label text="PIEDRAZUL" styleClass="logo-label"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Button text="Volver" onAction="#handleVolver" styleClass="logout-button"/>
+            <Button fx:id="btnVolver" text="Volver" onAction="#handleVolver" styleClass="logout-button"/>
         </HBox>
     </top>
 

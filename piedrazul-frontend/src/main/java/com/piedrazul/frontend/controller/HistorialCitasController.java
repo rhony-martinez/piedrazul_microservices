@@ -13,7 +13,6 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.util.List;
-import javafx.application.Platform;
 
 import com.piedrazul.frontend.client.MedicoClient;
 import com.piedrazul.frontend.dto.response.MedicoResponse;

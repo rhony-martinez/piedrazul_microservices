@@ -1,6 +1,5 @@
 package com.piedrazul.citas.domain.valueobjects;
 
-import java.util.Objects;
 import java.util.UUID;
 
 public record CitaId(UUID value) {

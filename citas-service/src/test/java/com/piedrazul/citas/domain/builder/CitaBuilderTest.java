@@ -1,7 +1,6 @@
 package com.piedrazul.citas.domain.builder;
 
 import com.piedrazul.citas.domain.exception.MedicoNoDisponibleException;
-import com.piedrazul.citas.domain.exception.PacienteNoExisteException;
 import com.piedrazul.citas.domain.model.*;
 import com.piedrazul.citas.domain.valueobjects.*;
 import org.junit.jupiter.api.BeforeEach;

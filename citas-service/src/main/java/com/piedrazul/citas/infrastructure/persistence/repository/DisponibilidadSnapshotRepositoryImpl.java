@@ -4,7 +4,6 @@ package com.piedrazul.citas.infrastructure.persistence.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.piedrazul.citas.application.port.outgoing.DisponibilidadSnapshotRepositoryPort;
 import com.piedrazul.citas.domain.model.DisponibilidadSnapshot;
 import com.piedrazul.citas.domain.model.TimeRange;

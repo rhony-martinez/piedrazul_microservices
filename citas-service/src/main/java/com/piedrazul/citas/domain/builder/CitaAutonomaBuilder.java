@@ -1,8 +1,6 @@
 package com.piedrazul.citas.domain.builder;
 
-import com.piedrazul.citas.domain.exception.*;
 import com.piedrazul.citas.domain.model.*;
-import com.piedrazul.citas.domain.valueobjects.CitaId;
 
 import java.time.LocalDateTime;
 

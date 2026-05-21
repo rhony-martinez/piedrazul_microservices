@@ -7,7 +7,6 @@ import com.piedrazul.personas.domain.repository.IMedicoRepository;
 import com.piedrazul.personas.domain.repository.IPersonaRepository;
 import com.piedrazul.personas.infrastructure.messaging.publisher.MedicoEventPublisher;
 import com.piedrazul.personas.interfaces.rest.dto.request.RegistrarMedicoRequest;
-import com.piedrazul.personas.domain.model.TipoProfesional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

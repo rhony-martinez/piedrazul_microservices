@@ -7,12 +7,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.piedrazul.frontend.dto.response.DisponibilidadResponse;
 
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
 
 public class DisponibilidadClient {

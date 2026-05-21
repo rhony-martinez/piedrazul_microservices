@@ -6,15 +6,12 @@ import com.piedrazul.frontend.dto.request.CrearCitaAutonomaRequest;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
 import com.piedrazul.frontend.session.SessionManager;
 import com.piedrazul.frontend.util.SceneManager;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -133,15 +130,15 @@ public class AgendarCitaAutonomaController {
 
     @FXML
     private void handleVolver() {
-        volverAlDashboard();
-    }
-
-    private void volverAlDashboard() {
         SceneManager.switchScene(
                 "/view/dashboard/paciente-dashboard.fxml",
                 btnVolver,
                 "PIEDRAZUL - Menú principal"
         );
+    }
+
+    private void volverAlDashboard() {
+
     }
 
     private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {

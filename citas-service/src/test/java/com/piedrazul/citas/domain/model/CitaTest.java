@@ -1,7 +1,6 @@
 package com.piedrazul.citas.domain.model;
 
 import com.piedrazul.citas.domain.exception.CitaNoCancelableException;
-import com.piedrazul.citas.domain.exception.DisponibilidadNoDisponibleException;
 import com.piedrazul.citas.domain.valueobjects.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
