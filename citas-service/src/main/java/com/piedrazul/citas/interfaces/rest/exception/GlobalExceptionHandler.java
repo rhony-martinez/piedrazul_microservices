@@ -82,13 +82,39 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
-        log.error("Estado inválido: {}", ex.getMessage());
+    @ExceptionHandler(CitaNoReagendableException.class)
+    public ResponseEntity<ErrorResponse> handleCitaNoReagendable(CitaNoReagendableException ex) {
+        log.error("Cita no reagendable: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("Cita No Reagendable")
+                .message(ex.getMessage())
+                .path(getPath())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(CitaNoMarcableException.class)
+    public ResponseEntity<ErrorResponse> handleCitaNoMarcable(CitaNoMarcableException ex) {
+        log.error("Cita no marcable: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("Cita No Marcable")
+                .message(ex.getMessage())
+                .path(getPath())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(RestriccionAutoservicioException.class)
+    public ResponseEntity<ErrorResponse> handleRestriccionAutoservicio(RestriccionAutoservicioException ex) {
+        log.error("Restricción autoservicio: {}", ex.getMessage());
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
-                .error("Operación Inválida")
+                .error("Restricción de Autoservicio")
                 .message(ex.getMessage())
                 .path(getPath())
                 .build();

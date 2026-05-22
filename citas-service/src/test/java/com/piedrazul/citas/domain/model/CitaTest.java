@@ -1,6 +1,8 @@
 package com.piedrazul.citas.domain.model;
 
 import com.piedrazul.citas.domain.exception.CitaNoCancelableException;
+import com.piedrazul.citas.domain.exception.CitaNoMarcableException;
+import com.piedrazul.citas.domain.exception.CitaNoReagendableException;
 import com.piedrazul.citas.domain.valueobjects.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -91,7 +93,7 @@ class CitaTest {
         DisponibilidadSnapshot disponibilidad = crearDisponibilidadSnapshot(medicoId, fechaHora);
         LocalDateTime nuevaFecha = LocalDateTime.now().plusDays(5);
 
-        assertThrows(IllegalStateException.class, () -> {
+        assertThrows(CitaNoReagendableException.class, () -> {
             cita.reagendar(nuevaFecha, disponibilidad);
         });
     }
@@ -110,7 +112,7 @@ class CitaTest {
     @Test
     @DisplayName("No debería marcar como atendida una cita no confirmada")
     void testMarcarComoAtendidaNoConfirmada() {
-        assertThrows(IllegalStateException.class, () -> {
+        assertThrows(CitaNoMarcableException.class, () -> {
             cita.marcarComoAtendida();
         });
     }

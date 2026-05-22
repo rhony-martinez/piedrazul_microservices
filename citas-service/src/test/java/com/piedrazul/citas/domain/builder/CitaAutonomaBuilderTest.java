@@ -1,6 +1,7 @@
 package com.piedrazul.citas.domain.builder;
 
 import com.piedrazul.citas.domain.exception.DisponibilidadNoDisponibleException;
+import com.piedrazul.citas.domain.exception.RestriccionAutoservicioException;
 import com.piedrazul.citas.domain.model.*;
 import com.piedrazul.citas.domain.valueobjects.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -87,8 +88,8 @@ class CitaAutonomaBuilderTest {
 
         final CitaAutonomaBuilder builderLocal = new CitaAutonomaBuilder();
 
-        // El código puede lanzar DisponibilidadNoDisponibleException o IllegalStateException
-        // Aceptamos cualquiera de las dos
+        // Dependiendo de la hora actual, puede fallar primero la validación
+        // de disponibilidad o la restricción de autoservicio (24h).
         Exception exception = assertThrows(Exception.class, () -> {
             builderLocal
                     .conPaciente(finalPacienteId, finalPacienteSnapshot)
@@ -99,10 +100,9 @@ class CitaAutonomaBuilderTest {
                     .build();
         });
 
-        // Verificar que sea una de las excepciones esperadas
-        assertTrue(exception instanceof IllegalStateException ||
+        assertTrue(exception instanceof RestriccionAutoservicioException ||
                         exception instanceof DisponibilidadNoDisponibleException,
-                "Se esperaba IllegalStateException o DisponibilidadNoDisponibleException");
+                "Se esperaba RestriccionAutoservicioException o DisponibilidadNoDisponibleException");
     }
 
     @Test

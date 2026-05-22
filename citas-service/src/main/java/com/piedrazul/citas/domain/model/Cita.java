@@ -70,7 +70,7 @@ public class Cita {
     // Reagendar cita
     public void reagendar(LocalDateTime nuevaFechaHora, DisponibilidadSnapshot disponibilidad) {
         if (!this.estado.puedeReagendarse()) {
-            throw new IllegalStateException(
+            throw new CitaNoReagendableException(
                     String.format("Solo se pueden reagendar citas confirmadas, estado actual: %s",
                             this.estado.getDescripcion())
             );
@@ -88,7 +88,7 @@ public class Cita {
     // Marcar como atendida
     public void marcarComoAtendida() {
         if (this.estado != EstadoCita.CONFIRMADA && this.estado != EstadoCita.REAGENDADA) {
-            throw new IllegalStateException(
+            throw new CitaNoMarcableException(
                     String.format("Solo se pueden marcar como atendidas citas confirmadas o reagendadas, estado actual: %s",
                             this.estado.getDescripcion())
             );
@@ -101,7 +101,7 @@ public class Cita {
     // Marcar como no asistida
     public void marcarComoNoAsistida() {
         if (this.estado != EstadoCita.CONFIRMADA && this.estado != EstadoCita.REAGENDADA) {
-            throw new IllegalStateException(
+            throw new CitaNoMarcableException(
                     String.format("Solo se pueden marcar como no asistidas citas confirmadas o reagendadas, estado actual: %s",
                             this.estado.getDescripcion())
             );
@@ -109,7 +109,7 @@ public class Cita {
 
         // Verificar que la fecha de la cita ya pasó
         if (this.fechaHora.isAfter(LocalDateTime.now())) {
-            throw new IllegalStateException("No se puede marcar como no asistida una cita futura");
+            throw new CitaNoMarcableException("No se puede marcar como no asistida una cita futura");
         }
 
         this.estado = EstadoCita.NO_ASISTIDA;
