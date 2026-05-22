@@ -69,6 +69,7 @@ public class CitaEventPublisherImpl implements CitaEventPublisherPort {
         log.info("Evento CITA_CANCELADA publicado exitosamente");
     }
 
+    @Override
     public void publicarCitaReagendada(Cita cita, LocalDateTime fechaHoraOriginal) {
         log.info("Publicando evento CITA_REAGENDADA para cita: {}", cita.getId());
 

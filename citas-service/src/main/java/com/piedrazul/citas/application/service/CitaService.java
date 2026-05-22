@@ -71,11 +71,17 @@ public class CitaService implements CancelarCitaUseCase,
                 .orElseThrow(() -> new DisponibilidadNoDisponibleException(
                         "No hay disponibilidad configurada para el médico"));
 
+        // Capturamos la fecha original antes de mutar el agregado,
+        // para poder publicarla en el evento de reagendamiento.
+        LocalDateTime fechaHoraOriginal = cita.getFechaHora();
+
         cita.reagendar(request.getNuevaFechaHora(), disponibilidad);
 
         Cita citaActualizada = citaRepository.save(cita);
         log.info("Cita reagendada exitosamente: {} nueva fecha: {}",
                 citaActualizada.getId(), citaActualizada.getFechaHora());
+
+        eventPublisher.publicarCitaReagendada(citaActualizada, fechaHoraOriginal);
 
         PacienteSnapshot paciente = pacienteSnapshotRepository.findById(cita.getPacienteId()).orElse(null);
         MedicoSnapshot medico = medicoSnapshotRepository.findById(cita.getMedicoId()).orElse(null);
