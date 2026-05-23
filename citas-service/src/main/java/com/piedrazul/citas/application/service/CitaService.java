@@ -45,12 +45,11 @@ public class CitaService implements CancelarCitaUseCase,
         Cita citaActualizada = citaRepository.save(cita);
         log.info("Cita cancelada exitosamente: {}", citaActualizada.getId());
 
-        // Publicar evento de cancelación
-        eventPublisher.publicarCitaCancelada(citaActualizada);
-
-        // Obtener snapshots para respuesta
+        // Snapshots para enriquecer el evento y la respuesta
         PacienteSnapshot paciente = pacienteSnapshotRepository.findById(cita.getPacienteId()).orElse(null);
         MedicoSnapshot medico = medicoSnapshotRepository.findById(cita.getMedicoId()).orElse(null);
+
+        eventPublisher.publicarCitaCancelada(citaActualizada, paciente, medico);
 
         return mapper.toResponse(citaActualizada, paciente, medico);
     }
@@ -81,10 +80,10 @@ public class CitaService implements CancelarCitaUseCase,
         log.info("Cita reagendada exitosamente: {} nueva fecha: {}",
                 citaActualizada.getId(), citaActualizada.getFechaHora());
 
-        eventPublisher.publicarCitaReagendada(citaActualizada, fechaHoraOriginal);
-
         PacienteSnapshot paciente = pacienteSnapshotRepository.findById(cita.getPacienteId()).orElse(null);
         MedicoSnapshot medico = medicoSnapshotRepository.findById(cita.getMedicoId()).orElse(null);
+
+        eventPublisher.publicarCitaReagendada(citaActualizada, fechaHoraOriginal, paciente, medico);
 
         return mapper.toResponse(citaActualizada, paciente, medico);
     }

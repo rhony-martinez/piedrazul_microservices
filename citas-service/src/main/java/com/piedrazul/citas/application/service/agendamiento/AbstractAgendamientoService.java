@@ -62,7 +62,7 @@ public abstract class AbstractAgendamientoService {
 
             Cita guardada = citaRepository.save(cita);
 
-            eventPublisher.publicarCitaAgendada(guardada);
+            eventPublisher.publicarCitaAgendada(guardada, paciente, medico);
 
             return mapper.toResponse(
                     guardada,
