@@ -1,6 +1,7 @@
 package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.piedrazul.frontend.config.ApiConfig;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -9,7 +10,7 @@ import java.util.Map;
 
 public class PacienteClient {
 
-    private static final String URL_PACIENTE = "http://localhost:8082/api/pacientes";
+    private static final String URL_PACIENTE = ApiConfig.gatewayBaseUrl() + "/api/pacientes";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

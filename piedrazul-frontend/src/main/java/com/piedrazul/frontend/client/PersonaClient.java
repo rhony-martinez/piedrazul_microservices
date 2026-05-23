@@ -1,6 +1,7 @@
 package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.request.CrearPersonaRequest;
 
 import java.io.InputStream;
@@ -10,7 +11,7 @@ import java.net.URL;
 
 public class PersonaClient {
 
-    private static final String BASE_URL = "http://localhost:8082/api/personas";
+    private static final String BASE_URL = ApiConfig.gatewayBaseUrl() + "/api/personas";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

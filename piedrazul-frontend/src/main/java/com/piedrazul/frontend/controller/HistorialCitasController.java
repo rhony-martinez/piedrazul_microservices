@@ -15,6 +15,7 @@ import java.net.HttpURLConnection;
 import java.util.List;
 
 import com.piedrazul.frontend.client.MedicoClient;
+import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
 
 public class HistorialCitasController {
@@ -156,7 +157,7 @@ public class HistorialCitasController {
                 fecha = dpFecha.getValue().toString();
             }
 
-            String url = "http://localhost:8083/api/citas/historial";
+            String url = ApiConfig.gatewayBaseUrl() + "/api/citas/historial";
 
             if (medicoSeleccionado != null) {
                 url += "?medicoId=" + medicoSeleccionado.getPersonaId();

@@ -1,6 +1,7 @@
 package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.request.ConfiguracionRequest;
 import com.piedrazul.frontend.dto.response.ConfiguracionResponse;
 
@@ -11,7 +12,7 @@ import java.net.URL;
 public class ConfiguracionClient {
 
     private static final String URL_CONFIG =
-            "http://localhost:8083/api/configuracion";
+            ApiConfig.gatewayBaseUrl() + "/api/configuracion";
 
     private final ObjectMapper mapper = new ObjectMapper();
 

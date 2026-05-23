@@ -1,6 +1,7 @@
 package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.request.CrearUsuarioRequest;
 
 import java.io.OutputStream;
@@ -9,7 +10,7 @@ import java.net.URL;
 
 public class UsuarioClient {
 
-    private static final String BASE_URL = "http://localhost:8081/api/usuarios";
+    private static final String BASE_URL = ApiConfig.gatewayBaseUrl() + "/api/usuarios";
     private final ObjectMapper mapper = new ObjectMapper();
 
     public void crearUsuario(CrearUsuarioRequest request) throws Exception {

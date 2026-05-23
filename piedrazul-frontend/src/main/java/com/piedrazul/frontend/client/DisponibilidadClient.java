@@ -1,6 +1,7 @@
 package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.piedrazul.frontend.config.ApiConfig;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -14,7 +15,7 @@ import java.util.List;
 
 public class DisponibilidadClient {
 
-    private static final String URL = "http://localhost:8082/api/disponibilidad";
+    private static final String URL = ApiConfig.gatewayBaseUrl() + "/api/disponibilidad";
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public void crearDisponibilidad(Map<String, Object> body) {
@@ -59,7 +60,7 @@ public class DisponibilidadClient {
 
         try {
 
-            URL url = new URL("http://localhost:8082/api/disponibilidad");
+            URL url = new URL(URL);
 
             HttpURLConnection conn =
                     (HttpURLConnection) url.openConnection();

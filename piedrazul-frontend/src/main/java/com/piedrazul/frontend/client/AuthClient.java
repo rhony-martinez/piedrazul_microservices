@@ -1,6 +1,7 @@
 package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.request.LoginRequest;
 import com.piedrazul.frontend.dto.response.LoginResponse;
 
@@ -11,7 +12,7 @@ import java.net.URL;
 
 public class AuthClient {
 
-    private static final String BASE_URL = "http://localhost:8081/api";
+    private static final String BASE_URL = ApiConfig.gatewayBaseUrl() + "/api";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

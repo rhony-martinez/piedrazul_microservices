@@ -2,6 +2,7 @@ package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.request.CrearCitaAutonomaRequest;
 import com.piedrazul.frontend.dto.response.CitaResponse;
 
@@ -13,7 +14,7 @@ import java.util.List;
 
 public class CitaClient {
 
-    private static final String BASE_URL = "http://localhost:8083/api/citas";
+    private static final String BASE_URL = ApiConfig.gatewayBaseUrl() + "/api/citas";
     private final ObjectMapper objectMapper;
 
     public CitaClient() {
