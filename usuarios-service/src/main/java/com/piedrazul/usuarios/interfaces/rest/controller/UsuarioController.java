@@ -1,42 +1,51 @@
 package com.piedrazul.usuarios.interfaces.rest.controller;
 
-import com.piedrazul.usuarios.application.service.AsignarRolesUsuarioService;
 import com.piedrazul.usuarios.application.service.ConsultarUsuarioService;
 import com.piedrazul.usuarios.application.service.RegistrarUsuarioService;
 import com.piedrazul.usuarios.domain.model.Usuario;
-import com.piedrazul.usuarios.interfaces.rest.dto.request.AsignarRolesRequest;
 import com.piedrazul.usuarios.interfaces.rest.dto.request.CrearUsuarioRequest;
 import com.piedrazul.usuarios.interfaces.rest.dto.response.UsuarioResponse;
 import com.piedrazul.usuarios.interfaces.rest.mapper.UsuarioRestMapper;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
 
     private final RegistrarUsuarioService registrarUsuarioService;
-    private final AsignarRolesUsuarioService asignarRolesUsuarioService;
     private final ConsultarUsuarioService consultarUsuarioService;
 
     public UsuarioController(
             RegistrarUsuarioService registrarUsuarioService,
-            AsignarRolesUsuarioService asignarRolesUsuarioService,
             ConsultarUsuarioService consultarUsuarioService
     ) {
         this.registrarUsuarioService = registrarUsuarioService;
-        this.asignarRolesUsuarioService = asignarRolesUsuarioService;
         this.consultarUsuarioService = consultarUsuarioService;
     }
 
     @PostMapping
-    public ResponseEntity<UsuarioResponse> crearUsuario(@Valid @RequestBody CrearUsuarioRequest request) {
+    public ResponseEntity<UsuarioResponse> crearUsuario(
+            @Valid @RequestBody CrearUsuarioRequest request
+    ) {
         Usuario usuario = registrarUsuarioService.ejecutar(
                 request.getPersonaId(),
                 request.getUsername(),
                 request.getPassword(),
+                request.getEmail(),
+                request.getFirstName(),
+                request.getLastName(),
                 request.getRoles()
         );
 
@@ -46,17 +55,22 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioResponse> obtenerUsuarioPorId(@PathVariable Integer id) {
+    public ResponseEntity<UsuarioResponse> obtenerUsuarioPorId(@PathVariable UUID id) {
         Usuario usuario = consultarUsuarioService.consultarPorId(id);
         return ResponseEntity.ok(UsuarioRestMapper.toResponse(usuario));
     }
 
-    @PostMapping("/{id}/roles")
-    public ResponseEntity<UsuarioResponse> asignarRoles(
-            @PathVariable Integer id,
-            @Valid @RequestBody AsignarRolesRequest request
-    ) {
-        Usuario usuario = asignarRolesUsuarioService.asignarRoles(id, request.getRoles());
+    @GetMapping("/by-username/{username}")
+    public ResponseEntity<UsuarioResponse> obtenerUsuarioPorUsername(@PathVariable String username) {
+        Usuario usuario = consultarUsuarioService.consultarPorUsername(username);
         return ResponseEntity.ok(UsuarioRestMapper.toResponse(usuario));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<UsuarioResponse>> listarUsuarios() {
+        List<UsuarioResponse> response = consultarUsuarioService.listarTodos().stream()
+                .map(UsuarioRestMapper::toResponse)
+                .toList();
+        return ResponseEntity.ok(response);
     }
 }

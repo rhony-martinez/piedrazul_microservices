@@ -1,39 +1,25 @@
 package com.piedrazul.frontend.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.piedrazul.frontend.config.ApiConfig;
-
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Map;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.piedrazul.frontend.dto.response.DisponibilidadResponse;
+import com.piedrazul.frontend.http.AuthenticatedHttpClient;
 
-import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 public class DisponibilidadClient {
 
-    private static final String URL = ApiConfig.gatewayBaseUrl() + "/api/disponibilidad";
+    private static final String URL = AuthenticatedHttpClient.baseUrl() + "/api/disponibilidad";
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public void crearDisponibilidad(Map<String, Object> body) {
         try {
-            HttpURLConnection conn = (HttpURLConnection) new URL(URL).openConnection();
-
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setDoOutput(true);
-
-            try (OutputStream os = conn.getOutputStream()) {
-                os.write(objectMapper.writeValueAsBytes(body));
-            }
-
-            if (conn.getResponseCode() != 200 && conn.getResponseCode() != 201) {
-                throw new RuntimeException("Error creando disponibilidad");
-            }
-
+            String json = objectMapper.writeValueAsString(body);
+            AuthenticatedHttpClient.post(URL, json);
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            throw new RuntimeException("Error creando disponibilidad: " + e.getResponseBody(), e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -44,7 +30,6 @@ public class DisponibilidadClient {
                                     String horaInicio,
                                     String horaFin,
                                     Integer intervalo) {
-
         Map<String, Object> body = Map.of(
                 "medicoId", medicoId,
                 "diaSemana", dia,
@@ -52,36 +37,18 @@ public class DisponibilidadClient {
                 "horaFin", horaFin,
                 "intervaloMinutos", intervalo
         );
-
         crearDisponibilidad(body);
     }
 
     public List<DisponibilidadResponse> obtenerDisponibilidades() {
-
         try {
-
-            URL url = new URL(URL);
-
-            HttpURLConnection conn =
-                    (HttpURLConnection) url.openConnection();
-
-            conn.setRequestMethod("GET");
-
-            if (conn.getResponseCode() != 200) {
-                throw new RuntimeException(
-                        "Error obteniendo disponibilidades"
-                );
-            }
-
-            InputStream inputStream = conn.getInputStream();
-
-            ObjectMapper mapper = new ObjectMapper();
-
-            return mapper.readValue(
-                    inputStream,
+            AuthenticatedHttpClient.Response resp = AuthenticatedHttpClient.get(URL);
+            return objectMapper.readValue(
+                    resp.getBody(),
                     new TypeReference<List<DisponibilidadResponse>>() {}
             );
-
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            throw new RuntimeException("Error obteniendo disponibilidades: " + e.getResponseBody(), e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

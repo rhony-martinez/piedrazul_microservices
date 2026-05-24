@@ -1,10 +1,35 @@
 package com.piedrazul.usuarios.domain.model;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.time.Instant;
+import java.util.UUID;
 
+/**
+ * Modelo de dominio del Usuario tras la integracion con Keycloak.
+ *
+ * Diseno post-migracion (Sprint Keycloak Fase 3):
+ *   - {@code id}: UUID generado por NUESTRO sistema antes de crear el usuario en
+ *     Keycloak. Se persiste tambien como atributo 'usuario_id' del usuario en
+ *     Keycloak para que aparezca como claim del JWT. Es el ID de dominio que
+ *     usan los demas microservicios (no el sub de Keycloak), lo que nos da
+ *     independencia del IdP.
+ *   - {@code keycloakUserId}: UUID asignado por Keycloak (el claim 'sub' del JWT).
+ *     Lo guardamos para poder consultar/modificar el usuario contra el Admin API
+ *     sin tener que hacer lookup por username.
+ *   - {@code personaId}: Long, FK al personas-service. Mantenido para preservar
+ *     la relacion de dominio Usuario ↔ Persona.
+ *
+ * Lo que YA NO esta aqui (lo gestiona Keycloak):
+ *   - password / passwordHash    → credentials API de Keycloak
+ *   - roles                       → realm_access.roles del JWT
+ *   - estado (ACTIVO/INACTIVO)    → "enabled" del usuario en Keycloak
+ *   - intentosFallidos / lockout  → "Brute Force Detection" nativo de Keycloak
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -12,51 +37,10 @@ import java.util.Set;
 @Builder
 public class Usuario {
 
-    private Integer id;
+    private UUID id;
+    private UUID keycloakUserId;
     private String username;
-    private String passwordHash;
-    private EstadoUsuario estado;
-    private Integer personaId;
-    private int intentosFallidos;
-
-    @Builder.Default
-    private Set<Rol> roles = new HashSet<>();
-
-    public void incrementarIntentosFallidos() {
-        this.intentosFallidos++;
-        if (this.intentosFallidos >= 3) {
-            this.estado = EstadoUsuario.INACTIVO;
-        }
-    }
-
-    public void resetearIntentosFallidos() {
-        this.intentosFallidos = 0;
-    }
-
-    public boolean estaActivo() {
-        return this.estado == EstadoUsuario.ACTIVO;
-    }
-
-    public void desactivar() {
-        this.estado = EstadoUsuario.INACTIVO;
-    }
-
-    public void asignarRol(Rol rol) {
-        if (rol == null) {
-            throw new IllegalArgumentException("El rol no puede ser nulo");
-        }
-        this.roles.add(rol);
-    }
-
-    public boolean tieneRol(String nombreRol) {
-        return this.roles.stream()
-                .anyMatch(r -> r.getNombre().equalsIgnoreCase(nombreRol));
-    }
-
-    public void cambiarPasswordHash(String nuevoPasswordHash) {
-        if (nuevoPasswordHash == null || nuevoPasswordHash.isBlank()) {
-            throw new IllegalArgumentException("El password hash no puede ser vacío");
-        }
-        this.passwordHash = nuevoPasswordHash;
-    }
+    private Long personaId;
+    private Instant fechaCreacion;
+    private Instant fechaActualizacion;
 }

@@ -9,7 +9,7 @@ import java.util.Properties;
  *
  *   1. Variable de entorno PIEDRAZUL_GATEWAY_URL (ideal para Docker/CI)
  *   2. Propiedad piedrazul.gateway.url en classpath:application.properties
- *   3. Fallback a http://localhost:8080 (modo desarrollo sin configurar nada)
+ *   3. Fallback a http://localhost:8085 (modo desarrollo sin configurar nada)
  *
  * El valor se resuelve una sola vez al inicio del proceso y se cachea.
  */
@@ -18,7 +18,7 @@ public final class ApiConfig {
     private static final String ENV_VAR = "PIEDRAZUL_GATEWAY_URL";
     private static final String PROPERTIES_FILE = "application.properties";
     private static final String PROPERTY_KEY = "piedrazul.gateway.url";
-    private static final String DEFAULT_URL = "http://localhost:8080";
+    private static final String DEFAULT_URL = "http://localhost:8085";
 
     private static volatile String cachedGatewayUrl;
 

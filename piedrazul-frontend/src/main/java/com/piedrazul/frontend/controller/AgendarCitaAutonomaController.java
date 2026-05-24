@@ -57,9 +57,16 @@ public class AgendarCitaAutonomaController {
 
         dpFecha.valueProperty().addListener((obs, oldVal, newVal) -> cargarSlots());
 
-        // Obtener pacienteId del usuario logueado
         if (SessionManager.isLoggedIn()) {
-            pacienteId = SessionManager.getCurrentUser().getPersonaId();
+            pacienteId = SessionManager.getPersonaId();
+            if (pacienteId == null) {
+                mostrarAlerta(
+                        "Cuenta sin perfil vinculado",
+                        "Tu usuario no tiene una persona asociada (claim persona_id ausente en el token). "
+                                + "Pidele al administrador que vincule tu cuenta antes de agendar.",
+                        Alert.AlertType.WARNING
+                );
+            }
         }
     }
 

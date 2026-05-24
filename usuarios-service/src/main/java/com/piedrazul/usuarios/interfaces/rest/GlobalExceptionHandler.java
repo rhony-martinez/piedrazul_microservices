@@ -1,8 +1,8 @@
 package com.piedrazul.usuarios.interfaces.rest;
 
-import com.piedrazul.usuarios.application.exception.CredencialesInvalidasException;
 import com.piedrazul.usuarios.application.exception.DependenciaExternaException;
 import com.piedrazul.usuarios.application.exception.PersonaNoEncontradaException;
+import com.piedrazul.usuarios.infrastructure.keycloak.KeycloakAdminClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -19,68 +19,67 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> details = new LinkedHashMap<>();
-
         ex.getBindingResult().getFieldErrors().forEach(error ->
-                details.put(error.getField(), error.getDefaultMessage())
-        );
+                details.put(error.getField(), error.getDefaultMessage()));
 
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", 400);
-        body.put("error", "Bad Request");
-        body.put("message", "Error de validación");
-        body.put("details", details);
-
-        return ResponseEntity.badRequest().body(body);
+        return ResponseEntity.badRequest().body(errorBody(400, "Bad Request",
+                "Error de validacion", details));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.badRequest().body(Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", 400,
-                "error", "Bad Request",
-                "message", ex.getMessage()
-        ));
+        return ResponseEntity.badRequest().body(errorBody(400, "Bad Request", ex.getMessage(), null));
     }
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalState(IllegalStateException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", 409,
-                "error", "Conflict",
-                "message", ex.getMessage()
-        ));
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(errorBody(409, "Conflict", ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(PersonaNoEncontradaException.class)
+    public ResponseEntity<Map<String, Object>> handlePersonaNotFound(PersonaNoEncontradaException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(errorBody(404, "Not Found", ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(DependenciaExternaException.class)
+    public ResponseEntity<Map<String, Object>> handleDependency(DependenciaExternaException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(errorBody(503, "Service Unavailable", ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(KeycloakAdminClient.UsuarioYaExisteException.class)
+    public ResponseEntity<Map<String, Object>> handleUsuarioYaExiste(
+            KeycloakAdminClient.UsuarioYaExisteException ex
+    ) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(errorBody(409, "Conflict", ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(KeycloakAdminClient.KeycloakAdminException.class)
+    public ResponseEntity<Map<String, Object>> handleKeycloakAdmin(
+            KeycloakAdminClient.KeycloakAdminException ex
+    ) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(errorBody(502, "Bad Gateway", "Error comunicandose con Keycloak: " + ex.getMessage(), null));
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", 500,
-                "error", "Internal Server Error",
-                "message", ex.getMessage()
-        ));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(errorBody(500, "Internal Server Error", ex.getMessage(), null));
     }
 
-    @ExceptionHandler(CredencialesInvalidasException.class)
-    public ResponseEntity<Map<String, Object>> handleCredencialesInvalidas(CredencialesInvalidasException ex) {
-        return ResponseEntity.badRequest().body(Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", 400,
-                "error", "Bad Request",
-                "message", ex.getMessage()
-        ));
-    }
-
-    @ExceptionHandler(PersonaNoEncontradaException.class)
-    public ResponseEntity<?> handlePersonaNotFoundException(RuntimeException ex) {
-        return ResponseEntity.status(404).body(Map.of("error", ex.getMessage()));
-    }
-
-    @ExceptionHandler(DependenciaExternaException.class)
-    public ResponseEntity<?> handleDependencyError(RuntimeException ex) {
-        return ResponseEntity.status(503).body(Map.of("error", ex.getMessage()));
+    private Map<String, Object> errorBody(int status, String error, String message, Map<String, String> details) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", status);
+        body.put("error", error);
+        body.put("message", message);
+        if (details != null) {
+            body.put("details", details);
+        }
+        return body;
     }
 }

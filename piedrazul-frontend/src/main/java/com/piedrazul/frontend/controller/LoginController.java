@@ -1,7 +1,6 @@
 package com.piedrazul.frontend.controller;
 
-import com.piedrazul.frontend.client.AuthClient;
-import com.piedrazul.frontend.dto.response.LoginResponse;
+import com.piedrazul.frontend.auth.KeycloakAuthClient;
 import com.piedrazul.frontend.session.SessionManager;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.fxml.FXML;
@@ -17,35 +16,35 @@ public class LoginController {
     @FXML
     private PasswordField txtPassword;
 
-    private final AuthClient authClient = new AuthClient();
-
     @FXML
     private void handleLogin() {
         String username = txtUsername.getText();
         String password = txtPassword.getText();
 
-        try {
-            LoginResponse response = authClient.login(username, password);
-
-            SessionManager.setCurrentUser(response);
-
-            showAlert("Éxito", response.getMessage());
-
-            System.out.println("Roles: " + response.getRoles());
-
-            redirectByRole(response);
-
-        } catch (Exception e) {
-            showAlert("Error", e.getMessage());
+        if (username == null || username.isBlank() || password == null || password.isBlank()) {
+            showAlert("Datos faltantes", "Ingresa usuario y contrasena.", Alert.AlertType.WARNING);
+            return;
         }
-    }
 
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        try {
+            SessionManager.login(username, password);
+
+            String rol = SessionManager.getPrimaryRole();
+            if (rol == null) {
+                SessionManager.clear();
+                showAlert("Sin rol asignado",
+                        "Tu usuario no tiene roles del sistema. Contacta al administrador.",
+                        Alert.AlertType.ERROR);
+                return;
+            }
+
+            redirectByRole(rol);
+
+        } catch (KeycloakAuthClient.AuthException e) {
+            showAlert("Error de autenticacion", e.getMessage(), Alert.AlertType.ERROR);
+        } catch (Exception e) {
+            showAlert("Error inesperado", e.getMessage(), Alert.AlertType.ERROR);
+        }
     }
 
     @FXML
@@ -56,44 +55,42 @@ public class LoginController {
         );
     }
 
-    private void redirectByRole(LoginResponse response) {
-        String rol = response.getRoles().getFirst();
-
+    private void redirectByRole(String rol) {
         switch (rol) {
-            case "PACIENTE":
-                SceneManager.showDashboard(
-                        "/view/dashboard/paciente-dashboard.fxml",
-                        txtUsername,
-                        "PIEDRAZUL - Menú principal"
-                );
-                break;
-
-            case "MEDICO_TERAPISTA":
-                SceneManager.showDashboard(
-                        "/view/dashboard/medico-dashboard.fxml",
-                        txtUsername,
-                        "PIEDRAZUL - Menú principal"
-                );
-                break;
-
-            case "ADMINISTRADOR":
-                SceneManager.showDashboard(
-                        "/view/dashboard/administrador-dashboard.fxml",
-                        txtUsername,
-                        "PIEDRAZUL - Menú principal"
-                );
-                break;
-
-            case "AGENDADOR":
-                SceneManager.showDashboard(
-                        "/view/dashboard/agendador-dashboard.fxml",
-                        txtUsername,
-                        "PIEDRAZUL - Menú principal"
-                );
-                break;
-
-            default:
-                throw new RuntimeException("Rol no soportado: " + rol);
+            case "PACIENTE" -> SceneManager.showDashboard(
+                    "/view/dashboard/paciente-dashboard.fxml",
+                    txtUsername,
+                    "PIEDRAZUL - Menu principal"
+            );
+            case "MEDICO_TERAPISTA" -> SceneManager.showDashboard(
+                    "/view/dashboard/medico-dashboard.fxml",
+                    txtUsername,
+                    "PIEDRAZUL - Menu principal"
+            );
+            case "ADMINISTRADOR" -> SceneManager.showDashboard(
+                    "/view/dashboard/administrador-dashboard.fxml",
+                    txtUsername,
+                    "PIEDRAZUL - Menu principal"
+            );
+            case "AGENDADOR" -> SceneManager.showDashboard(
+                    "/view/dashboard/agendador-dashboard.fxml",
+                    txtUsername,
+                    "PIEDRAZUL - Menu principal"
+            );
+            default -> {
+                SessionManager.clear();
+                showAlert("Rol no soportado",
+                        "El rol '" + rol + "' no tiene una pantalla asignada.",
+                        Alert.AlertType.ERROR);
+            }
         }
+    }
+
+    private void showAlert(String title, String message, Alert.AlertType type) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

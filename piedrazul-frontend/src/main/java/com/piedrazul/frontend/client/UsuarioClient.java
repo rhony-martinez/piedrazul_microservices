@@ -1,32 +1,17 @@
 package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.request.CrearUsuarioRequest;
-
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import com.piedrazul.frontend.http.AuthenticatedHttpClient;
 
 public class UsuarioClient {
 
-    private static final String BASE_URL = ApiConfig.gatewayBaseUrl() + "/api/usuarios";
+    private static final String BASE_URL = AuthenticatedHttpClient.baseUrl() + "/api/usuarios";
+
     private final ObjectMapper mapper = new ObjectMapper();
 
     public void crearUsuario(CrearUsuarioRequest request) throws Exception {
-        URL url = new URL(BASE_URL);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setDoOutput(true);
-
-        try (OutputStream os = conn.getOutputStream()) {
-            os.write(mapper.writeValueAsBytes(request));
-        }
-
-        if (conn.getResponseCode() != 200 && conn.getResponseCode() != 201) {
-            throw new RuntimeException("Error creando usuario");
-        }
+        String body = mapper.writeValueAsString(request);
+        AuthenticatedHttpClient.post(BASE_URL, body);
     }
 }

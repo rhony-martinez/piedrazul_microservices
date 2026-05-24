@@ -1,8 +1,13 @@
 package com.piedrazul.usuarios.interfaces.rest.dto.response;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.util.Set;
+import java.time.Instant;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -10,10 +15,11 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class UsuarioResponse {
-    private Integer id;
-    private Integer personaId;
+
+    private UUID id;
+    private UUID keycloakUserId;
     private String username;
-    private String estado;
-    private int intentosFallidos;
-    private Set<String> roles;
+    private Long personaId;
+    private Instant fechaCreacion;
+    private Instant fechaActualizacion;
 }

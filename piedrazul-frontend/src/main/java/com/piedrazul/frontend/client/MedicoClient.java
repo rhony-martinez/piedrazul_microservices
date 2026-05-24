@@ -1,70 +1,43 @@
 package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
+import com.piedrazul.frontend.http.AuthenticatedHttpClient;
 
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
 public class MedicoClient {
 
-    private static final String URL_MEDICO = ApiConfig.gatewayBaseUrl() + "/api/medicos";
+    private static final String URL_MEDICO = AuthenticatedHttpClient.baseUrl() + "/api/medicos";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public void crearMedico(Long personaId, String tipoProfesional) {
         try {
-            URL url = new URL(URL_MEDICO);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setDoOutput(true);
-
-            Map<String, Object> body = Map.of(
+            String body = objectMapper.writeValueAsString(Map.of(
                     "personaId", personaId,
                     "tipoProfesional", tipoProfesional
-            );
-
-            try (OutputStream os = conn.getOutputStream()) {
-                os.write(objectMapper.writeValueAsBytes(body));
-            }
-
-            int status = conn.getResponseCode();
-
-            if (status != 200 && status != 201) {
-                String error = new String(conn.getErrorStream().readAllBytes());
-                throw new RuntimeException("Error creando médico: " + error);
-            }
-
+            ));
+            AuthenticatedHttpClient.post(URL_MEDICO, body);
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            throw new RuntimeException("Error creando medico: " + e.getResponseBody(), e);
         } catch (Exception e) {
-            throw new RuntimeException("Error en MedicoClient", e);
+            throw new RuntimeException("Error en MedicoClient: " + e.getMessage(), e);
         }
     }
 
     public List<MedicoResponse> obtenerMedicos() {
         try {
-            URL url = new URL(URL_MEDICO);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-            conn.setRequestMethod("GET");
-
-            if (conn.getResponseCode() != 200) {
-                throw new RuntimeException("Error obteniendo médicos");
-            }
-
+            AuthenticatedHttpClient.Response resp = AuthenticatedHttpClient.get(URL_MEDICO);
             return objectMapper.readValue(
-                    conn.getInputStream(),
-                    objectMapper.getTypeFactory()
-                            .constructCollectionType(List.class, MedicoResponse.class)
+                    resp.getBody(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, MedicoResponse.class)
             );
-
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            throw new RuntimeException("Error obteniendo medicos: " + e.getResponseBody(), e);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error en MedicoClient: " + e.getMessage(), e);
         }
     }
 }

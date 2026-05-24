@@ -3,19 +3,16 @@ package com.piedrazul.frontend.controller;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.piedrazul.frontend.dto.response.CitaResponse;
+import com.piedrazul.frontend.http.AuthenticatedHttpClient;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
 import java.util.List;
 
 import com.piedrazul.frontend.client.MedicoClient;
-import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
 
 public class HistorialCitasController {
@@ -157,7 +154,7 @@ public class HistorialCitasController {
                 fecha = dpFecha.getValue().toString();
             }
 
-            String url = ApiConfig.gatewayBaseUrl() + "/api/citas/historial";
+            String url = AuthenticatedHttpClient.baseUrl() + "/api/citas/historial";
 
             if (medicoSeleccionado != null) {
                 url += "?medicoId=" + medicoSeleccionado.getPersonaId();
@@ -167,33 +164,12 @@ public class HistorialCitasController {
                 url += (url.contains("?") ? "&" : "?") + "fecha=" + fecha;
             }
 
-            System.out.println("URL: " + url);
+            AuthenticatedHttpClient.Response resp = AuthenticatedHttpClient.get(url);
 
-            HttpURLConnection conn = (HttpURLConnection) new java.net.URI(url).toURL().openConnection();
-            conn.setRequestMethod("GET");
-
-            BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream())
-            );
-
-            StringBuilder response = new StringBuilder();
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-
-            reader.close();
-
-            System.out.println("RESPONSE: " + response);
-
-            // CONVERTIR JSON → OBJETOS
             Gson gson = new Gson();
             Type listType = new TypeToken<List<CitaResponse>>() {}.getType();
+            List<CitaResponse> citas = gson.fromJson(resp.getBody(), listType);
 
-            List<CitaResponse> citas = gson.fromJson(response.toString(), listType);
-
-            // CARGAR TABLA
             tablaCitas.setItems(FXCollections.observableArrayList(citas));
 
         } catch (Exception e) {

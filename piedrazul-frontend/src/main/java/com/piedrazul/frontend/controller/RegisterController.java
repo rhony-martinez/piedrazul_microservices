@@ -67,11 +67,16 @@ public class RegisterController {
                 medicoClient.crearMedico(personaId, "MEDICO");
             }
 
-            //  3. Crear Usuario
+            // 3. Crear Usuario (esto crea el usuario tambien en Keycloak via Admin API
+            // y persiste la fila local con keycloak_user_id + atributos persona_id/usuario_id
+            // que apareceran en el JWT al hacer login).
             CrearUsuarioRequest usuarioRequest = new CrearUsuarioRequest();
             usuarioRequest.setPersonaId(personaId);
             usuarioRequest.setUsername(txtUsername.getText());
             usuarioRequest.setPassword(txtPassword.getText());
+            usuarioRequest.setEmail(txtCorreo.getText());
+            usuarioRequest.setFirstName(txtPrimerNombre.getText());
+            usuarioRequest.setLastName(txtPrimerApellido.getText());
             usuarioRequest.setRoles(List.of(cmbRol.getValue()));
 
             usuarioClient.crearUsuario(usuarioRequest);

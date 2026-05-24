@@ -1,20 +1,15 @@
 package com.piedrazul.usuarios.infrastructure.persistence.repository;
 
-import com.piedrazul.usuarios.domain.model.Rol;
 import com.piedrazul.usuarios.domain.model.Usuario;
 import com.piedrazul.usuarios.domain.repository.IUsuarioRepository;
-import com.piedrazul.usuarios.infrastructure.persistence.entity.RolEntity;
 import com.piedrazul.usuarios.infrastructure.persistence.entity.UsuarioEntity;
-import com.piedrazul.usuarios.infrastructure.persistence.entity.UsuarioRolEntity;
-import com.piedrazul.usuarios.infrastructure.persistence.entity.UsuarioRolId;
 import com.piedrazul.usuarios.infrastructure.persistence.mapper.UsuarioMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Repository
@@ -22,136 +17,40 @@ import java.util.stream.Collectors;
 public class UsuarioRepositoryImpl implements IUsuarioRepository {
 
     private final SpringDataUsuarioRepository usuarioRepository;
-    private final SpringDataRolRepository rolRepository;
-    private final SpringDataUsuarioRolRepository usuarioRolRepository;
 
-    public UsuarioRepositoryImpl(
-            SpringDataUsuarioRepository usuarioRepository,
-            SpringDataRolRepository rolRepository,
-            SpringDataUsuarioRolRepository usuarioRolRepository
-    ) {
+    public UsuarioRepositoryImpl(SpringDataUsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
-        this.rolRepository = rolRepository;
-        this.usuarioRolRepository = usuarioRolRepository;
     }
 
     @Override
     public Usuario guardar(Usuario usuario) {
-        UsuarioEntity usuarioEntity;
-
-        if (usuario.getId() == null) {
-            usuarioEntity = UsuarioEntity.builder()
-                    .username(usuario.getUsername())
-                    .password(usuario.getPasswordHash())
-                    .estado(usuario.getEstado().name())
-                    .personaId(usuario.getPersonaId())
-                    .intentosFallidos(usuario.getIntentosFallidos())
-                    .roles(new HashSet<>())
-                    .build();
-
-            usuarioEntity = usuarioRepository.save(usuarioEntity);
-
-            reconstruirRoles(usuarioEntity, usuario.getRoles());
-
-            usuarioEntity = usuarioRepository.save(usuarioEntity);
-
-            UsuarioEntity recargado = usuarioRepository.findById(usuarioEntity.getId())
-                    .orElseThrow(() -> new RuntimeException("No se pudo recargar el usuario guardado"));
-
-            return UsuarioMapper.toDomain(recargado);
-        }
-
-        usuarioEntity = usuarioRepository.findById(usuario.getId())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado para actualización"));
-
-        usuarioEntity.setUsername(usuario.getUsername());
-        usuarioEntity.setPassword(usuario.getPasswordHash());
-        usuarioEntity.setEstado(usuario.getEstado().name());
-        usuarioEntity.setPersonaId(usuario.getPersonaId());
-        usuarioEntity.setIntentosFallidos(usuario.getIntentosFallidos());
-
-        usuarioEntity.getRoles().clear();
-        reconstruirRoles(usuarioEntity, usuario.getRoles());
-
-        usuarioEntity = usuarioRepository.save(usuarioEntity);
-
-        UsuarioEntity recargado = usuarioRepository.findById(usuarioEntity.getId())
-                .orElseThrow(() -> new RuntimeException("No se pudo recargar el usuario actualizado"));
-
-        return UsuarioMapper.toDomain(recargado);
-    }
-
-    private void reconstruirRoles(UsuarioEntity usuarioEntity, Set<Rol> roles) {
-        if (roles == null || roles.isEmpty()) {
-            return;
-        }
-
-        for (Rol rol : roles) {
-            RolEntity rolEntity = obtenerRolEntity(rol);
-
-            UsuarioRolEntity usuarioRolEntity = UsuarioRolEntity.builder()
-                    .id(new UsuarioRolId(usuarioEntity.getId(), rolEntity.getId()))
-                    .usuario(usuarioEntity)
-                    .rol(rolEntity)
-                    .build();
-
-            usuarioEntity.getRoles().add(usuarioRolEntity);
-        }
-    }
-
-    private void guardarRoles(UsuarioEntity usuarioEntity, Set<Rol> roles) {
-        if (roles == null || roles.isEmpty()) {
-            return;
-        }
-
-        for (Rol rol : roles) {
-            RolEntity rolEntity = obtenerRolEntity(rol);
-
-            UsuarioRolEntity usuarioRolEntity = UsuarioRolEntity.builder()
-                    .id(new UsuarioRolId(usuarioEntity.getId(), rolEntity.getId()))
-                    .usuario(usuarioEntity)
-                    .rol(rolEntity)
-                    .build();
-
-            usuarioEntity.getRoles().add(usuarioRolEntity);
-        }
-
-        usuarioRepository.save(usuarioEntity);
-    }
-
-    private RolEntity obtenerRolEntity(Rol rol) {
-        if (rol.getId() != null) {
-            return rolRepository.findById(rol.getId())
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado con id: " + rol.getId()));
-        }
-
-        if (rol.getNombre() != null && !rol.getNombre().isBlank()) {
-            return rolRepository.findByNombre(rol.getNombre())
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado con nombre: " + rol.getNombre()));
-        }
-
-        throw new IllegalArgumentException("El rol debe tener id o nombre");
+        UsuarioEntity entity = UsuarioMapper.toEntity(usuario);
+        UsuarioEntity persisted = usuarioRepository.save(entity);
+        return UsuarioMapper.toDomain(persisted);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Usuario> buscarPorId(Integer id) {
-        return usuarioRepository.findById(id)
-                .map(UsuarioMapper::toDomain);
+    public Optional<Usuario> buscarPorId(UUID id) {
+        return usuarioRepository.findById(id).map(UsuarioMapper::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Usuario> buscarPorKeycloakUserId(UUID keycloakUserId) {
+        return usuarioRepository.findByKeycloakUserId(keycloakUserId).map(UsuarioMapper::toDomain);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Usuario> buscarPorUsername(String username) {
-        return usuarioRepository.findByUsername(username)
-                .map(UsuarioMapper::toDomain);
+        return usuarioRepository.findByUsername(username).map(UsuarioMapper::toDomain);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Usuario> buscarPorPersonaId(Integer personaId) {
-        return usuarioRepository.findByPersonaId(personaId)
-                .map(UsuarioMapper::toDomain);
+    public Optional<Usuario> buscarPorPersonaId(Long personaId) {
+        return usuarioRepository.findByPersonaId(personaId).map(UsuarioMapper::toDomain);
     }
 
     @Override
@@ -162,16 +61,20 @@ public class UsuarioRepositoryImpl implements IUsuarioRepository {
 
     @Override
     @Transactional(readOnly = true)
-    public boolean existePorPersonaId(Integer personaId) {
+    public boolean existePorPersonaId(Long personaId) {
         return usuarioRepository.existsByPersonaId(personaId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Usuario> listarTodos() {
-        return usuarioRepository.findAll()
-                .stream()
+        return usuarioRepository.findAll().stream()
                 .map(UsuarioMapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void eliminarPorId(UUID id) {
+        usuarioRepository.deleteById(id);
     }
 }

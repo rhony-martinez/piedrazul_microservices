@@ -15,7 +15,7 @@ public class AdministradorDashboardController {
         if (!SessionManager.isLoggedIn()) {
             SceneManager.showLogin("/view/auth_register/loginView.fxml",lblBienvenida);
         }
-        String username = SessionManager.getCurrentUser().getUsername();
+        String username = SessionManager.getUsername();
         lblBienvenida.setText("Bienvenido " + username);
     }
 

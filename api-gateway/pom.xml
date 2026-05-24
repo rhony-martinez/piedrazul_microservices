@@ -48,6 +48,22 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!--
+          Seguridad: el Gateway actua como OAuth2 Resource Server.
+          - Valida la firma del JWT contra el JWKS del realm 'piedrazul' de Keycloak.
+          - Rechaza con 401 cualquier request sin Bearer valido.
+          - Las reglas de autorizacion por ruta/rol estan en SecurityConfig.
+          spring-boot-starter-security trae el reactor de WebFlux Security (compatible con Spring Cloud Gateway).
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
         <!-- Lombok (opcional, para mantener consistencia con otros módulos) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
