@@ -3,6 +3,7 @@ package com.piedrazul.citas.application.port.outgoing;
 import com.piedrazul.citas.domain.model.Cita;
 import com.piedrazul.citas.domain.valueobjects.CitaId;
 import com.piedrazul.citas.domain.valueobjects.MedicoId;
+import com.piedrazul.citas.domain.valueobjects.PacienteId;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +29,12 @@ public interface CitaRepositoryPort {
         List<Cita> findAll();
 
         List<Cita> findByMedicoIdAndFecha(MedicoId medicoId,
+                        LocalDateTime inicio,
+                        LocalDateTime fin);
+
+        List<Cita> findByPacienteId(PacienteId pacienteId);
+
+        List<Cita> findByPacienteIdAndFecha(PacienteId pacienteId,
                         LocalDateTime inicio,
                         LocalDateTime fin);
 }

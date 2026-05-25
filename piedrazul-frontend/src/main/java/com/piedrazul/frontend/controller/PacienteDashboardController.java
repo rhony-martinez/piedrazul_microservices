@@ -38,4 +38,13 @@ public class PacienteDashboardController {
                 "PIEDRAZUL - Agendar Cita"
         );
     }
+
+    @FXML
+    private void handleMisCitas() {
+        SceneManager.switchScene(
+                "/view/dashboard/misCitasPacienteView.fxml",
+                lblBienvenida,
+                "PIEDRAZUL - Mis Citas"
+        );
+    }
 }

@@ -47,4 +47,19 @@ public class CitaClient {
             throw new RuntimeException("Error al crear cita autonoma: " + e.getMessage(), e);
         }
     }
+
+    public List<CitaResponse> listarPorPaciente(Long pacienteId) {
+        try {
+            AuthenticatedHttpClient.Response resp =
+                    AuthenticatedHttpClient.get(BASE_URL + "/historial?pacienteId=" + pacienteId);
+            return objectMapper.readValue(
+                    resp.getBody(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, CitaResponse.class)
+            );
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            throw new RuntimeException("Error listando citas: " + e.getResponseBody(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al listar citas del paciente: " + e.getMessage(), e);
+        }
+    }
 }

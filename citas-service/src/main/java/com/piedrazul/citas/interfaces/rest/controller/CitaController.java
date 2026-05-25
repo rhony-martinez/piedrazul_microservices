@@ -117,6 +117,7 @@ public class CitaController {
     @GetMapping("/historial")
     public ResponseEntity<?> listar(
             @RequestParam(required = false) Long medicoId,
+            @RequestParam(required = false) Long pacienteId,
             @RequestParam(required = false) String fecha) {
 
         try {
@@ -127,7 +128,7 @@ public class CitaController {
 
             List<CitaRestResponse> response =
                     listarCitasPorMedicoUseCase
-                            .listar(medicoId, fechaParsed)
+                            .listar(medicoId, pacienteId, fechaParsed)
                             .stream()
                             .map(mapper::toRestResponse)
                             .toList();

@@ -117,11 +117,30 @@ public class CitaService implements CancelarCitaUseCase,
 
     @Override
     @Transactional(readOnly = true)
-    public List<CitaResponse> listar(Long medicoId, LocalDate fecha) {
+    public List<CitaResponse> listar(Long medicoId, Long pacienteId, LocalDate fecha) {
 
         List<Cita> citas;
 
-        if (medicoId != null && fecha != null) {
+        if (pacienteId != null) {
+
+            if (fecha != null) {
+                LocalDateTime inicio = fecha.atStartOfDay();
+                LocalDateTime fin = fecha.atTime(23, 59, 59);
+                citas = citaRepository.findByPacienteIdAndFecha(
+                        PacienteId.of(pacienteId), inicio, fin
+                );
+            } else {
+                citas = citaRepository.findByPacienteId(PacienteId.of(pacienteId));
+            }
+
+            if (medicoId != null) {
+                MedicoId medicoIdVo = MedicoId.of(medicoId);
+                citas = citas.stream()
+                        .filter(c -> c.getMedicoId().equals(medicoIdVo))
+                        .toList();
+            }
+
+        } else if (medicoId != null && fecha != null) {
 
             LocalDateTime inicio = fecha.atStartOfDay();
             LocalDateTime fin = fecha.atTime(23, 59, 59);
