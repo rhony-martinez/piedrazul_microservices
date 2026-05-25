@@ -52,24 +52,10 @@ public class HistorialCitasController {
                     newScene.getStylesheets().add(css);
                 }
 
-                // Cuando el Stage esté disponible
+                // Cuando el Stage esté disponible, asegurar maximizado
                 newScene.windowProperty().addListener((o, oldWindow, newWindow) -> {
                     if (newWindow instanceof javafx.stage.Stage stage) {
-
-                        // Maximizar ventana
                         stage.setMaximized(true);
-
-                        // Opcional: ocupar toda la pantalla real
-                        // stage.setFullScreen(true);
-
-                        // Forzar tamaño de pantalla
-                        javafx.geometry.Rectangle2D screenBounds =
-                                javafx.stage.Screen.getPrimary().getVisualBounds();
-
-                        stage.setX(screenBounds.getMinX());
-                        stage.setY(screenBounds.getMinY());
-                        stage.setWidth(screenBounds.getWidth());
-                        stage.setHeight(screenBounds.getHeight());
                     }
                 });
             }

@@ -10,10 +10,10 @@ import com.piedrazul.frontend.util.ApiClientException;
 import com.piedrazul.frontend.util.ApiErrorParser;
 import com.piedrazul.frontend.util.FormFieldHelper;
 import com.piedrazul.frontend.util.NameNormalizer;
+import com.piedrazul.frontend.util.SceneManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.TextFormatter;
-import javafx.stage.Stage;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -153,15 +153,7 @@ public class RegisterController {
 
     @FXML
     private void goLogin() {
-        try {
-            Stage stage = (Stage) txtPrimerNombre.getScene().getWindow();
-            stage.getScene().setRoot(
-                    javafx.fxml.FXMLLoader.load(getClass().getResource("/view/auth_register/loginView.fxml"))
-            );
-            stage.setMaximized(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        SceneManager.showLogin("/view/auth_register/loginView.fxml", txtPrimerNombre);
     }
 
     private boolean validateForm() {

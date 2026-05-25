@@ -1,8 +1,8 @@
 package com.piedrazul.frontend.app;
 
+import com.piedrazul.frontend.util.SceneManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class MainApp extends Application {
@@ -13,14 +13,7 @@ public class MainApp extends Application {
                 getClass().getResource("/view/auth_register/loginView.fxml")
         );
 
-        Scene scene = new Scene(loader.load());
-
-        stage.setTitle("Piedrazul - Login");
-        stage.setScene(scene);
-        stage.setMinWidth(900);
-        stage.setMinHeight(620);
-        stage.setMaximized(true);
-        stage.show();
+        SceneManager.configureInitialStage(stage, loader.load(), "Piedrazul - Login");
     }
 
     public static void main(String[] args) {
