@@ -2,11 +2,14 @@ package com.piedrazul.frontend.controller;
 
 import com.piedrazul.frontend.auth.KeycloakAuthClient;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.FormFieldHelper;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 
 public class LoginController {
 
@@ -17,12 +20,45 @@ public class LoginController {
     private PasswordField txtPassword;
 
     @FXML
-    private void handleLogin() {
-        String username = txtUsername.getText();
-        String password = txtPassword.getText();
+    private HBox boxUsername;
 
-        if (username == null || username.isBlank() || password == null || password.isBlank()) {
-            showAlert("Datos faltantes", "Ingresa usuario y contrasena.", Alert.AlertType.WARNING);
+    @FXML
+    private HBox boxPassword;
+
+    @FXML
+    private Label errUsername;
+
+    @FXML
+    private Label errPassword;
+
+    @FXML
+    public void initialize() {
+        FormFieldHelper.bindClearOnChange(txtUsername, boxUsername, errUsername);
+        FormFieldHelper.bindClearOnChange(txtPassword, boxPassword, errPassword);
+    }
+
+    @FXML
+    private void handleLogin() {
+        clearErrors();
+
+        String username = txtUsername.getText() == null ? "" : txtUsername.getText().trim();
+        String password = txtPassword.getText() == null ? "" : txtPassword.getText();
+
+        boolean hasError = false;
+
+        if (username.isBlank()) {
+            FormFieldHelper.showFieldError(txtUsername, boxUsername, errUsername,
+                    "Ingrese su usuario");
+            hasError = true;
+        }
+
+        if (password.isBlank()) {
+            FormFieldHelper.showFieldError(txtPassword, boxPassword, errPassword,
+                    "Ingrese su contraseña");
+            hasError = true;
+        }
+
+        if (hasError) {
             return;
         }
 
@@ -41,9 +77,18 @@ public class LoginController {
             redirectByRole(rol);
 
         } catch (KeycloakAuthClient.AuthException e) {
-            showAlert("Error de autenticacion", e.getMessage(), Alert.AlertType.ERROR);
+            if (isCredentialError(e.getMessage())) {
+                FormFieldHelper.showFieldError(txtUsername, boxUsername, errUsername,
+                        "Usuario o contraseña incorrectos");
+                FormFieldHelper.showFieldError(txtPassword, boxPassword, errPassword,
+                        "Usuario o contraseña incorrectos");
+            } else {
+                FormFieldHelper.showFieldError(txtUsername, boxUsername, errUsername,
+                        e.getMessage());
+            }
         } catch (Exception e) {
-            showAlert("Error inesperado", e.getMessage(), Alert.AlertType.ERROR);
+            FormFieldHelper.showFieldError(txtUsername, boxUsername, errUsername,
+                    "No se pudo conectar. Intente nuevamente.");
         }
     }
 
@@ -53,6 +98,19 @@ public class LoginController {
                 "/view/auth_register/register-View.fxml",
                 txtUsername
         );
+    }
+
+    private boolean isCredentialError(String message) {
+        if (message == null) {
+            return true;
+        }
+        String lower = message.toLowerCase();
+        return lower.contains("incorrect") || lower.contains("invalid_grant");
+    }
+
+    private void clearErrors() {
+        FormFieldHelper.clearFieldError(txtUsername, boxUsername, errUsername);
+        FormFieldHelper.clearFieldError(txtPassword, boxPassword, errPassword);
     }
 
     private void redirectByRole(String rol) {

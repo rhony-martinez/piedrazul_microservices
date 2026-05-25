@@ -1,6 +1,5 @@
 package com.piedrazul.usuarios.interfaces.rest.dto.request;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -31,9 +30,11 @@ public class CrearUsuarioRequest {
     @Size(min = 6, message = "password debe tener al menos 6 caracteres")
     private String password;
 
-    @NotBlank(message = "email es obligatorio")
-    @Email(message = "email invalido")
     private String email;
+
+    public void setEmail(String email) {
+        this.email = (email == null || email.isBlank()) ? null : email.trim();
+    }
 
     private String firstName;
 

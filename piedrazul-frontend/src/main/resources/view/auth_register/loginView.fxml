@@ -9,64 +9,56 @@
             stylesheets="@../css/login.css"
             styleClass="root">
 
-    <!-- 🔵 HEADER -->
     <top>
         <HBox styleClass="header">
             <Label text="PIEDRAZUL" styleClass="logo"/>
         </HBox>
     </top>
 
-    <!-- 🧾 CONTENIDO -->
     <center>
         <VBox alignment="CENTER" spacing="25" styleClass="container">
 
             <Label text="INICIAR SESIÓN" styleClass="title"/>
 
-            <!-- FORMULARIO -->
             <GridPane hgap="20" vgap="20" styleClass="form">
 
-                <!-- Usuario -->
-                <Label text="Usuario" styleClass="label"
+                <Label text="Usuario *" styleClass="label"
                        GridPane.rowIndex="0" GridPane.columnIndex="0"/>
 
-                <HBox spacing="10" styleClass="input-container"
-                      GridPane.rowIndex="0" GridPane.columnIndex="1">
+                <VBox spacing="4" GridPane.rowIndex="0" GridPane.columnIndex="1">
+                    <HBox fx:id="boxUsername" spacing="10" styleClass="input-container">
+                        <Label text="👤" styleClass="input-icon"/>
+                        <TextField fx:id="txtUsername"
+                                   promptText="Ej: juan.perez"
+                                   styleClass="input"/>
+                    </HBox>
+                    <Label fx:id="errUsername" styleClass="field-error"
+                           visible="false" managed="false"/>
+                </VBox>
 
-                    <Label text="👤" styleClass="input-icon"/>
-                    <TextField fx:id="txtUsername"
-                               promptText="Ingrese su usuario"
-                               styleClass="input"/>
-
-                </HBox>
-
-                <!-- Contraseña -->
-                <Label text="Contraseña" styleClass="label"
+                <Label text="Contraseña *" styleClass="label"
                        GridPane.rowIndex="1" GridPane.columnIndex="0"/>
 
-                <HBox spacing="10" styleClass="input-container"
-                      GridPane.rowIndex="1" GridPane.columnIndex="1">
-
-                    <Label text="🔒" styleClass="input-icon"/>
-                    <PasswordField fx:id="txtPassword"
-                                   promptText="Ingrese su contraseña"
-                                   styleClass="input"/>
-
-                </HBox>
+                <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                    <HBox fx:id="boxPassword" spacing="10" styleClass="input-container">
+                        <Label text="🔒" styleClass="input-icon"/>
+                        <PasswordField fx:id="txtPassword"
+                                       promptText="Ingrese su contraseña"
+                                       styleClass="input"/>
+                    </HBox>
+                    <Label fx:id="errPassword" styleClass="field-error"
+                           visible="false" managed="false"/>
+                </VBox>
 
             </GridPane>
 
-            <!-- BOTÓN PRINCIPAL -->
             <Button text="Iniciar Sesión"
                     onAction="#handleLogin"
                     styleClass="btn-primary"/>
 
-            <!-- ACCIÓN SECUNDARIA -->
             <Button text="Registrar"
                     onAction="#onGoRegister"
                     styleClass="btn-secondary"/>
-
-            <!-- MENSAJE -->
-            <Label fx:id="lblMensaje" styleClass="error-label"/>
 
         </VBox>
     </center>

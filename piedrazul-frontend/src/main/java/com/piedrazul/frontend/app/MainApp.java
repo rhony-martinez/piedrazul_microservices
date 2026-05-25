@@ -10,19 +10,20 @@ public class MainApp extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(
-                getClass().getResource("/view/auth_register/LoginView.fxml")
+                getClass().getResource("/view/auth_register/loginView.fxml")
         );
 
         Scene scene = new Scene(loader.load());
 
         stage.setTitle("Piedrazul - Login");
         stage.setScene(scene);
-        stage.setResizable(false);
+        stage.setMinWidth(900);
+        stage.setMinHeight(620);
+        stage.setMaximized(true);
         stage.show();
     }
 
     public static void main(String[] args) {
-
         launch();
     }
 }

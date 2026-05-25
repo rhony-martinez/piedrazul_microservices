@@ -9,107 +9,159 @@
             stylesheets="@../css/login.css"
             styleClass="root">
 
-    <!-- HEADER -->
     <top>
         <HBox styleClass="header">
             <Label text="PIEDRAZUL" styleClass="logo"/>
         </HBox>
     </top>
 
-    <!-- CONTENIDO -->
     <center>
         <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
-            <VBox spacing="25" alignment="CENTER" styleClass="container">
+            <VBox spacing="25" alignment="TOP_CENTER" styleClass="container register-container">
 
                 <Label text="REGISTRO DE USUARIO" styleClass="title"/>
+                <Label fx:id="lblFormError" styleClass="field-error"
+                       visible="false" managed="false" wrapText="true"
+                       maxWidth="1000"/>
 
-                <!-- DATOS PERSONALES -->
                 <VBox spacing="10">
                     <Label text="Datos personales" styleClass="section-title"/>
 
-                    <GridPane hgap="30" vgap="15">
+                    <GridPane styleClass="form-grid" hgap="24" vgap="18">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="170" prefWidth="190" halignment="RIGHT"/>
+                            <ColumnConstraints minWidth="280" hgrow="ALWAYS"/>
+                            <ColumnConstraints minWidth="170" prefWidth="190" halignment="RIGHT"/>
+                            <ColumnConstraints minWidth="280" hgrow="ALWAYS"/>
+                        </columnConstraints>
 
-                        <!-- COLUMNA IZQUIERDA -->
-                        <Label text="Primer Nombre" styleClass="label"/>
-                        <TextField fx:id="txtPrimerNombre" styleClass="input"
-                                   GridPane.columnIndex="1"/>
+                        <Label text="Primer nombre *" styleClass="label"/>
+                        <VBox spacing="4" GridPane.columnIndex="1">
+                            <TextField fx:id="txtPrimerNombre" styleClass="input"
+                                       promptText="Ej: Juan"/>
+                            <Label fx:id="errPrimerNombre" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
 
-                        <Label text="Primer Apellido" styleClass="label" GridPane.rowIndex="1"/>
-                        <TextField fx:id="txtPrimerApellido" styleClass="input"
-                                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                        <Label text="Segundo nombre" styleClass="label" GridPane.columnIndex="2"/>
+                        <VBox spacing="4" GridPane.columnIndex="3">
+                            <TextField fx:id="txtSegundoNombre" styleClass="input"
+                                       promptText="Opcional. Ej: Carlos"/>
+                            <Label fx:id="errSegundoNombre" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
 
-                        <Label text="Género" styleClass="label" GridPane.rowIndex="2"/>
-                        <ComboBox fx:id="cmbGenero" styleClass="input"
-                                  GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                        <Label text="Primer apellido *" styleClass="label" GridPane.rowIndex="1"/>
+                        <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                            <TextField fx:id="txtPrimerApellido" styleClass="input"
+                                       promptText="Ej: Pérez"/>
+                            <Label fx:id="errPrimerApellido" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
 
-                        <!-- COLUMNA DERECHA -->
-                        <Label text="Segundo Nombre" styleClass="label"
-                               GridPane.columnIndex="2"/>
-                        <TextField fx:id="txtSegundoNombre" styleClass="input"
-                                   GridPane.columnIndex="3"/>
-
-                        <Label text="Segundo Apellido" styleClass="label"
+                        <Label text="Segundo apellido" styleClass="label"
                                GridPane.rowIndex="1" GridPane.columnIndex="2"/>
-                        <TextField fx:id="txtSegundoApellido" styleClass="input"
-                                   GridPane.rowIndex="1" GridPane.columnIndex="3"/>
+                        <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="3">
+                            <TextField fx:id="txtSegundoApellido" styleClass="input"
+                                       promptText="Opcional. Ej: López"/>
+                            <Label fx:id="errSegundoApellido" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
 
-                        <Label text="Fecha Nacimiento" styleClass="label"
+                        <Label text="Género *" styleClass="label" GridPane.rowIndex="2"/>
+                        <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="1">
+                            <ComboBox fx:id="cmbGenero" styleClass="input"
+                                      promptText="Seleccione género"/>
+                            <Label fx:id="errGenero" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
+
+                        <Label text="Fecha nacimiento *" styleClass="label"
                                GridPane.rowIndex="2" GridPane.columnIndex="2"/>
-                        <DatePicker fx:id="dateNacimiento" styleClass="input"
-                                    GridPane.rowIndex="2" GridPane.columnIndex="3"/>
+                        <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="3">
+                            <DatePicker fx:id="dateNacimiento" styleClass="input"
+                                        promptText="DD/MM/AAAA"/>
+                            <Label fx:id="errFechaNacimiento" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
 
                     </GridPane>
                 </VBox>
 
-                <!-- CONTACTO -->
                 <VBox spacing="10">
                     <Label text="Datos de contacto" styleClass="section-title"/>
 
-                    <GridPane hgap="20" vgap="15">
+                    <GridPane styleClass="form-grid" hgap="24" vgap="18">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="170" prefWidth="190" halignment="RIGHT"/>
+                            <ColumnConstraints minWidth="320" hgrow="ALWAYS"/>
+                        </columnConstraints>
 
-                        <Label text="Teléfono" styleClass="label"/>
-                        <TextField fx:id="txtTelefono"
-                                   styleClass="input"
-                                   GridPane.columnIndex="1"/>
+                        <Label text="Teléfono *" styleClass="label"/>
+                        <VBox spacing="4" GridPane.columnIndex="1">
+                            <TextField fx:id="txtTelefono" styleClass="input"
+                                       promptText="10 dígitos. Ej: 3001234567"/>
+                            <Label fx:id="errTelefono" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
 
-                        <Label text="DNI" styleClass="label" GridPane.rowIndex="1"/>
-                        <TextField fx:id="txtDni"
-                                   styleClass="input"
-                                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                        <Label text="DNI *" styleClass="label" GridPane.rowIndex="1"/>
+                        <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                            <TextField fx:id="txtDni" styleClass="input"
+                                       promptText="Solo números. Ej: 1234567890"/>
+                            <Label fx:id="errDni" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
 
                         <Label text="Correo" styleClass="label" GridPane.rowIndex="2"/>
-                        <TextField fx:id="txtCorreo"
-                                   styleClass="input"
-                                   GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                        <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="1">
+                            <TextField fx:id="txtCorreo" styleClass="input"
+                                       promptText="Opcional. Ej: correo@ejemplo.com"/>
+                            <Label fx:id="errCorreo" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
 
                     </GridPane>
                 </VBox>
 
-                <!-- CUENTA -->
                 <VBox spacing="10">
                     <Label text="Datos de cuenta" styleClass="section-title"/>
 
-                    <GridPane hgap="20" vgap="15">
+                    <GridPane styleClass="form-grid" hgap="24" vgap="18">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="170" prefWidth="190" halignment="RIGHT"/>
+                            <ColumnConstraints minWidth="320" hgrow="ALWAYS"/>
+                        </columnConstraints>
 
-                        <Label text="Usuario 👤" styleClass="label"/>
-                        <TextField fx:id="txtUsername"
-                                   styleClass="input"
-                                   GridPane.columnIndex="1"/>
+                        <Label text="Usuario *" styleClass="label"/>
+                        <VBox spacing="4" GridPane.columnIndex="1">
+                            <TextField fx:id="txtUsername" styleClass="input"
+                                       promptText="Mín. 3 caracteres. Ej: juan.perez"/>
+                            <Label fx:id="errUsername" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
 
-                        <Label text="Contraseña 🔒" styleClass="label" GridPane.rowIndex="1"/>
-                        <PasswordField fx:id="txtPassword"
-                                       styleClass="input"
-                                       GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                        <Label text="Contraseña *" styleClass="label" GridPane.rowIndex="1"/>
+                        <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                            <PasswordField fx:id="txtPassword" styleClass="input"
+                                           promptText="Mín. 6 caracteres"/>
+                            <Label fx:id="errPassword" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
 
-                        <Label text="Rol" styleClass="label" GridPane.rowIndex="2"/>
-                        <ComboBox fx:id="cmbRol"
-                                  styleClass="input"
-                                  GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                        <Label text="Rol *" styleClass="label" GridPane.rowIndex="2"/>
+                        <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="1">
+                            <ComboBox fx:id="cmbRol" styleClass="input"
+                                      promptText="Seleccione un rol"/>
+                            <Label fx:id="errRol" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
 
                     </GridPane>
                 </VBox>
 
-                <!-- BOTONES -->
+                <Label text="* Campo obligatorio" styleClass="hint-label"/>
+
                 <VBox spacing="10" alignment="CENTER">
                     <Button text="Registrarse"
                             onAction="#handleRegister"

@@ -42,6 +42,25 @@
     -fx-font-size: 16px;
 }
 
+.form-grid .label {
+    -fx-wrap-text: true;
+    -fx-min-width: 170px;
+    -fx-pref-width: 190px;
+    -fx-max-width: 220px;
+    -fx-alignment: CENTER_RIGHT;
+    -fx-text-alignment: RIGHT;
+}
+
+.register-container {
+    -fx-max-width: 1200px;
+    -fx-padding: 40 60 40 60;
+}
+
+.form-grid .input {
+    -fx-pref-width: 320px;
+    -fx-max-width: Infinity;
+}
+
 /* INPUTS */
 /* INPUT BASE */
 .input {
@@ -118,7 +137,31 @@
     -fx-background-color: #4bb8d6;
 }
 
-/* ❌ MENSAJE ERROR */
+/* ❌ ERRORES DE CAMPO */
+.field-error {
+    -fx-text-fill: #ff5757;
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
+}
+
+.input-error {
+    -fx-background-color: #fde8e8;
+    -fx-border-color: #ff5757;
+    -fx-border-width: 1px;
+}
+
+.input-container-error {
+    -fx-background-color: #fde8e8;
+    -fx-border-color: #ff5757;
+    -fx-border-width: 1px;
+}
+
+.hint-label {
+    -fx-text-fill: #888888;
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
+}
+
 .error-label {
     -fx-text-fill: #ff5757;
     -fx-font-size: 13px;

@@ -11,34 +11,35 @@ import java.net.URL;
 
 public class SceneManager {
 
-    private static final double LOGIN_WIDTH = 900;
-    private static final double LOGIN_HEIGHT = 620;
-    private static final double LOGIN_MIN_WIDTH = 850;
-    private static final double LOGIN_MIN_HEIGHT = 580;
+    private static final double AUTH_MIN_WIDTH = 900;
+    private static final double AUTH_MIN_HEIGHT = 620;
 
     private static final double DASHBOARD_MIN_WIDTH = 1000;
     private static final double DASHBOARD_MIN_HEIGHT = 650;
 
     private SceneManager() {
-        // Evita crear objetos de esta clase
     }
 
     public static void showLogin(String fxmlPath, Node node) {
+        showAuthScreen(fxmlPath, node, "Piedrazul - Login");
+    }
+
+    public static void showRegister(String fxmlPath, Node node) {
+        showAuthScreen(fxmlPath, node, "Piedrazul - Registro");
+    }
+
+    private static void showAuthScreen(String fxmlPath, Node node, String title) {
         try {
             Parent root = FXMLLoader.load(SceneManager.class.getResource(fxmlPath));
 
             Stage stage = (Stage) node.getScene().getWindow();
             Scene scene = new Scene(root);
 
-            stage.setMaximized(false);
             stage.setScene(scene);
-            stage.setTitle("Piedrazul - Login");
-
-            stage.setMinWidth(LOGIN_MIN_WIDTH);
-            stage.setMinHeight(LOGIN_MIN_HEIGHT);
-            stage.setWidth(LOGIN_WIDTH);
-            stage.setHeight(LOGIN_HEIGHT);
-
+            stage.setTitle(title);
+            stage.setMinWidth(AUTH_MIN_WIDTH);
+            stage.setMinHeight(AUTH_MIN_HEIGHT);
+            stage.setMaximized(true);
             stage.show();
 
             Platform.runLater(stage::centerOnScreen);
@@ -73,31 +74,6 @@ public class SceneManager {
         }
     }
 
-    public static void showRegister(String fxmlPath, Node node) {
-        try {
-            Parent root = FXMLLoader.load(SceneManager.class.getResource(fxmlPath));
-
-            Stage stage = (Stage) node.getScene().getWindow();
-            Scene scene = new Scene(root);
-
-            stage.setMaximized(false);
-            stage.setScene(scene);
-            stage.setTitle("Piedrazul - Registro");
-
-            stage.setMinWidth(LOGIN_MIN_WIDTH);
-            stage.setMinHeight(LOGIN_MIN_HEIGHT);
-            stage.setWidth(LOGIN_WIDTH);
-            stage.setHeight(LOGIN_HEIGHT);
-
-            stage.show();
-
-            Platform.runLater(stage::centerOnScreen);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public static void switchScene(String fxmlPath, Node node, String title) {
         try {
             URL resource = SceneManager.class.getResource(fxmlPath);
@@ -116,10 +92,7 @@ public class SceneManager {
 
             stage.show();
 
-            // Maximizar correctamente
-            Platform.runLater(() -> {
-                stage.setMaximized(true);
-            });
+            Platform.runLater(() -> stage.setMaximized(true));
 
         } catch (Exception e) {
             System.out.println("ERROR CAMBIANDO ESCENA: " + fxmlPath);

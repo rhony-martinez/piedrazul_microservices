@@ -73,6 +73,7 @@ public class SecurityConfig {
                         // separar auto-registro de PACIENTE (publico) vs creacion por staff
                         // (ADMIN/AGENDADOR autenticado) cuando definamos el flujo final.
                         .pathMatchers(HttpMethod.POST, "/api/personas").permitAll()
+                        .pathMatchers(HttpMethod.DELETE, "/api/personas/*/registro-fallido").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/pacientes").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/personas/**", "/api/pacientes/**").authenticated()
                         .pathMatchers("/api/personas/**", "/api/pacientes/**")

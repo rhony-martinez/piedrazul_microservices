@@ -1,5 +1,6 @@
 package com.piedrazul.personas.interfaces.rest.controller;
 
+import com.piedrazul.personas.application.service.CompensarRegistroFallidoService;
 import com.piedrazul.personas.application.service.CrearPersonaService;
 import com.piedrazul.personas.application.service.ConsultarPersonaService;
 import com.piedrazul.personas.domain.model.Persona;
@@ -19,6 +20,7 @@ public class PersonaController {
 
     private final CrearPersonaService crearPersonaService;
     private final ConsultarPersonaService consultarPersonaService;
+    private final CompensarRegistroFallidoService compensarRegistroFallidoService;
     private final PersonaRestMapper mapper;
 
     @PostMapping
@@ -35,6 +37,11 @@ public class PersonaController {
                 request.getCorreo()
         );
         return mapper.toResponse(persona);
+    }
+
+    @DeleteMapping("/{id}/registro-fallido")
+    public void compensarRegistroFallido(@PathVariable Long id) {
+        compensarRegistroFallidoService.ejecutar(id);
     }
 
     @GetMapping("/{id}")

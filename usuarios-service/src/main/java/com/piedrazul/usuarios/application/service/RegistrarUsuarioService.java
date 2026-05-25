@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /**
  * Caso de uso: registrar un nuevo usuario.
@@ -39,6 +40,8 @@ import java.util.UUID;
 public class RegistrarUsuarioService {
 
     private static final Logger log = LoggerFactory.getLogger(RegistrarUsuarioService.class);
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}$");
 
     private final IUsuarioRepository usuarioRepository;
     private final PersonaServiceClient personaServiceClient;
@@ -63,7 +66,7 @@ public class RegistrarUsuarioService {
             String lastName,
             List<String> roles
     ) {
-        validarEntrada(personaId, username, password, roles);
+        validarEntrada(personaId, username, password, email, roles);
 
         String usernameNormalizado = username.trim();
 
@@ -123,7 +126,7 @@ public class RegistrarUsuarioService {
     }
 
     private void validarEntrada(
-            Long personaId, String username, String password, List<String> roles
+            Long personaId, String username, String password, String email, List<String> roles
     ) {
         if (personaId == null) {
             throw new IllegalArgumentException("personaId es obligatorio");
@@ -133,6 +136,9 @@ public class RegistrarUsuarioService {
         }
         if (password == null || password.isBlank()) {
             throw new IllegalArgumentException("password es obligatorio");
+        }
+        if (email != null && !email.isBlank() && !EMAIL_PATTERN.matcher(email.trim()).matches()) {
+            throw new IllegalArgumentException("email invalido");
         }
         if (roles == null || roles.isEmpty()) {
             throw new IllegalArgumentException("Debe asignarse al menos un rol");
