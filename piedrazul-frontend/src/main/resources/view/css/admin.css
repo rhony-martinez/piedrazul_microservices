@@ -30,12 +30,62 @@
 .field-label {
     -fx-text-fill: #5cceee;
     -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.form-grid .field-label {
+    -fx-wrap-text: true;
+    -fx-min-width: 220px;
+    -fx-pref-width: 240px;
+    -fx-max-width: 260px;
+    -fx-alignment: CENTER_RIGHT;
+    -fx-text-alignment: RIGHT;
+}
+
+.hint-label {
+    -fx-text-fill: #888888;
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
+}
+
+.field-error {
+    -fx-text-fill: #ff5757;
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
+}
+
+.input-error {
+    -fx-background-color: #fde8e8;
+    -fx-border-color: #ff5757;
+    -fx-border-width: 1px;
+}
+
+.status-label {
+    -fx-font-weight: bold;
+}
+
+.status-error {
+    -fx-text-fill: #ff5757;
+}
+
+.status-success {
+    -fx-text-fill: #2e9e44;
+}
+
+.status-warning {
+    -fx-text-fill: #e67e22;
+}
+
+.config-form {
+    -fx-max-width: 820px;
+    -fx-fill-width: true;
 }
 
 /* INPUTS */
 .text-field,
 .combo-box,
-.date-picker {
+.date-picker,
+.input-field {
     -fx-background-color: #eee8e8;
     -fx-border-color: #24c0eb;
     -fx-border-radius: 8px;

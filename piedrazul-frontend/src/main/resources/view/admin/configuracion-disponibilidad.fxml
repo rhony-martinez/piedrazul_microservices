@@ -11,118 +11,126 @@
       stylesheets="@../css/admin.css"
       styleClass="root">
 
-    <!-- ========================= -->
-    <!-- CONFIGURACIÓN SISTEMA -->
-    <!-- ========================= -->
+    <VBox spacing="12" alignment="TOP_CENTER" styleClass="card config-form">
 
-    <VBox spacing="10"
-          alignment="CENTER"
-          styleClass="card">
+        <Label text="Configuración del Sistema" styleClass="section-title"/>
+        <Label text="Define cuántas semanas hacia adelante pueden agendar los pacientes."
+               styleClass="hint-label" wrapText="true" maxWidth="700"/>
 
-        <Label text="Configuración del Sistema"
-               style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+        <GridPane styleClass="form-grid" hgap="20" vgap="12" maxWidth="700">
+            <columnConstraints>
+                <ColumnConstraints minWidth="220" prefWidth="240" halignment="RIGHT"/>
+                <ColumnConstraints minWidth="280" hgrow="ALWAYS"/>
+            </columnConstraints>
+
+            <Label text="Semanas disponibles *" styleClass="field-label"/>
+            <VBox spacing="4" GridPane.columnIndex="1">
+                <TextField fx:id="txtSemanas"
+                           promptText="Entero entre 1 y 52. Ej: 4"
+                           styleClass="input-field"/>
+                <Label fx:id="errSemanas" styleClass="field-error"
+                       visible="false" managed="false"/>
+            </VBox>
+        </GridPane>
 
         <HBox spacing="10" alignment="CENTER">
-
-            <Label text="Semanas disponibles:"/>
-
-            <TextField fx:id="txtSemanas"
-                       promptText="Ej: 4"
-                       prefWidth="100"/>
-
             <Button text="Guardar"
                     fx:id="btnGuardarConfiguracion"
                     onAction="#handleGuardarConfiguracion"/>
-
             <Button text="Editar"
                     fx:id="btnEditarConfiguracion"
                     onAction="#handleEditarConfiguracion"/>
-
         </HBox>
 
         <Label fx:id="lblEstadoConfiguracion"
                text="No configurado"
-               style="-fx-text-fill: red; -fx-font-weight: bold;"/>
+               styleClass="status-label status-error"/>
 
     </VBox>
 
-    <!-- ========================= -->
-    <!-- DISPONIBILIDAD -->
-    <!-- ========================= -->
-
     <VBox fx:id="contenedorDisponibilidad"
           spacing="12"
-          alignment="CENTER"
-          styleClass="card">
+          alignment="TOP_CENTER"
+          styleClass="card config-form">
 
-        <Label text="Configurar Disponibilidad"
-               style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+        <Label text="Configurar Disponibilidad" styleClass="section-title"/>
+        <Label text="Registre los horarios en los que cada médico atiende citas."
+               styleClass="hint-label" wrapText="true" maxWidth="750"/>
 
-        <ComboBox fx:id="cmbMedicos"
-                  promptText="Seleccione médico"
-                  prefWidth="250"/>
+        <GridPane styleClass="form-grid" hgap="20" vgap="12" maxWidth="750">
+            <columnConstraints>
+                <ColumnConstraints minWidth="220" prefWidth="240" halignment="RIGHT"/>
+                <ColumnConstraints minWidth="320" hgrow="ALWAYS"/>
+            </columnConstraints>
 
-        <ComboBox fx:id="cmbDiaSemana"
-                  promptText="Día"
-                  prefWidth="250"/>
+            <Label text="Médico *" styleClass="field-label"/>
+            <VBox spacing="4" GridPane.columnIndex="1">
+                <ComboBox fx:id="cmbMedicos"
+                          promptText="Seleccione el médico"
+                          styleClass="input-field"/>
+                <Label fx:id="errMedico" styleClass="field-error"
+                       visible="false" managed="false"/>
+            </VBox>
 
-        <HBox spacing="20" alignment="CENTER">
+            <Label text="Día de la semana *" styleClass="field-label" GridPane.rowIndex="1"/>
+            <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                <ComboBox fx:id="cmbDiaSemana"
+                          promptText="Seleccione el día"
+                          styleClass="input-field"/>
+                <Label fx:id="errDia" styleClass="field-error"
+                       visible="false" managed="false"/>
+            </VBox>
 
-            <VBox spacing="5">
-                <Label text="Desde:" styleClass="field-label"/>
+            <Label text="Hora de inicio *" styleClass="field-label" GridPane.rowIndex="2"/>
+            <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="1">
                 <TextField fx:id="txtHoraInicio"
-                           promptText="08:00"
-                           styleClass="input-small"/>
+                           promptText="Formato 24h. Ej: 08:00"
+                           styleClass="input-field input-small"/>
+                <Label fx:id="errHoraInicio" styleClass="field-error"
+                       visible="false" managed="false"/>
             </VBox>
 
-            <VBox spacing="5">
-                <Label text="Hasta:" styleClass="field-label"/>
+            <Label text="Hora de fin *" styleClass="field-label" GridPane.rowIndex="3"/>
+            <VBox spacing="4" GridPane.rowIndex="3" GridPane.columnIndex="1">
                 <TextField fx:id="txtHoraFin"
-                           promptText="10:00"
-                           styleClass="input-small"/>
+                           promptText="Debe ser posterior al inicio. Ej: 12:00"
+                           styleClass="input-field input-small"/>
+                <Label fx:id="errHoraFin" styleClass="field-error"
+                       visible="false" managed="false"/>
             </VBox>
 
-        </HBox>
+            <Label text="Intervalo entre citas (min) *" styleClass="field-label" GridPane.rowIndex="4"/>
+            <VBox spacing="4" GridPane.rowIndex="4" GridPane.columnIndex="1">
+                <TextField fx:id="txtIntervalo"
+                           promptText="Entero positivo. Ej: 30"
+                           styleClass="input-field input-small"/>
+                <Label fx:id="errIntervalo" styleClass="field-error"
+                       visible="false" managed="false"/>
+            </VBox>
+        </GridPane>
 
-        <TextField fx:id="txtIntervalo"
-                   promptText="Intervalo (minutos)"
-                   prefWidth="200"/>
+        <Label text="* Campo obligatorio" styleClass="hint-label"/>
 
-        <Button text="Agregar Disponibilidad"
-                onAction="#handleAgregar"/>
+        <Label fx:id="lblFormError" styleClass="field-error"
+               visible="false" managed="false" wrapText="true" maxWidth="750"/>
 
-        <!-- TABLA -->
+        <Button text="Agregar Disponibilidad" onAction="#handleAgregar"/>
+
         <TableView fx:id="tablaDisponibilidad"
                    prefHeight="250"
                    prefWidth="750">
 
             <columns>
-                <TableColumn fx:id="colMedico"
-                             text="Médico"
-                             prefWidth="180"/>
-
-                <TableColumn fx:id="colDia"
-                             text="Día"
-                             prefWidth="120"/>
-
-                <TableColumn fx:id="colHoraInicio"
-                             text="Inicio"
-                             prefWidth="100"/>
-
-                <TableColumn fx:id="colHoraFin"
-                             text="Fin"
-                             prefWidth="100"/>
-
-                <TableColumn fx:id="colIntervalo"
-                             text="Intervalo"
-                             prefWidth="100"/>
+                <TableColumn fx:id="colMedico" text="Médico" prefWidth="180"/>
+                <TableColumn fx:id="colDia" text="Día" prefWidth="120"/>
+                <TableColumn fx:id="colHoraInicio" text="Inicio" prefWidth="100"/>
+                <TableColumn fx:id="colHoraFin" text="Fin" prefWidth="100"/>
+                <TableColumn fx:id="colIntervalo" text="Intervalo (min)" prefWidth="120"/>
             </columns>
 
         </TableView>
 
     </VBox>
-
-    <!-- BOTÓN VOLVER -->
 
     <Button text="Volver al Dashboard"
             onAction="#handleVolver"
