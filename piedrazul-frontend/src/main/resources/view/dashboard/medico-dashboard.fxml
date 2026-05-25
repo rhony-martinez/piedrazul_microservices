@@ -70,6 +70,7 @@
                                 styleClass="dashboard-main-button"/>
 
                         <Button text="MIS CITAS"
+                                onAction="#handleMisCitas"
                                 styleClass="dashboard-main-button"/>
 
                     </HBox>

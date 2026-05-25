@@ -6,7 +6,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.piedrazul.frontend.controller.MisCitasPacienteController"
+            fx:controller="com.piedrazul.frontend.controller.MisCitasMedicoController"
             prefWidth="1100"
             prefHeight="650"
             style="-fx-background-color: #f1ebeb;">
@@ -32,6 +32,47 @@
                           -fx-text-fill: white;
                           -fx-font-weight: bold;"/>
 
+                        <HBox spacing="15" alignment="CENTER">
+
+                                <VBox spacing="5">
+                                        <Label text="Paciente"
+                                               style="-fx-text-fill: white;
+                                  -fx-font-weight: bold;"/>
+                                        <ComboBox fx:id="cmbPacientes"
+                                                  prefWidth="220"
+                                                  style="-fx-background-radius: 8;
+                                     -fx-font-size: 14px;"/>
+                                </VBox>
+
+                                <VBox spacing="5">
+                                        <Label text="Fecha"
+                                               style="-fx-text-fill: white;
+                                  -fx-font-weight: bold;"/>
+                                        <DatePicker fx:id="dpFecha"
+                                                    prefWidth="180"
+                                                    promptText="Seleccione fecha"
+                                                    style="-fx-background-radius: 8;
+                                       -fx-font-size: 14px;"/>
+                                </VBox>
+
+                                <VBox alignment="BOTTOM_CENTER">
+                                        <Button text="LISTAR"
+                                                onAction="#buscarCitas"
+                                                prefWidth="150"
+                                                prefHeight="45"
+                                                style="-fx-background-color: #5cceee;
+                                   -fx-text-fill: white;
+                                   -fx-font-weight: bold;
+                                   -fx-font-size: 16px;
+                                   -fx-background-radius: 10;
+                                   -fx-border-radius: 10;
+                                   -fx-border-color: #24c0eb;
+                                   -fx-border-width: 2;
+                                   -fx-cursor: hand;"/>
+                                </VBox>
+
+                        </HBox>
+
                 </VBox>
         </top>
 
@@ -42,7 +83,7 @@
                                 <Insets top="20" right="20" bottom="20" left="20"/>
                         </padding>
 
-                        <Label text="Historial de citas"
+                        <Label text="Citas asignadas"
                                style="-fx-font-size: 18px;
                           -fx-font-weight: bold;
                           -fx-text-fill: #37474f;"/>
@@ -64,7 +105,7 @@
                                 <columns>
                                         <TableColumn fx:id="colId" text="ID" prefWidth="60"/>
                                         <TableColumn fx:id="colFecha" text="Fecha" prefWidth="140"/>
-                                        <TableColumn fx:id="colMedico" text="Médico" prefWidth="200"/>
+                                        <TableColumn fx:id="colPaciente" text="Paciente" prefWidth="200"/>
                                         <TableColumn fx:id="colTipo" text="Tipo" prefWidth="100"/>
                                         <TableColumn fx:id="colEstado" text="Estado" prefWidth="120"/>
                                         <TableColumn fx:id="colMotivo" text="Motivo" prefWidth="280"/>

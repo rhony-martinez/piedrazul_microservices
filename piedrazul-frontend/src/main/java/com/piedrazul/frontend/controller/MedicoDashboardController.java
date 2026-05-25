@@ -28,4 +28,13 @@ public class MedicoDashboardController {
                 lblBienvenida
         );
     }
+
+    @FXML
+    private void handleMisCitas() {
+        SceneManager.switchScene(
+                "/view/dashboard/misCitasMedicoView.fxml",
+                lblBienvenida,
+                "PIEDRAZUL - Mis Citas"
+        );
+    }
 }

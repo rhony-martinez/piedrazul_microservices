@@ -171,3 +171,9 @@
 .cita-proxima-row:selected {
     -fx-background-color: #ffe08a;
 }
+
+.cita-leyenda-hint {
+    -fx-font-size: 12px;
+    -fx-text-fill: #78909c;
+    -fx-font-style: italic;
+}

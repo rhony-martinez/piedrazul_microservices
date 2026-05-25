@@ -1,7 +1,12 @@
 package com.piedrazul.frontend.controller;
 
 import com.piedrazul.frontend.client.CitaClient;
+import com.piedrazul.frontend.client.PacienteClient;
+import com.piedrazul.frontend.client.PersonaClient;
 import com.piedrazul.frontend.dto.response.CitaResponse;
+import com.piedrazul.frontend.dto.response.PacienteListItem;
+import com.piedrazul.frontend.dto.response.PacienteResponse;
+import com.piedrazul.frontend.dto.response.PersonaResponse;
 import com.piedrazul.frontend.session.SessionManager;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.beans.property.SimpleStringProperty;
@@ -10,17 +15,22 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-public class MisCitasPacienteController {
+public class MisCitasMedicoController {
 
     private static final DateTimeFormatter FECHA_DISPLAY =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
+    @FXML private ComboBox<PacienteListItem> cmbPacientes;
+    @FXML private DatePicker dpFecha;
     @FXML private Label lblProximaCita;
     @FXML private Label lblLeyendaProxima;
     @FXML private Button btnVolver;
@@ -28,20 +38,31 @@ public class MisCitasPacienteController {
 
     @FXML private TableColumn<CitaResponse, String> colId;
     @FXML private TableColumn<CitaResponse, String> colFecha;
-    @FXML private TableColumn<CitaResponse, String> colMedico;
+    @FXML private TableColumn<CitaResponse, String> colPaciente;
     @FXML private TableColumn<CitaResponse, String> colTipo;
     @FXML private TableColumn<CitaResponse, String> colEstado;
     @FXML private TableColumn<CitaResponse, String> colMotivo;
 
+    private Long medicoId;
     private String proximaCitaId;
+
     private final CitaClient citaClient = new CitaClient();
+    private final PacienteClient pacienteClient = new PacienteClient();
+    private final PersonaClient personaClient = new PersonaClient();
 
     @FXML
     public void initialize() {
+        medicoId = SessionManager.getPersonaId();
+        if (medicoId == null) {
+            mostrarError("No se pudo identificar tu perfil de médico. Vuelve a iniciar sesión.");
+            return;
+        }
+
         configurarEstilosVentana();
         configurarColumnas();
         configurarResaltadoFilas();
-        cargarCitas();
+        cargarPacientes();
+        buscarCitas();
     }
 
     private void configurarEstilosVentana() {
@@ -70,11 +91,11 @@ public class MisCitasPacienteController {
         colFecha.setCellValueFactory(data ->
                 new SimpleStringProperty(formatearFecha(data.getValue())));
 
-        colMedico.setCellValueFactory(data ->
+        colPaciente.setCellValueFactory(data ->
                 new SimpleStringProperty(
-                        data.getValue().getMedicoNombre() != null
-                                ? data.getValue().getMedicoNombre()
-                                : String.valueOf(data.getValue().getMedicoId())
+                        data.getValue().getPacienteNombre() != null
+                                ? data.getValue().getPacienteNombre()
+                                : String.valueOf(data.getValue().getPacienteId())
                 ));
 
         colTipo.setCellValueFactory(data -> new SimpleStringProperty("General"));
@@ -102,15 +123,40 @@ public class MisCitasPacienteController {
         });
     }
 
-    private void cargarCitas() {
+    private void cargarPacientes() {
         try {
-            Long pacienteId = SessionManager.getPersonaId();
-            if (pacienteId == null) {
-                mostrarError("No se pudo identificar tu perfil de paciente. Vuelve a iniciar sesión.");
-                return;
-            }
+            List<PacienteResponse> pacientes = pacienteClient.obtenerPacientes();
+            Map<Long, PersonaResponse> personasPorId = personaClient.listarPersonas().stream()
+                    .collect(Collectors.toMap(PersonaResponse::getId, p -> p, (a, b) -> a));
 
-            List<CitaResponse> citas = citaClient.listarPorPaciente(pacienteId);
+            List<PacienteListItem> items = pacientes.stream()
+                    .map(p -> {
+                        PersonaResponse persona = personasPorId.get(p.getPersonaId());
+                        String nombre = persona != null
+                                ? persona.getPrimerNombre() + " " + persona.getPrimerApellido()
+                                : "Paciente #" + p.getPersonaId();
+                        return new PacienteListItem(p.getPersonaId(), nombre.trim());
+                    })
+                    .sorted(Comparator.comparing(PacienteListItem::getNombreCompleto))
+                    .toList();
+
+            cmbPacientes.setItems(FXCollections.observableArrayList(items));
+            cmbPacientes.setPromptText("Todos los pacientes");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            mostrarError("No se pudo cargar el listado de pacientes: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void buscarCitas() {
+        try {
+            PacienteListItem pacienteSeleccionado = cmbPacientes.getValue();
+            Long pacienteId = pacienteSeleccionado != null ? pacienteSeleccionado.getPersonaId() : null;
+            LocalDate fecha = dpFecha.getValue();
+
+            List<CitaResponse> citas = citaClient.listarPorMedico(medicoId, pacienteId, fecha);
             citas.sort(Comparator.comparing(this::parseFechaHora).reversed());
 
             proximaCitaId = citas.stream()
@@ -145,11 +191,11 @@ public class MisCitasPacienteController {
                 .filter(c -> proximaCitaId.equals(c.getId()))
                 .findFirst()
                 .ifPresent(cita -> {
-                    String medico = cita.getMedicoNombre() != null
-                            ? cita.getMedicoNombre()
-                            : "médico #" + cita.getMedicoId();
+                    String paciente = cita.getPacienteNombre() != null
+                            ? cita.getPacienteNombre()
+                            : "paciente #" + cita.getPacienteId();
                     lblProximaCita.setText(
-                            "Próxima cita: " + formatearFecha(cita) + " con " + medico
+                            "Próxima cita: " + formatearFecha(cita) + " con " + paciente
                     );
                     if (!lblProximaCita.getStyleClass().contains("proxima-cita-label-activa")) {
                         lblProximaCita.getStyleClass().add("proxima-cita-label-activa");
@@ -191,7 +237,7 @@ public class MisCitasPacienteController {
     @FXML
     private void volver() {
         SceneManager.switchScene(
-                "/view/dashboard/paciente-dashboard.fxml",
+                "/view/dashboard/medico-dashboard.fxml",
                 btnVolver,
                 "Dashboard"
         );
