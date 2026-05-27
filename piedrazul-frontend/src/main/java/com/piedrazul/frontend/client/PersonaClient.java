@@ -3,7 +3,9 @@ package com.piedrazul.frontend.client;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.piedrazul.frontend.config.ApiConfig;
+import com.piedrazul.frontend.dto.request.ActualizarPersonaRequest;
 import com.piedrazul.frontend.dto.request.CrearPersonaRequest;
 import com.piedrazul.frontend.dto.response.PersonaResponse;
 import com.piedrazul.frontend.http.AuthenticatedHttpClient;
@@ -19,6 +21,7 @@ public class PersonaClient {
     }
 
     private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     public Long crearPersona(CrearPersonaRequest request) {
@@ -59,6 +62,33 @@ public class PersonaClient {
             throw new RuntimeException("Error listando personas: " + e.getResponseBody(), e);
         } catch (Exception e) {
             throw new RuntimeException("Error en PersonaClient: " + e.getMessage(), e);
+        }
+    }
+
+    public PersonaResponse obtenerPorId(Long personaId) {
+        try {
+            AuthenticatedHttpClient.Response resp =
+                    AuthenticatedHttpClient.get(personasBaseUrl() + "/" + personaId);
+            return objectMapper.readValue(resp.getBody(), PersonaResponse.class);
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            ApiErrorParser.ParsedApiError parsed = ApiErrorParser.parse(e.getResponseBody());
+            throw new ApiClientException(parsed, e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error obteniendo persona: " + e.getMessage(), e);
+        }
+    }
+
+    public PersonaResponse actualizarPersona(Long personaId, ActualizarPersonaRequest request) {
+        try {
+            String body = objectMapper.writeValueAsString(request);
+            AuthenticatedHttpClient.Response resp =
+                    AuthenticatedHttpClient.put(personasBaseUrl() + "/" + personaId, body);
+            return objectMapper.readValue(resp.getBody(), PersonaResponse.class);
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            ApiErrorParser.ParsedApiError parsed = ApiErrorParser.parse(e.getResponseBody());
+            throw new ApiClientException(parsed, e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error actualizando persona: " + e.getMessage(), e);
         }
     }
 }

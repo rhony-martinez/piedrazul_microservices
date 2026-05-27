@@ -75,6 +75,27 @@ public class Persona {
         );
     }
 
+    public void actualizarDatosAdministrables(
+            String primerNombre,
+            String segundoNombre,
+            String primerApellido,
+            String segundoApellido,
+            LocalDate fechaNacimiento,
+            String telefono
+    ) {
+        validarPrimerNombre(primerNombre);
+        validarPrimerApellido(primerApellido);
+        validarFechaNacimiento(fechaNacimiento);
+        validarTelefono(telefono);
+
+        this.primerNombre = primerNombre.trim();
+        this.segundoNombre = limpiarOpcional(segundoNombre);
+        this.primerApellido = primerApellido.trim();
+        this.segundoApellido = limpiarOpcional(segundoApellido);
+        this.fechaNacimiento = fechaNacimiento;
+        this.telefono = telefono.trim();
+    }
+
     public void actualizarDatosBasicos(
             String primerNombre,
             String segundoNombre,

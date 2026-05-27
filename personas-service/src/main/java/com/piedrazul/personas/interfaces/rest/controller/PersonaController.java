@@ -1,9 +1,11 @@
 package com.piedrazul.personas.interfaces.rest.controller;
 
+import com.piedrazul.personas.application.service.ActualizarPersonaService;
 import com.piedrazul.personas.application.service.CompensarRegistroFallidoService;
 import com.piedrazul.personas.application.service.CrearPersonaService;
 import com.piedrazul.personas.application.service.ConsultarPersonaService;
 import com.piedrazul.personas.domain.model.Persona;
+import com.piedrazul.personas.interfaces.rest.dto.request.ActualizarPersonaRequest;
 import com.piedrazul.personas.interfaces.rest.dto.request.CrearPersonaRequest;
 import com.piedrazul.personas.interfaces.rest.dto.response.PersonaResponse;
 import com.piedrazul.personas.interfaces.rest.mapper.PersonaRestMapper;
@@ -20,6 +22,7 @@ public class PersonaController {
 
     private final CrearPersonaService crearPersonaService;
     private final ConsultarPersonaService consultarPersonaService;
+    private final ActualizarPersonaService actualizarPersonaService;
     private final CompensarRegistroFallidoService compensarRegistroFallidoService;
     private final PersonaRestMapper mapper;
 
@@ -47,6 +50,15 @@ public class PersonaController {
     @GetMapping("/{id}")
     public PersonaResponse buscarPorId(@PathVariable Long id) {
         return mapper.toResponse(consultarPersonaService.buscarPorId(id));
+    }
+
+    @PutMapping("/{id}")
+    public PersonaResponse actualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody ActualizarPersonaRequest request
+    ) {
+        Persona persona = actualizarPersonaService.ejecutar(id, request);
+        return mapper.toResponse(persona);
     }
 
     @GetMapping
