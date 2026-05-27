@@ -19,7 +19,10 @@
         <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
             <VBox spacing="25" alignment="TOP_CENTER" styleClass="container register-container">
 
-                <Label text="REGISTRO DE USUARIO" styleClass="title"/>
+                <Label fx:id="lblTitulo" text="REGISTRO DE USUARIO" styleClass="title"/>
+                <Label fx:id="lblSubtitulo" styleClass="hint-label"
+                       visible="false" managed="false" wrapText="true"
+                       maxWidth="1000"/>
                 <Label fx:id="lblFormError" styleClass="field-error"
                        visible="false" managed="false" wrapText="true"
                        maxWidth="1000"/>
@@ -181,8 +184,9 @@
                             onAction="#handleRegister"
                             styleClass="btn-primary"/>
 
-                    <Button text="Volver al login"
-                            onAction="#goLogin"
+                    <Button fx:id="btnVolver"
+                            text="Volver al login"
+                            onAction="#handleVolver"
                             styleClass="btn-secondary"/>
                 </VBox>
 

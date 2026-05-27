@@ -30,6 +30,22 @@ public class AdministradorDashboardController {
     }
 
     @FXML
+    private void handleRegistrarUsuario() {
+        if (!SessionManager.isLoggedIn() || !SessionManager.hasRole("ADMINISTRADOR")) {
+            SessionManager.clear();
+            SceneManager.showLogin("/view/auth_register/loginView.fxml", lblBienvenida);
+            return;
+        }
+
+        SessionManager.beginRegisterFromAdminPanel();
+        SceneManager.switchScene(
+                "/view/auth_register/register-View.fxml",
+                lblBienvenida,
+                "PIEDRAZUL - Registrar usuario"
+        );
+    }
+
+    @FXML
     private void handleConfiguracionHorarios() {
         SceneManager.switchScene("/view/admin/configuracion-disponibilidad.fxml",lblBienvenida,"Configuración de Parámetros");
     }

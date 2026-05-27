@@ -67,7 +67,8 @@
                           styleClass="main-actions-row">
 
                         <Button text="REGISTRAR USUARIO"
-                                styleClass="dashboard-main-button"/>
+                                styleClass="dashboard-main-button"
+                                onAction="#handleRegistrarUsuario"/>
 
                         <Button text="ADMINISTRAR USUARIOS"
                                 styleClass="dashboard-main-button"/>

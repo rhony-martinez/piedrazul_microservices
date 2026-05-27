@@ -38,6 +38,9 @@ public final class SessionManager {
     private static volatile TokenSet tokens;
     private static volatile JwtClaims claims;
 
+    /** true cuando el registro se abrio desde el panel del administrador (no desde login). */
+    private static volatile boolean registerFromAdminPanel;
+
     private SessionManager() {
     }
 
@@ -62,6 +65,23 @@ public final class SessionManager {
             tokens = null;
             claims = null;
         }
+        registerFromAdminPanel = false;
+    }
+
+    public static void beginRegisterFromAdminPanel() {
+        registerFromAdminPanel = true;
+    }
+
+    public static boolean isRegisterFromAdminPanel() {
+        return registerFromAdminPanel;
+    }
+
+    public static void endRegisterFromAdminPanel() {
+        registerFromAdminPanel = false;
+    }
+
+    public static boolean hasRole(String role) {
+        return role != null && getRoles().contains(role);
     }
 
     public static boolean isLoggedIn() {

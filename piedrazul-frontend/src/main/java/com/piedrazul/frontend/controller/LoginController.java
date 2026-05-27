@@ -94,6 +94,7 @@ public class LoginController {
 
     @FXML
     private void onGoRegister() {
+        SessionManager.endRegisterFromAdminPanel();
         SceneManager.showRegister(
                 "/view/auth_register/register-View.fxml",
                 txtUsername

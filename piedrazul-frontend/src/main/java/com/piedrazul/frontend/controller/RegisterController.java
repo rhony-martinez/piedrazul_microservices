@@ -10,6 +10,7 @@ import com.piedrazul.frontend.util.ApiClientException;
 import com.piedrazul.frontend.util.ApiErrorParser;
 import com.piedrazul.frontend.util.FormFieldHelper;
 import com.piedrazul.frontend.util.NameNormalizer;
+import com.piedrazul.frontend.session.SessionManager;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -59,7 +60,10 @@ public class RegisterController {
     @FXML private VBox panelEspecialidades;
     @FXML private VBox boxEspecialidades;
     @FXML private Label errEspecialidades;
+    @FXML private Label lblTitulo;
+    @FXML private Label lblSubtitulo;
     @FXML private Label lblFormError;
+    @FXML private Button btnVolver;
 
     @FXML private Label errPrimerNombre;
     @FXML private Label errSegundoNombre;
@@ -83,6 +87,10 @@ public class RegisterController {
 
     @FXML
     public void initialize() {
+        if (!configurarContextoNavegacion()) {
+            return;
+        }
+
         cmbGenero.getItems().addAll("HOMBRE", "MUJER", "OTRO");
         cmbRol.getItems().addAll("PACIENTE", "MEDICO_TERAPISTA", "ADMINISTRADOR", "AGENDADOR");
         cmbRol.setValue("PACIENTE");
@@ -223,7 +231,7 @@ public class RegisterController {
             usuarioClient.crearUsuario(usuarioRequest);
 
             showAlert("Éxito", "Usuario registrado correctamente", Alert.AlertType.INFORMATION);
-            goLogin();
+            volverDespuesDeRegistro();
 
         } catch (ApiClientException e) {
             revertirRegistro(personaId);
@@ -241,8 +249,60 @@ public class RegisterController {
     }
 
     @FXML
-    private void goLogin() {
-        SceneManager.showLogin("/view/auth_register/loginView.fxml", txtPrimerNombre);
+    private void handleVolver() {
+        volverSinRegistrar();
+    }
+
+    private boolean configurarContextoNavegacion() {
+        if (SessionManager.isRegisterFromAdminPanel()) {
+            if (!SessionManager.isLoggedIn() || !SessionManager.hasRole("ADMINISTRADOR")) {
+                SessionManager.endRegisterFromAdminPanel();
+                SceneManager.showLogin("/view/auth_register/loginView.fxml", lblTitulo);
+                return false;
+            }
+
+            lblTitulo.setText("REGISTRO DE USUARIO");
+            lblSubtitulo.setText("Panel de administración — complete los datos del nuevo usuario.");
+            lblSubtitulo.setVisible(true);
+            lblSubtitulo.setManaged(true);
+            btnVolver.setText("Volver al menú principal");
+            return true;
+        }
+
+        lblSubtitulo.setVisible(false);
+        lblSubtitulo.setManaged(false);
+        btnVolver.setText("Volver al login");
+        return true;
+    }
+
+    private void volverSinRegistrar() {
+        if (SessionManager.isRegisterFromAdminPanel()) {
+            SessionManager.endRegisterFromAdminPanel();
+            SceneManager.showDashboard(
+                    "/view/dashboard/administrador-dashboard.fxml",
+                    btnVolver,
+                    "PIEDRAZUL - Administrador"
+            );
+            return;
+        }
+
+        SessionManager.endRegisterFromAdminPanel();
+        SceneManager.showLogin("/view/auth_register/loginView.fxml", btnVolver);
+    }
+
+    private void volverDespuesDeRegistro() {
+        if (SessionManager.isRegisterFromAdminPanel()) {
+            SessionManager.endRegisterFromAdminPanel();
+            SceneManager.showDashboard(
+                    "/view/dashboard/administrador-dashboard.fxml",
+                    btnVolver,
+                    "PIEDRAZUL - Administrador"
+            );
+            return;
+        }
+
+        SessionManager.endRegisterFromAdminPanel();
+        SceneManager.showLogin("/view/auth_register/loginView.fxml", btnVolver);
     }
 
     private boolean validateForm() {
