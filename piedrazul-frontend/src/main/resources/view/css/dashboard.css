@@ -177,3 +177,194 @@
     -fx-text-fill: #78909c;
     -fx-font-style: italic;
 }
+
+/* ===============================
+   AGENDAR CITA - PACIENTE
+   =============================== */
+
+.agendar-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.agendar-scroll > .viewport {
+    -fx-background-color: #f1ebeb;
+}
+
+.agendar-container {
+    -fx-padding: 28px 55px 36px 55px;
+}
+
+.agendar-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12px;
+    -fx-border-radius: 12px;
+    -fx-border-color: #d9d9d9;
+    -fx-border-width: 1px;
+    -fx-padding: 20px 24px 20px 24px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 6, 0.12, 0, 2);
+}
+
+.agendar-welcome-card {
+    -fx-border-color: #24c0eb;
+    -fx-border-width: 2px;
+}
+
+.agendar-welcome-title {
+    -fx-text-fill: #24c0eb;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.agendar-guide-text {
+    -fx-text-fill: #555555;
+    -fx-font-size: 14px;
+}
+
+.agendar-step-indicator {
+    -fx-text-fill: #1a8fb0;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 0 0 0;
+}
+
+.agendar-section-title {
+    -fx-text-fill: #24c0eb;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.agendar-field-label {
+    -fx-text-fill: #333333;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.agendar-field-hint {
+    -fx-text-fill: #888888;
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
+}
+
+.agendar-field-error {
+    -fx-text-fill: #ff5757;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.agendar-input {
+    -fx-background-color: #eee8e8;
+    -fx-border-color: #24c0eb;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 8px;
+    -fx-pref-height: 40px;
+}
+
+.agendar-input:focused {
+    -fx-border-width: 2px;
+}
+
+.agendar-input-error {
+    -fx-background-color: #fde8e8;
+    -fx-border-color: #ff5757;
+    -fx-border-width: 1px;
+}
+
+.agendar-slots-card {
+    -fx-padding: 16px 18px 16px 18px;
+}
+
+.agendar-slots-table {
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: #cacaca;
+    -fx-border-width: 1px;
+    -fx-font-size: 13px;
+}
+
+.agendar-slots-table .column-header-background {
+    -fx-background-color: #24c0eb;
+}
+
+.agendar-slots-table .column-header,
+.agendar-slots-table .filler {
+    -fx-background-color: #24c0eb;
+    -fx-size: 32px;
+}
+
+.agendar-slots-table .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+.agendar-slots-table .table-row-cell {
+    -fx-background-color: white;
+    -fx-cell-size: 32px;
+}
+
+.agendar-slots-table .table-row-cell:selected {
+    -fx-background-color: #5cceee;
+}
+
+.agendar-slots-table .table-row-cell:empty {
+    -fx-background-color: white;
+}
+
+.agendar-status-info {
+    -fx-text-fill: #1a8fb0;
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
+}
+
+.agendar-status-banner {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 16px 10px 16px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+}
+
+.agendar-status-error {
+    -fx-text-fill: #c0392b;
+    -fx-background-color: #fde8e8;
+    -fx-border-color: #ff5757;
+    -fx-border-width: 1px;
+}
+
+.agendar-status-success {
+    -fx-text-fill: #1e7e34;
+    -fx-background-color: #e8f8ec;
+    -fx-border-color: #2e9e44;
+    -fx-border-width: 1px;
+}
+
+.agendar-status-warning {
+    -fx-text-fill: #b86b00;
+    -fx-background-color: #fff3cd;
+    -fx-border-color: #e67e22;
+    -fx-border-width: 1px;
+}
+
+.agendar-btn-primary {
+    -fx-background-color: #24c0eb;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10px;
+    -fx-padding: 12px 32px 12px 32px;
+    -fx-cursor: hand;
+    -fx-min-width: 200px;
+}
+
+.agendar-btn-primary:hover {
+    -fx-background-color: #1aa7cc;
+}
+
+.agendar-btn-primary:disabled {
+    -fx-background-color: #b0dbe8;
+    -fx-text-fill: #f5f5f5;
+    -fx-cursor: default;
+}
