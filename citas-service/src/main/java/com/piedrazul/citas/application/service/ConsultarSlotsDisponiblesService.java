@@ -7,6 +7,7 @@ import com.piedrazul.citas.application.port.outgoing.DisponibilidadSnapshotRepos
 import com.piedrazul.citas.domain.model.DisponibilidadSnapshot;
 import com.piedrazul.citas.domain.model.TimeRange;
 import com.piedrazul.citas.domain.valueobjects.MedicoId;
+import com.piedrazul.citas.domain.valueobjects.PacienteId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,7 @@ public class ConsultarSlotsDisponiblesService implements ConsultarSlotsDisponibl
     private final ConfiguracionRepositoryPort configRepo;
 
     @Override
-    public List<LocalDateTime> consultar(MedicoId medicoId) {
+    public List<LocalDateTime> consultar(MedicoId medicoId, PacienteId pacienteId) {
 
         DisponibilidadSnapshot snapshot = disponibilidadRepo.findByMedicoId(medicoId)
                 .orElseThrow(() -> new RuntimeException("No hay disponibilidad"));
@@ -32,10 +33,13 @@ public class ConsultarSlotsDisponiblesService implements ConsultarSlotsDisponibl
         LocalDateTime ahora = LocalDateTime.now();
         LocalDateTime fin = ahora.plusWeeks(semanas);
 
-        List<LocalDateTime> citasExistentes =
-                citaRepo.findFechasOcupadasPorMedico(medicoId, ahora, fin);
+        Set<LocalDateTime> ocupados = new HashSet<>(
+                citaRepo.findFechasOcupadasPorMedico(medicoId, ahora, fin)
+        );
 
-        Set<LocalDateTime> ocupados = new HashSet<>(citasExistentes);
+        if (pacienteId != null) {
+            ocupados.addAll(citaRepo.findFechasOcupadasPorPaciente(pacienteId, ahora, fin));
+        }
 
         List<LocalDateTime> disponibles = new ArrayList<>();
 

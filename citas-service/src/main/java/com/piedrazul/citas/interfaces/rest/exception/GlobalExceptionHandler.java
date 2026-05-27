@@ -30,6 +30,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
+    @ExceptionHandler(PacienteNoDisponibleException.class)
+    public ResponseEntity<ErrorResponse> handlePacienteNoDisponible(PacienteNoDisponibleException ex) {
+        log.warn("Paciente no disponible: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("Paciente No Disponible")
+                .message(ex.getMessage())
+                .path(getPath())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     @ExceptionHandler(MedicoNoDisponibleException.class)
     public ResponseEntity<ErrorResponse> handleMedicoNoDisponible(MedicoNoDisponibleException ex) {
         log.error("Médico no disponible: {}", ex.getMessage());

@@ -34,8 +34,33 @@ public class CitaRepositoryImpl implements CitaRepositoryPort {
     }
 
     @Override
-    public boolean existsByMedicoIdAndFechaHora(MedicoId medicoId, LocalDateTime fechaHora) {
-        return springDataCitaRepository.existsByMedicoIdAndFechaHora(medicoId.value(), fechaHora);
+    public boolean existsCitaActivaByMedicoIdAndFechaHora(MedicoId medicoId, LocalDateTime fechaHora) {
+        return springDataCitaRepository.existsCitaActivaByMedicoIdAndFechaHora(
+                medicoId.value(), fechaHora);
+    }
+
+    @Override
+    public boolean existsCitaActivaByMedicoIdAndFechaHoraExcluding(
+            MedicoId medicoId,
+            LocalDateTime fechaHora,
+            CitaId citaId) {
+        return springDataCitaRepository.existsCitaActivaByMedicoIdAndFechaHoraExcluding(
+                medicoId.value(), fechaHora, citaId.toString());
+    }
+
+    @Override
+    public boolean existsCitaActivaByPacienteIdAndFechaHora(PacienteId pacienteId, LocalDateTime fechaHora) {
+        return springDataCitaRepository.existsCitaActivaByPacienteIdAndFechaHora(
+                pacienteId.value(), fechaHora);
+    }
+
+    @Override
+    public boolean existsCitaActivaByPacienteIdAndFechaHoraExcluding(
+            PacienteId pacienteId,
+            LocalDateTime fechaHora,
+            CitaId citaId) {
+        return springDataCitaRepository.existsCitaActivaByPacienteIdAndFechaHoraExcluding(
+                pacienteId.value(), fechaHora, citaId.toString());
     }
 
     @Override
@@ -44,8 +69,21 @@ public class CitaRepositoryImpl implements CitaRepositoryPort {
             LocalDateTime desde,
             LocalDateTime hasta) {
 
-        return springDataCitaRepository.findFechasOcupadas(
+        return springDataCitaRepository.findFechasOcupadasPorMedico(
                 medicoId.value(),
+                desde,
+                hasta
+        );
+    }
+
+    @Override
+    public List<LocalDateTime> findFechasOcupadasPorPaciente(
+            PacienteId pacienteId,
+            LocalDateTime desde,
+            LocalDateTime hasta) {
+
+        return springDataCitaRepository.findFechasOcupadasPorPaciente(
+                pacienteId.value(),
                 desde,
                 hasta
         );

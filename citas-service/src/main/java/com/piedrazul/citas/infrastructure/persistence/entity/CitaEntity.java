@@ -16,7 +16,8 @@ import java.util.UUID;
                 @Index(name = "idx_paciente_fecha", columnList = "paciente_id, fecha_hora")
         },
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_medico_fecha", columnNames = {"medico_id", "fecha_hora"})
+                @UniqueConstraint(name = "uk_medico_fecha", columnNames = {"medico_id", "fecha_hora"}),
+                @UniqueConstraint(name = "uk_paciente_fecha", columnNames = {"paciente_id", "fecha_hora"})
         }
 )
 @Data

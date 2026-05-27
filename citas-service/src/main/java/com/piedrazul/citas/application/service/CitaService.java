@@ -73,8 +73,21 @@ public class CitaService implements CancelarCitaUseCase,
         // Capturamos la fecha original antes de mutar el agregado,
         // para poder publicarla en el evento de reagendamiento.
         LocalDateTime fechaHoraOriginal = cita.getFechaHora();
+        LocalDateTime nuevaFechaHora = request.getNuevaFechaHora();
 
-        cita.reagendar(request.getNuevaFechaHora(), disponibilidad);
+        if (citaRepository.existsCitaActivaByMedicoIdAndFechaHoraExcluding(
+                cita.getMedicoId(), nuevaFechaHora, cita.getId())) {
+            throw new DisponibilidadNoDisponibleException(
+                    "El médico ya tiene una cita agendada en el horario seleccionado");
+        }
+
+        if (citaRepository.existsCitaActivaByPacienteIdAndFechaHoraExcluding(
+                cita.getPacienteId(), nuevaFechaHora, cita.getId())) {
+            throw new PacienteNoDisponibleException(
+                    "El paciente ya tiene una cita agendada en el horario seleccionado");
+        }
+
+        cita.reagendar(nuevaFechaHora, disponibilidad);
 
         Cita citaActualizada = citaRepository.save(cita);
         log.info("Cita reagendada exitosamente: {} nueva fecha: {}",

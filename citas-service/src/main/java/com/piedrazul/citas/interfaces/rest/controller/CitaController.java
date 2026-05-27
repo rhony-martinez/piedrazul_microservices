@@ -3,6 +3,7 @@ package com.piedrazul.citas.interfaces.rest.controller;
 import com.piedrazul.citas.application.dto.response.CitaResponse;
 import com.piedrazul.citas.application.port.incoming.*;
 import com.piedrazul.citas.domain.valueobjects.MedicoId;
+import com.piedrazul.citas.domain.valueobjects.PacienteId;
 import com.piedrazul.citas.interfaces.rest.dto.request.*;
 import com.piedrazul.citas.interfaces.rest.dto.response.CitaRestResponse;
 import com.piedrazul.citas.interfaces.rest.mapper.CitaRestMapper;
@@ -110,8 +111,11 @@ public class CitaController {
     }
 
     @GetMapping("/medicos/{medicoId}/slots")
-    public List<LocalDateTime> obtenerSlots(@PathVariable Long medicoId) {
-        return consultarSlotsDisponiblesUseCase.consultar(MedicoId.of(medicoId));
+    public List<LocalDateTime> obtenerSlots(
+            @PathVariable Long medicoId,
+            @RequestParam(required = false) Long pacienteId) {
+        PacienteId pacienteIdVo = pacienteId != null ? PacienteId.of(pacienteId) : null;
+        return consultarSlotsDisponiblesUseCase.consultar(MedicoId.of(medicoId), pacienteIdVo);
     }
 
     @GetMapping("/historial")

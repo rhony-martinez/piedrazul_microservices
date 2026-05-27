@@ -13,16 +13,81 @@ import java.util.Optional;
 @Repository
 public interface SpringDataCitaRepository extends JpaRepository<CitaEntity, String> {
     Optional<CitaEntity> findById(String id);
-    boolean existsByMedicoIdAndFechaHora(Long medicoId, LocalDateTime fechaHora);
+
+    @Query("""
+    SELECT COUNT(c) > 0
+    FROM CitaEntity c
+    WHERE c.medicoId = :medicoId
+    AND c.fechaHora = :fechaHora
+    AND c.estado IN ('PROGRAMADA', 'CONFIRMADA', 'REAGENDADA')
+    """)
+    boolean existsCitaActivaByMedicoIdAndFechaHora(
+            @Param("medicoId") Long medicoId,
+            @Param("fechaHora") LocalDateTime fechaHora
+    );
+
+    @Query("""
+    SELECT COUNT(c) > 0
+    FROM CitaEntity c
+    WHERE c.medicoId = :medicoId
+    AND c.fechaHora = :fechaHora
+    AND c.id <> :citaId
+    AND c.estado IN ('PROGRAMADA', 'CONFIRMADA', 'REAGENDADA')
+    """)
+    boolean existsCitaActivaByMedicoIdAndFechaHoraExcluding(
+            @Param("medicoId") Long medicoId,
+            @Param("fechaHora") LocalDateTime fechaHora,
+            @Param("citaId") String citaId
+    );
+
+    @Query("""
+    SELECT COUNT(c) > 0
+    FROM CitaEntity c
+    WHERE c.pacienteId = :pacienteId
+    AND c.fechaHora = :fechaHora
+    AND c.estado IN ('PROGRAMADA', 'CONFIRMADA', 'REAGENDADA')
+    """)
+    boolean existsCitaActivaByPacienteIdAndFechaHora(
+            @Param("pacienteId") Long pacienteId,
+            @Param("fechaHora") LocalDateTime fechaHora
+    );
+
+    @Query("""
+    SELECT COUNT(c) > 0
+    FROM CitaEntity c
+    WHERE c.pacienteId = :pacienteId
+    AND c.fechaHora = :fechaHora
+    AND c.id <> :citaId
+    AND c.estado IN ('PROGRAMADA', 'CONFIRMADA', 'REAGENDADA')
+    """)
+    boolean existsCitaActivaByPacienteIdAndFechaHoraExcluding(
+            @Param("pacienteId") Long pacienteId,
+            @Param("fechaHora") LocalDateTime fechaHora,
+            @Param("citaId") String citaId
+    );
+
     @Query("""
     SELECT c.fechaHora
     FROM CitaEntity c
     WHERE c.medicoId = :medicoId
     AND c.fechaHora BETWEEN :desde AND :hasta
-    AND c.estado = 'PROGRAMADA'
+    AND c.estado IN ('PROGRAMADA', 'CONFIRMADA', 'REAGENDADA')
     """)
-    List<LocalDateTime> findFechasOcupadas(
+    List<LocalDateTime> findFechasOcupadasPorMedico(
             @Param("medicoId") Long medicoId,
+            @Param("desde") LocalDateTime desde,
+            @Param("hasta") LocalDateTime hasta
+    );
+
+    @Query("""
+    SELECT c.fechaHora
+    FROM CitaEntity c
+    WHERE c.pacienteId = :pacienteId
+    AND c.fechaHora BETWEEN :desde AND :hasta
+    AND c.estado IN ('PROGRAMADA', 'CONFIRMADA', 'REAGENDADA')
+    """)
+    List<LocalDateTime> findFechasOcupadasPorPaciente(
+            @Param("pacienteId") Long pacienteId,
             @Param("desde") LocalDateTime desde,
             @Param("hasta") LocalDateTime hasta
     );

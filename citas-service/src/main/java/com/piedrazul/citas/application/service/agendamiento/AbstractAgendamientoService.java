@@ -39,6 +39,7 @@ public abstract class AbstractAgendamientoService {
                 obtenerDisponibilidad(medicoId);
 
         validarHorarioDisponible(
+                pacienteId,
                 medicoId,
                 request.getFechaHora(),
                 disponibilidad
@@ -72,8 +73,8 @@ public abstract class AbstractAgendamientoService {
 
         } catch (DataIntegrityViolationException e) {
 
-            throw new MedicoNoDisponibleException(
-                    "Horario ocupado"
+            throw new DisponibilidadNoDisponibleException(
+                    "El horario seleccionado ya no está disponible"
             );
         }
     }
@@ -117,25 +118,36 @@ public abstract class AbstractAgendamientoService {
     }
 
     private void validarHorarioDisponible(
+            PacienteId pacienteId,
             MedicoId medicoId,
             java.time.LocalDateTime fechaHora,
             DisponibilidadSnapshot disponibilidad
     ) {
 
-        if (citaRepository.existsByMedicoIdAndFechaHora(
+        if (citaRepository.existsCitaActivaByMedicoIdAndFechaHora(
                 medicoId,
                 fechaHora
         )) {
 
             throw new DisponibilidadNoDisponibleException(
-                    "Horario ocupado"
+                    "El médico ya tiene una cita agendada en el horario seleccionado"
+            );
+        }
+
+        if (citaRepository.existsCitaActivaByPacienteIdAndFechaHora(
+                pacienteId,
+                fechaHora
+        )) {
+
+            throw new PacienteNoDisponibleException(
+                    "El paciente ya tiene una cita agendada en el horario seleccionado"
             );
         }
 
         if (!disponibilidad.esSlotValido(fechaHora)) {
 
             throw new DisponibilidadNoDisponibleException(
-                    "Slot inválido"
+                    "El horario seleccionado no está disponible"
             );
         }
     }

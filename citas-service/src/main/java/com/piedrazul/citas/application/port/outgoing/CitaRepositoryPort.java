@@ -14,11 +14,27 @@ public interface CitaRepositoryPort {
 
         Optional<Cita> findById(CitaId id);
 
-        boolean existsByMedicoIdAndFechaHora(com.piedrazul.citas.domain.valueobjects.MedicoId medicoId,
-                        java.time.LocalDateTime fechaHora);
+        boolean existsCitaActivaByMedicoIdAndFechaHora(MedicoId medicoId, LocalDateTime fechaHora);
+
+        boolean existsCitaActivaByMedicoIdAndFechaHoraExcluding(
+                        MedicoId medicoId,
+                        LocalDateTime fechaHora,
+                        CitaId citaId);
+
+        boolean existsCitaActivaByPacienteIdAndFechaHora(PacienteId pacienteId, LocalDateTime fechaHora);
+
+        boolean existsCitaActivaByPacienteIdAndFechaHoraExcluding(
+                        PacienteId pacienteId,
+                        LocalDateTime fechaHora,
+                        CitaId citaId);
 
         List<LocalDateTime> findFechasOcupadasPorMedico(
                         MedicoId medicoId,
+                        LocalDateTime desde,
+                        LocalDateTime hasta);
+
+        List<LocalDateTime> findFechasOcupadasPorPaciente(
+                        PacienteId pacienteId,
                         LocalDateTime desde,
                         LocalDateTime hasta);
 

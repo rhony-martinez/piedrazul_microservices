@@ -140,7 +140,10 @@ public class AgendarCitaAutonomaController {
         }
 
         try {
-            List<LocalDateTime> slots = citaClient.obtenerSlotsDisponibles(medicoSeleccionado.getPersonaId());
+            List<LocalDateTime> slots = citaClient.obtenerSlotsDisponibles(
+                    medicoSeleccionado.getPersonaId(),
+                    pacienteId
+            );
             LocalDate fechaSeleccionada = dpFecha.getValue();
             List<LocalDateTime> slotsFiltrados = slots.stream()
                     .filter(slot -> slot.toLocalDate().equals(fechaSeleccionada))
@@ -164,7 +167,7 @@ public class AgendarCitaAutonomaController {
         } catch (Exception e) {
             tablaSlots.setItems(FXCollections.observableArrayList());
             mostrarEstadoGeneral(
-                    "No se pudieron cargar los horarios: " + e.getMessage(),
+                    mensajeAgendamientoParaPaciente(e.getMessage()),
                     "agendar-status-error"
             );
         }
@@ -255,9 +258,10 @@ public class AgendarCitaAutonomaController {
 
         } catch (Exception e) {
             mostrarEstadoGeneral(
-                    "No se pudo agendar la cita: " + e.getMessage(),
+                    mensajeAgendamientoParaPaciente(e.getMessage()),
                     "agendar-status-error"
             );
+            cargarSlots();
         }
     }
 
@@ -333,5 +337,23 @@ public class AgendarCitaAutonomaController {
 
     private static String nombreMedico(MedicoResponse medico) {
         return medico.getPrimerNombre() + " " + medico.getPrimerApellido();
+    }
+
+    private static String mensajeAgendamientoParaPaciente(String mensaje) {
+        if (mensaje == null || mensaje.isBlank()) {
+            return "No se pudo completar el agendamiento. Intente nuevamente.";
+        }
+
+        if (mensaje.contains("El paciente ya tiene una cita agendada")) {
+            return "Ya tiene una cita agendada en el horario seleccionado. Elija otra hora.";
+        }
+        if (mensaje.contains("El médico ya tiene una cita agendada")) {
+            return "Ese horario acaba de ser ocupado. Elija otra hora disponible.";
+        }
+        if (mensaje.contains("ya no está disponible")) {
+            return "El horario seleccionado ya no está disponible. Elija otra hora.";
+        }
+
+        return mensaje;
     }
 }
