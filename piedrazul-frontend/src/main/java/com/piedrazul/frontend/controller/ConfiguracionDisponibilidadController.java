@@ -40,6 +40,8 @@ public class ConfiguracionDisponibilidadController {
     @FXML private Button btnEditarConfiguracion;
     @FXML private Label lblEstadoConfiguracion;
     @FXML private Label lblFormError;
+    @FXML private Label lblEstadoEdicionDisponibilidad;
+    @FXML private Label lblFiltroTabla;
 
     @FXML private Label errSemanas;
     @FXML private Label errMedico;
@@ -64,6 +66,7 @@ public class ConfiguracionDisponibilidadController {
     @FXML private Button btnCancelarEdicionDisponibilidad;
 
     private final ObservableList<DisponibilidadRow> data = FXCollections.observableArrayList();
+    private final ObservableList<DisponibilidadRow> todasLasDisponibilidades = FXCollections.observableArrayList();
 
     private final MedicoClient medicoClient = new MedicoClient();
     private final DisponibilidadClient disponibilidadClient = new DisponibilidadClient();
@@ -104,6 +107,7 @@ public class ConfiguracionDisponibilidadController {
         bindTimeNormalization(txtHoraFin);
 
         cmbMedicos.getItems().addAll(medicoClient.obtenerMedicos());
+        cmbMedicos.valueProperty().addListener((obs, oldVal, newVal) -> aplicarFiltroTabla());
 
         actualizarModoFormulario(false);
         cargarConfiguracion();
@@ -270,11 +274,32 @@ public class ConfiguracionDisponibilidadController {
         btnCancelarEdicionDisponibilidad.setVisible(editando);
         btnCancelarEdicionDisponibilidad.setManaged(editando);
 
+        lblEstadoEdicionDisponibilidad.setVisible(editando);
+        lblEstadoEdicionDisponibilidad.setManaged(editando);
+
         if (!editando) {
             disponibilidadEnEdicionId = null;
         }
 
         actualizarBotonesSegunSeleccion();
+    }
+
+    private void aplicarFiltroTabla() {
+        MedicoResponse medicoSeleccionado = cmbMedicos.getValue();
+
+        if (medicoSeleccionado == null) {
+            data.setAll(todasLasDisponibilidades);
+            lblFiltroTabla.setText("Mostrando todas las disponibilidades registradas.");
+            return;
+        }
+
+        Long medicoId = medicoSeleccionado.getPersonaId();
+        var filtradas = todasLasDisponibilidades.stream()
+                .filter(row -> row.getMedicoId().equals(medicoId))
+                .toList();
+
+        data.setAll(filtradas);
+        lblFiltroTabla.setText("Mostrando disponibilidades de: " + medicoSeleccionado);
     }
 
     private void actualizarBotonesSegunSeleccion() {
@@ -492,7 +517,7 @@ public class ConfiguracionDisponibilidadController {
 
     private void cargarDisponibilidades() {
         try {
-            data.clear();
+            todasLasDisponibilidades.clear();
 
             var disponibilidades = disponibilidadClient.obtenerDisponibilidades();
 
@@ -504,7 +529,7 @@ public class ConfiguracionDisponibilidadController {
                         .findFirst()
                         .orElse("Médico ID: " + disponibilidad.getMedicoId());
 
-                data.add(new DisponibilidadRow(
+                todasLasDisponibilidades.add(new DisponibilidadRow(
                         disponibilidad.getId(),
                         disponibilidad.getMedicoId(),
                         nombreMedico,
@@ -514,6 +539,8 @@ public class ConfiguracionDisponibilidadController {
                         disponibilidad.getIntervaloMinutos()
                 ));
             }
+
+            aplicarFiltroTabla();
 
         } catch (Exception e) {
             mostrarAlerta("Error", "No se pudieron cargar las disponibilidades", Alert.AlertType.ERROR);

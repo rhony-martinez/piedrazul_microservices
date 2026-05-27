@@ -57,6 +57,12 @@
         <Label text="Registre los horarios en los que cada médico atiende citas."
                styleClass="hint-label" wrapText="true" maxWidth="750"/>
 
+        <Label fx:id="lblEstadoEdicionDisponibilidad"
+               text="Modo edición: los datos de la disponibilidad seleccionada se cargaron en el formulario. Actualice los campos y pulse Guardar Cambios."
+               styleClass="status-label status-warning"
+               wrapText="true" maxWidth="750"
+               visible="false" managed="false"/>
+
         <GridPane styleClass="form-grid" hgap="20" vgap="12" maxWidth="750">
             <columnConstraints>
                 <ColumnConstraints minWidth="220" prefWidth="240" halignment="RIGHT"/>
@@ -127,6 +133,10 @@
                     onAction="#handleCancelarEdicionDisponibilidad"
                     visible="false" managed="false"/>
         </HBox>
+
+        <Label fx:id="lblFiltroTabla"
+               text="Mostrando todas las disponibilidades registradas."
+               styleClass="hint-label" wrapText="true" maxWidth="750"/>
 
         <TableView fx:id="tablaDisponibilidad"
                    prefHeight="250"
