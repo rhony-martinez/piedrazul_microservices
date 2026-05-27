@@ -40,6 +40,39 @@ public class DisponibilidadClient {
         crearDisponibilidad(body);
     }
 
+    public void actualizarDisponibilidad(Long id,
+                                         Long medicoId,
+                                         String dia,
+                                         String horaInicio,
+                                         String horaFin,
+                                         Integer intervalo) {
+        try {
+            Map<String, Object> body = Map.of(
+                    "medicoId", medicoId,
+                    "diaSemana", dia,
+                    "horaInicio", horaInicio,
+                    "horaFin", horaFin,
+                    "intervaloMinutos", intervalo
+            );
+            String json = objectMapper.writeValueAsString(body);
+            AuthenticatedHttpClient.put(URL + "/" + id, json);
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            throw new RuntimeException("Error actualizando disponibilidad: " + e.getResponseBody(), e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void eliminarDisponibilidad(Long id) {
+        try {
+            AuthenticatedHttpClient.delete(URL + "/" + id);
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            throw new RuntimeException("Error eliminando disponibilidad: " + e.getResponseBody(), e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public List<DisponibilidadResponse> obtenerDisponibilidades() {
         try {
             AuthenticatedHttpClient.Response resp = AuthenticatedHttpClient.get(URL);

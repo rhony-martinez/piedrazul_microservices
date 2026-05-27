@@ -40,6 +40,12 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.queue.disponibilidad-actualizada}")
     private String queueDisponibilidadActualizada;
 
+    @Value("${rabbitmq.queue.disponibilidad-eliminada}")
+    private String queueDisponibilidadEliminada;
+
+    @Value("${rabbitmq.queue.disponibilidad-modificada}")
+    private String queueDisponibilidadModificada;
+
     @Bean
     public TopicExchange citasExchange() {
         return new TopicExchange(citasExchange);
@@ -68,6 +74,16 @@ public class RabbitMQConfig {
     @Bean
     public Queue disponibilidadActualizadaQueue() {
         return new Queue(queueDisponibilidadActualizada, true);
+    }
+
+    @Bean
+    public Queue disponibilidadEliminadaQueue() {
+        return new Queue(queueDisponibilidadEliminada, true);
+    }
+
+    @Bean
+    public Queue disponibilidadModificadaQueue() {
+        return new Queue(queueDisponibilidadModificada, true);
     }
 
     @Bean
@@ -100,6 +116,22 @@ public class RabbitMQConfig {
                 .bind(disponibilidadActualizadaQueue())
                 .to(personasExchange())
                 .with("disponibilidad.actualizada");
+    }
+
+    @Bean
+    public Binding disponibilidadEliminadaBinding() {
+        return BindingBuilder
+                .bind(disponibilidadEliminadaQueue())
+                .to(personasExchange())
+                .with("disponibilidad.eliminada");
+    }
+
+    @Bean
+    public Binding disponibilidadModificadaBinding() {
+        return BindingBuilder
+                .bind(disponibilidadModificadaQueue())
+                .to(personasExchange())
+                .with("disponibilidad.modificada");
     }
 
     @Bean

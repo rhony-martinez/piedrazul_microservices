@@ -102,6 +102,25 @@ public class DisponibilidadSnapshot {
         }
     }
 
+    public void removerHorarioSemanal(DayOfWeek dia, TimeRange rango) {
+        List<TimeRange> existentes = horariosSemanales.get(dia);
+        if (existentes == null) {
+            return;
+        }
+
+        existentes.removeIf(r -> r.getStart().equals(rango.getStart())
+                && r.getEnd().equals(rango.getEnd()));
+
+        if (existentes.isEmpty()) {
+            horariosSemanales.remove(dia);
+        }
+    }
+
+    public void reemplazarHorarioSemanal(DayOfWeek dia, TimeRange anterior, TimeRange nuevo) {
+        removerHorarioSemanal(dia, anterior);
+        agregarHorarioSemanalSinDuplicados(dia, nuevo);
+    }
+
     public boolean esSlotValido(LocalDateTime fechaHora) {
         if (!estaDisponible(this.medicoId, fechaHora)) {
             return false;

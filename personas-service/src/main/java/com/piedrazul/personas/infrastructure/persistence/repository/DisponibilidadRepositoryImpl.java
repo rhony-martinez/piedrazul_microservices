@@ -49,6 +49,11 @@ public class DisponibilidadRepositoryImpl implements IDisponibilidadRepository {
     }
 
     @Override
+    public boolean existePorMedicoIdYDiaExcluyendoId(Long medicoId, String diaSemana, Long id) {
+        return springDataRepository.existsByMedicoIdAndDiaSemanaAndIdNot(medicoId, diaSemana, id);
+    }
+
+    @Override
     public List<Disponibilidad> buscarTodas() {
 
         return springDataRepository.findAll()

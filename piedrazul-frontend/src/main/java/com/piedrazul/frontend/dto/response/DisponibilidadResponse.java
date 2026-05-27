@@ -7,6 +7,7 @@ import lombok.Setter;
 @Setter
 public class DisponibilidadResponse {
 
+    private Long id;
     private Long medicoId;
     private String diaSemana;
     private String horaInicio;

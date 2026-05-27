@@ -56,6 +56,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    @ExceptionHandler(DisponibilidadConCitasActivasException.class)
+    public ResponseEntity<ErrorResponse> handleDisponibilidadConCitasActivas(
+            DisponibilidadConCitasActivasException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Disponibilidad con citas activas: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error("Disponibilidad con Citas Activas")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     @ExceptionHandler(CitaNoEncontradaException.class)
     public ResponseEntity<ErrorResponse> handleCitaNoEncontrada(CitaNoEncontradaException ex) {
         log.error("Cita no encontrada: {}", ex.getMessage());

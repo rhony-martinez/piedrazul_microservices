@@ -20,6 +20,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.VBox;
 
+import java.util.Optional;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
@@ -56,11 +57,19 @@ public class ConfiguracionDisponibilidadController {
     @FXML private TableColumn<DisponibilidadRow, String> colHoraFin;
     @FXML private TableColumn<DisponibilidadRow, Integer> colIntervalo;
 
+    @FXML private Button btnAgregarDisponibilidad;
+    @FXML private Button btnEditarDisponibilidad;
+    @FXML private Button btnGuardarCambiosDisponibilidad;
+    @FXML private Button btnEliminarDisponibilidad;
+    @FXML private Button btnCancelarEdicionDisponibilidad;
+
     private final ObservableList<DisponibilidadRow> data = FXCollections.observableArrayList();
 
     private final MedicoClient medicoClient = new MedicoClient();
     private final DisponibilidadClient disponibilidadClient = new DisponibilidadClient();
     private final ConfiguracionClient configuracionClient = new ConfiguracionClient();
+
+    private Long disponibilidadEnEdicionId;
 
     @FXML
     public void initialize() {
@@ -71,6 +80,8 @@ public class ConfiguracionDisponibilidadController {
         colIntervalo.setCellValueFactory(cell -> new SimpleObjectProperty<>(cell.getValue().getIntervalo()));
 
         tablaDisponibilidad.setItems(data);
+        tablaDisponibilidad.getSelectionModel().selectedItemProperty()
+                .addListener((obs, oldVal, newVal) -> actualizarBotonesSegunSeleccion());
 
         cmbDiaSemana.getItems().addAll(
                 "LUNES", "MARTES", "MIERCOLES",
@@ -94,6 +105,7 @@ public class ConfiguracionDisponibilidadController {
 
         cmbMedicos.getItems().addAll(medicoClient.obtenerMedicos());
 
+        actualizarModoFormulario(false);
         cargarConfiguracion();
         cargarDisponibilidades();
     }
@@ -117,20 +129,102 @@ public class ConfiguracionDisponibilidadController {
                     medicoId, dia, horaInicio, horaFin, intervalo
             );
 
-            data.add(new DisponibilidadRow(
-                    cmbMedicos.getValue().toString(),
-                    dia,
-                    horaInicio,
-                    horaFin,
-                    intervalo
-            ));
-
             mostrarAlerta("Éxito", "Disponibilidad registrada correctamente", Alert.AlertType.INFORMATION);
             limpiarCamposDisponibilidad();
+            cargarDisponibilidades();
 
         } catch (Exception e) {
             showFormError(extractMessage(e.getMessage()));
         }
+    }
+
+    @FXML
+    private void handleEditarDisponibilidad() {
+        DisponibilidadRow seleccionada = tablaDisponibilidad.getSelectionModel().getSelectedItem();
+        if (seleccionada == null) {
+            return;
+        }
+
+        clearFormError();
+        clearDisponibilidadErrors();
+        disponibilidadEnEdicionId = seleccionada.getId();
+
+        seleccionarMedico(seleccionada.getMedicoId());
+        cmbDiaSemana.setValue(seleccionada.getDia());
+        txtHoraInicio.setText(seleccionada.getHoraInicio());
+        txtHoraFin.setText(seleccionada.getHoraFin());
+        txtIntervalo.setText(String.valueOf(seleccionada.getIntervalo()));
+
+        actualizarModoFormulario(true);
+    }
+
+    @FXML
+    private void handleGuardarCambiosDisponibilidad() {
+        if (disponibilidadEnEdicionId == null) {
+            return;
+        }
+
+        clearFormError();
+
+        if (!validateDisponibilidadForm()) {
+            return;
+        }
+
+        try {
+            Long medicoId = cmbMedicos.getValue().getPersonaId();
+            String dia = cmbDiaSemana.getValue();
+            String horaInicio = TimeInputHelper.normalize(txtHoraInicio.getText());
+            String horaFin = TimeInputHelper.normalize(txtHoraFin.getText());
+            Integer intervalo = IntegerInputHelper.parsePositiveInteger(txtIntervalo.getText());
+
+            disponibilidadClient.actualizarDisponibilidad(
+                    disponibilidadEnEdicionId,
+                    medicoId, dia, horaInicio, horaFin, intervalo
+            );
+
+            mostrarAlerta("Éxito", "Disponibilidad actualizada correctamente", Alert.AlertType.INFORMATION);
+            salirModoEdicion();
+            cargarDisponibilidades();
+
+        } catch (Exception e) {
+            showFormError(extractMessage(e.getMessage()));
+        }
+    }
+
+    @FXML
+    private void handleEliminarDisponibilidad() {
+        DisponibilidadRow seleccionada = tablaDisponibilidad.getSelectionModel().getSelectedItem();
+        if (seleccionada == null) {
+            return;
+        }
+
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Confirmar eliminación");
+        confirmacion.setHeaderText(null);
+        confirmacion.setContentText(
+                "¿Desea eliminar la disponibilidad seleccionada?\n"
+                        + seleccionada.getMedico() + " - " + seleccionada.getDia()
+                        + " (" + seleccionada.getHoraInicio() + " a " + seleccionada.getHoraFin() + ")"
+        );
+
+        Optional<ButtonType> resultado = confirmacion.showAndWait();
+        if (resultado.isEmpty() || resultado.get() != ButtonType.OK) {
+            return;
+        }
+
+        try {
+            disponibilidadClient.eliminarDisponibilidad(seleccionada.getId());
+            mostrarAlerta("Éxito", "Disponibilidad eliminada correctamente", Alert.AlertType.INFORMATION);
+            salirModoEdicion();
+            cargarDisponibilidades();
+        } catch (Exception e) {
+            showFormError(extractMessage(e.getMessage()));
+        }
+    }
+
+    @FXML
+    private void handleCancelarEdicionDisponibilidad() {
+        salirModoEdicion();
     }
 
     @FXML
@@ -166,6 +260,40 @@ public class ConfiguracionDisponibilidadController {
         btnGuardarConfiguracion.setDisable(false);
         lblEstadoConfiguracion.setText("Modo edición habilitado");
         lblEstadoConfiguracion.getStyleClass().setAll("status-label", "status-warning");
+    }
+
+    private void actualizarModoFormulario(boolean editando) {
+        btnAgregarDisponibilidad.setVisible(!editando);
+        btnAgregarDisponibilidad.setManaged(!editando);
+        btnGuardarCambiosDisponibilidad.setVisible(editando);
+        btnGuardarCambiosDisponibilidad.setManaged(editando);
+        btnCancelarEdicionDisponibilidad.setVisible(editando);
+        btnCancelarEdicionDisponibilidad.setManaged(editando);
+
+        if (!editando) {
+            disponibilidadEnEdicionId = null;
+        }
+
+        actualizarBotonesSegunSeleccion();
+    }
+
+    private void actualizarBotonesSegunSeleccion() {
+        boolean haySeleccion = tablaDisponibilidad.getSelectionModel().getSelectedItem() != null;
+        btnEditarDisponibilidad.setDisable(!haySeleccion || disponibilidadEnEdicionId != null);
+        btnEliminarDisponibilidad.setDisable(!haySeleccion || disponibilidadEnEdicionId != null);
+    }
+
+    private void salirModoEdicion() {
+        limpiarCamposDisponibilidad();
+        actualizarModoFormulario(false);
+        tablaDisponibilidad.getSelectionModel().clearSelection();
+    }
+
+    private void seleccionarMedico(Long medicoId) {
+        cmbMedicos.getItems().stream()
+                .filter(m -> m.getPersonaId().equals(medicoId))
+                .findFirst()
+                .ifPresent(m -> cmbMedicos.setValue(m));
     }
 
     private boolean validateDisponibilidadForm() {
@@ -296,11 +424,24 @@ public class ConfiguracionDisponibilidadController {
         if (message == null || message.isBlank()) {
             return "Ocurrió un error inesperado.";
         }
+
+        String body = message;
         int idx = message.indexOf(": ");
         if (idx >= 0 && idx < message.length() - 2) {
-            return message.substring(idx + 2).trim();
+            body = message.substring(idx + 2).trim();
         }
-        return message.trim();
+
+        int errorIndex = body.indexOf("\"error\"");
+        if (errorIndex >= 0) {
+            int start = body.indexOf(':', errorIndex) + 1;
+            int firstQuote = body.indexOf('"', start);
+            int secondQuote = body.indexOf('"', firstQuote + 1);
+            if (firstQuote >= 0 && secondQuote > firstQuote) {
+                return body.substring(firstQuote + 1, secondQuote);
+            }
+        }
+
+        return body.trim();
     }
 
     private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
@@ -364,6 +505,8 @@ public class ConfiguracionDisponibilidadController {
                         .orElse("Médico ID: " + disponibilidad.getMedicoId());
 
                 data.add(new DisponibilidadRow(
+                        disponibilidad.getId(),
+                        disponibilidad.getMedicoId(),
                         nombreMedico,
                         disponibilidad.getDiaSemana(),
                         disponibilidad.getHoraInicio(),

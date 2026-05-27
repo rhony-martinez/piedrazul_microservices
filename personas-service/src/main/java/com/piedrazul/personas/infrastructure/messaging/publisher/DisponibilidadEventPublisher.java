@@ -2,6 +2,8 @@
 package com.piedrazul.personas.infrastructure.messaging.publisher;
 
 import com.piedrazul.personas.infrastructure.messaging.event.DisponibilidadActualizadaEvent;
+import com.piedrazul.personas.infrastructure.messaging.event.DisponibilidadEliminadaEvent;
+import com.piedrazul.personas.infrastructure.messaging.event.DisponibilidadModificadaEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -51,5 +53,63 @@ public class DisponibilidadEventPublisher {
 
         rabbitTemplate.convertAndSend(personasExchange, "disponibilidad.actualizada", event);
         log.info("Evento DisponibilidadActualizada publicado exitosamente");
+    }
+
+    public void publicarDisponibilidadEliminada(
+            Long medicoId,
+            String diaSemana,
+            LocalTime horaInicio,
+            LocalTime horaFin
+    ) {
+        log.info("Publicando evento DisponibilidadEliminada para médico: {}", medicoId);
+
+        DisponibilidadEliminadaEvent event = DisponibilidadEliminadaEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .eventType("DISPONIBILIDAD_ELIMINADA")
+                .timestamp(LocalDateTime.now())
+                .data(DisponibilidadEliminadaEvent.DisponibilidadEliminadaData.builder()
+                        .medicoId(medicoId)
+                        .diaSemana(diaSemana)
+                        .horaInicio(horaInicio)
+                        .horaFin(horaFin)
+                        .build())
+                .build();
+
+        rabbitTemplate.convertAndSend(personasExchange, "disponibilidad.eliminada", event);
+        log.info("Evento DisponibilidadEliminada publicado exitosamente");
+    }
+
+    public void publicarDisponibilidadModificada(
+            Long medicoIdAnterior,
+            String diaSemanaAnterior,
+            LocalTime horaInicioAnterior,
+            LocalTime horaFinAnterior,
+            Long medicoIdNuevo,
+            String diaSemanaNuevo,
+            LocalTime horaInicioNuevo,
+            LocalTime horaFinNuevo,
+            Integer intervaloMinutos
+    ) {
+        log.info("Publicando evento DisponibilidadModificada para médico: {}", medicoIdAnterior);
+
+        DisponibilidadModificadaEvent event = DisponibilidadModificadaEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .eventType("DISPONIBILIDAD_MODIFICADA")
+                .timestamp(LocalDateTime.now())
+                .data(DisponibilidadModificadaEvent.DisponibilidadModificadaData.builder()
+                        .medicoId(medicoIdAnterior)
+                        .diaSemanaAnterior(diaSemanaAnterior)
+                        .horaInicioAnterior(horaInicioAnterior)
+                        .horaFinAnterior(horaFinAnterior)
+                        .medicoIdNuevo(medicoIdNuevo)
+                        .diaSemanaNuevo(diaSemanaNuevo)
+                        .horaInicioNuevo(horaInicioNuevo)
+                        .horaFinNuevo(horaFinNuevo)
+                        .intervaloMinutos(intervaloMinutos)
+                        .build())
+                .build();
+
+        rabbitTemplate.convertAndSend(personasExchange, "disponibilidad.modificada", event);
+        log.info("Evento DisponibilidadModificada publicado exitosamente");
     }
 }

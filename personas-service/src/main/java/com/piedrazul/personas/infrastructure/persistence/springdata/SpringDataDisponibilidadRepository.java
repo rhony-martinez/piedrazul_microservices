@@ -11,4 +11,6 @@ public interface SpringDataDisponibilidadRepository extends JpaRepository<Dispon
     List<DisponibilidadEntity> findByMedicoId(Long medicoId);
 
     boolean existsByMedicoIdAndDiaSemana(Long medicoId, String diaSemana);
+
+    boolean existsByMedicoIdAndDiaSemanaAndIdNot(Long medicoId, String diaSemana, Long id);
 }

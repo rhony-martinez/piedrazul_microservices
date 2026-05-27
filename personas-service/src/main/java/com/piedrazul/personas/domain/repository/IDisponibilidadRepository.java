@@ -16,5 +16,7 @@ public interface IDisponibilidadRepository {
 
     boolean existePorMedicoIdYDia(Long medicoId, String diaSemana);
 
+    boolean existePorMedicoIdYDiaExcluyendoId(Long medicoId, String diaSemana, Long id);
+
     List<Disponibilidad> buscarTodas();
 }

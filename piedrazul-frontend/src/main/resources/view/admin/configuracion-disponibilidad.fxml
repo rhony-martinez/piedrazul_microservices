@@ -114,7 +114,19 @@
         <Label fx:id="lblFormError" styleClass="field-error"
                visible="false" managed="false" wrapText="true" maxWidth="750"/>
 
-        <Button text="Agregar Disponibilidad" onAction="#handleAgregar"/>
+        <HBox spacing="10" alignment="CENTER">
+            <Button text="Agregar Disponibilidad"
+                    fx:id="btnAgregarDisponibilidad"
+                    onAction="#handleAgregar"/>
+            <Button text="Guardar Cambios"
+                    fx:id="btnGuardarCambiosDisponibilidad"
+                    onAction="#handleGuardarCambiosDisponibilidad"
+                    visible="false" managed="false"/>
+            <Button text="Cancelar"
+                    fx:id="btnCancelarEdicionDisponibilidad"
+                    onAction="#handleCancelarEdicionDisponibilidad"
+                    visible="false" managed="false"/>
+        </HBox>
 
         <TableView fx:id="tablaDisponibilidad"
                    prefHeight="250"
@@ -129,6 +141,17 @@
             </columns>
 
         </TableView>
+
+        <HBox spacing="10" alignment="CENTER">
+            <Button text="Editar seleccionada"
+                    fx:id="btnEditarDisponibilidad"
+                    onAction="#handleEditarDisponibilidad"
+                    disable="true"/>
+            <Button text="Eliminar seleccionada"
+                    fx:id="btnEliminarDisponibilidad"
+                    onAction="#handleEliminarDisponibilidad"
+                    disable="true"/>
+        </HBox>
 
     </VBox>
 
