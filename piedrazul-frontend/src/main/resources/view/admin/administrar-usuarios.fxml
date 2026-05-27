@@ -20,8 +20,6 @@
                visible="false" managed="false" wrapText="true" maxWidth="900"/>
         <Label fx:id="lblFormError" styleClass="field-error"
                visible="false" managed="false" wrapText="true" maxWidth="900"/>
-        <Label fx:id="lblEstadoGuardado" styleClass="status-label status-success"
-               visible="false" managed="false" wrapText="true" maxWidth="900"/>
     </VBox>
 
     <HBox spacing="18" alignment="TOP_CENTER" maxWidth="1100">
@@ -92,9 +90,11 @@
                 <TextField fx:id="txtDni" styleClass="input-field" disable="true"
                            GridPane.rowIndex="6" GridPane.columnIndex="1"/>
 
-                <Label text="Género" styleClass="field-label" GridPane.rowIndex="7"/>
-                <TextField fx:id="txtGenero" styleClass="input-field" disable="true"
-                           GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+                <Label text="Género *" styleClass="field-label" GridPane.rowIndex="7"/>
+                <VBox spacing="4" GridPane.rowIndex="7" GridPane.columnIndex="1">
+                    <ComboBox fx:id="cmbGenero" styleClass="input-field" disable="true"/>
+                    <Label fx:id="errGenero" styleClass="field-error" visible="false" managed="false"/>
+                </VBox>
 
                 <Label text="Correo" styleClass="field-label" GridPane.rowIndex="8"/>
                 <TextField fx:id="txtCorreo" styleClass="input-field" disable="true"

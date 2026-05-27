@@ -10,7 +10,7 @@ import com.piedrazul.frontend.session.SessionManager;
 import com.piedrazul.frontend.util.ApiClientException;
 import com.piedrazul.frontend.util.ApiErrorParser;
 import com.piedrazul.frontend.util.FormFieldHelper;
-import com.piedrazul.frontend.util.NameNormalizer;
+import com.piedrazul.frontend.util.PersonaFormSupport;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -18,18 +18,12 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.TextFormatter;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.function.UnaryOperator;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class AdministrarUsuariosController {
-
-    private static final Pattern NAME_PATTERN = Pattern.compile("^[\\p{L}\\s'-]+$");
-    private static final Pattern DIGITS_ONLY = Pattern.compile("\\d*");
 
     @FXML private TextField txtBuscar;
     @FXML private TableView<UsuarioAdminRow> tablaUsuarios;
@@ -40,7 +34,6 @@ public class AdministrarUsuariosController {
     @FXML private Label lblUsuarioSeleccionado;
     @FXML private Label lblEstadoCarga;
     @FXML private Label lblFormError;
-    @FXML private Label lblEstadoGuardado;
 
     @FXML private TextField txtPrimerNombre;
     @FXML private TextField txtSegundoNombre;
@@ -49,7 +42,8 @@ public class AdministrarUsuariosController {
     @FXML private DatePicker dateNacimiento;
     @FXML private TextField txtTelefono;
     @FXML private TextField txtDni;
-    @FXML private TextField txtGenero;
+    @FXML private ComboBox<String> cmbGenero;
+    @FXML private Label errGenero;
     @FXML private TextField txtCorreo;
 
     @FXML private Label errPrimerNombre;
@@ -95,7 +89,15 @@ public class AdministrarUsuariosController {
             }
         });
 
-        txtTelefono.setTextFormatter(digitsOnlyFormatter(10));
+        cmbGenero.getItems().addAll("HOMBRE", "MUJER", "OTRO");
+
+        txtTelefono.setTextFormatter(PersonaFormSupport.digitsOnlyFormatter(10));
+
+        PersonaFormSupport.bindNameNormalization(txtPrimerNombre);
+        PersonaFormSupport.bindNameNormalization(txtSegundoNombre);
+        PersonaFormSupport.bindNameNormalization(txtPrimerApellido);
+        PersonaFormSupport.bindNameNormalization(txtSegundoApellido);
+
         dateNacimiento.setDayCellFactory(picker -> new DateCell() {
             @Override
             public void updateItem(LocalDate date, boolean empty) {
@@ -110,6 +112,7 @@ public class AdministrarUsuariosController {
         bindClearOnChange(txtSegundoApellido, errSegundoApellido);
         bindClearOnChange(dateNacimiento, errFechaNacimiento);
         bindClearOnChange(txtTelefono, errTelefono);
+        bindClearOnChange(cmbGenero, errGenero);
 
         deshabilitarFormularioEdicion();
         cargarUsuarios();
@@ -135,18 +138,21 @@ public class AdministrarUsuariosController {
 
         try {
             ActualizarPersonaRequest request = new ActualizarPersonaRequest();
-            request.setPrimerNombre(normalizedName(txtPrimerNombre));
-            request.setSegundoNombre(normalizedNameOrNull(txtSegundoNombre));
-            request.setPrimerApellido(normalizedName(txtPrimerApellido));
-            request.setSegundoApellido(normalizedNameOrNull(txtSegundoApellido));
+            request.setPrimerNombre(PersonaFormSupport.normalizedName(txtPrimerNombre));
+            request.setSegundoNombre(PersonaFormSupport.normalizedNameOrNull(txtSegundoNombre));
+            request.setPrimerApellido(PersonaFormSupport.normalizedName(txtPrimerApellido));
+            request.setSegundoApellido(PersonaFormSupport.normalizedNameOrNull(txtSegundoApellido));
+            request.setGenero(cmbGenero.getValue());
             request.setFechaNacimiento(dateNacimiento.getValue());
-            request.setTelefono(trim(txtTelefono));
+            request.setTelefono(PersonaFormSupport.trim(txtTelefono));
 
             PersonaResponse actualizada =
                     personaClient.actualizarPersona(personaIdSeleccionada, request);
 
+            rellenarFormularioDesdePersona(actualizada);
             actualizarFilaSeleccionada(actualizada);
-            mostrarExito("Datos actualizados correctamente.");
+            mostrarAlerta("Éxito", "Los datos del usuario se actualizaron correctamente.",
+                    Alert.AlertType.INFORMATION);
 
         } catch (ApiClientException e) {
             mapServerError(e.getParsedError());
@@ -220,16 +226,7 @@ public class AdministrarUsuariosController {
             PersonaResponse persona = personaClient.obtenerPorId(personaId);
             lblUsuarioSeleccionado.setText("Editando: " + username + " (persona #" + personaId + ")");
 
-            txtPrimerNombre.setText(persona.getPrimerNombre());
-            txtSegundoNombre.setText(persona.getSegundoNombre());
-            txtPrimerApellido.setText(persona.getPrimerApellido());
-            txtSegundoApellido.setText(persona.getSegundoApellido());
-            dateNacimiento.setValue(persona.getFechaNacimiento());
-            txtTelefono.setText(persona.getTelefono());
-            txtDni.setText(persona.getDni());
-            txtGenero.setText(persona.getGenero());
-            txtCorreo.setText(persona.getCorreo());
-
+            rellenarFormularioDesdePersona(persona);
             habilitarFormularioEdicion();
 
         } catch (Exception e) {
@@ -276,13 +273,37 @@ public class AdministrarUsuariosController {
         return valor != null && valor.toLowerCase(Locale.ROOT).contains(filtro);
     }
 
+    private void rellenarFormularioDesdePersona(PersonaResponse persona) {
+        txtPrimerNombre.setText(PersonaFormSupport.displayName(persona.getPrimerNombre()));
+        txtSegundoNombre.setText(PersonaFormSupport.displayName(persona.getSegundoNombre()));
+        txtPrimerApellido.setText(PersonaFormSupport.displayName(persona.getPrimerApellido()));
+        txtSegundoApellido.setText(PersonaFormSupport.displayName(persona.getSegundoApellido()));
+        dateNacimiento.setValue(persona.getFechaNacimiento());
+        txtTelefono.setText(persona.getTelefono() != null ? persona.getTelefono().trim() : "");
+        txtDni.setText(persona.getDni());
+        cmbGenero.setValue(persona.getGenero());
+        txtCorreo.setText(persona.getCorreo());
+    }
+
     private boolean validarFormulario() {
+        PersonaFormSupport.normalizeNameFields(
+                txtPrimerNombre,
+                txtSegundoNombre,
+                txtPrimerApellido,
+                txtSegundoApellido
+        );
+
         boolean valido = true;
 
-        valido &= requireName(txtPrimerNombre, errPrimerNombre, "Ingrese el primer nombre");
-        valido &= optionalName(txtSegundoNombre, errSegundoNombre);
-        valido &= requireName(txtPrimerApellido, errPrimerApellido, "Ingrese el primer apellido");
-        valido &= optionalName(txtSegundoApellido, errSegundoApellido);
+        valido &= PersonaFormSupport.requireName(txtPrimerNombre, errPrimerNombre, "Ingrese el primer nombre");
+        valido &= PersonaFormSupport.optionalName(txtSegundoNombre, errSegundoNombre);
+        valido &= PersonaFormSupport.requireName(txtPrimerApellido, errPrimerApellido, "Ingrese el primer apellido");
+        valido &= PersonaFormSupport.optionalName(txtSegundoApellido, errSegundoApellido);
+
+        if (cmbGenero.getValue() == null) {
+            FormFieldHelper.showFieldError(cmbGenero, errGenero, "Seleccione un género");
+            valido = false;
+        }
 
         if (dateNacimiento.getValue() == null) {
             FormFieldHelper.showFieldError(dateNacimiento, errFechaNacimiento,
@@ -294,7 +315,7 @@ public class AdministrarUsuariosController {
             valido = false;
         }
 
-        String telefono = trim(txtTelefono);
+        String telefono = PersonaFormSupport.trim(txtTelefono);
         if (telefono.isEmpty()) {
             FormFieldHelper.showFieldError(txtTelefono, errTelefono, "Ingrese el teléfono");
             valido = false;
@@ -305,33 +326,6 @@ public class AdministrarUsuariosController {
         }
 
         return valido;
-    }
-
-    private boolean requireName(TextField field, Label errorLabel, String blankMessage) {
-        String value = normalizedName(field);
-        if (value.isEmpty()) {
-            FormFieldHelper.showFieldError(field, errorLabel, blankMessage);
-            return false;
-        }
-        if (!NAME_PATTERN.matcher(value).matches()) {
-            FormFieldHelper.showFieldError(field, errorLabel,
-                    "Solo letras, espacios, apóstrofes o guiones");
-            return false;
-        }
-        return true;
-    }
-
-    private boolean optionalName(TextField field, Label errorLabel) {
-        String value = normalizedName(field);
-        if (value.isEmpty()) {
-            return true;
-        }
-        if (!NAME_PATTERN.matcher(value).matches()) {
-            FormFieldHelper.showFieldError(field, errorLabel,
-                    "Solo letras, espacios, apóstrofes o guiones");
-            return false;
-        }
-        return true;
     }
 
     private void habilitarFormularioEdicion() {
@@ -353,6 +347,7 @@ public class AdministrarUsuariosController {
         txtSegundoApellido.setDisable(!editable);
         dateNacimiento.setDisable(!editable);
         txtTelefono.setDisable(!editable);
+        cmbGenero.setDisable(!editable);
     }
 
     private void limpiarFormulario() {
@@ -363,16 +358,72 @@ public class AdministrarUsuariosController {
         dateNacimiento.setValue(null);
         txtTelefono.clear();
         txtDni.clear();
-        txtGenero.clear();
+        cmbGenero.setValue(null);
         txtCorreo.clear();
     }
 
     private void mapServerError(ApiErrorParser.ParsedApiError parsed) {
-        if (parsed == null || parsed.message() == null) {
+        if (parsed == null) {
             mostrarError("No se pudo guardar los cambios.");
             return;
         }
-        mostrarError(parsed.message());
+
+        boolean mapped = false;
+        for (Map.Entry<String, String> entry : parsed.fieldErrors().entrySet()) {
+            mapped |= aplicarErrorCampo(entry.getKey(), entry.getValue());
+        }
+        if (mapped) {
+            return;
+        }
+
+        String message = parsed.message() == null ? "" : parsed.message().toLowerCase(Locale.ROOT);
+        if (message.contains("telefono") || message.contains("teléfono")) {
+            FormFieldHelper.showFieldError(txtTelefono, errTelefono, parsed.message());
+        } else if (message.contains("nombre")) {
+            FormFieldHelper.showFieldError(txtPrimerNombre, errPrimerNombre, parsed.message());
+        } else if (message.contains("apellido")) {
+            FormFieldHelper.showFieldError(txtPrimerApellido, errPrimerApellido, parsed.message());
+        } else if (message.contains("genero") || message.contains("género")) {
+            FormFieldHelper.showFieldError(cmbGenero, errGenero, parsed.message());
+        } else if (message.contains("fecha")) {
+            FormFieldHelper.showFieldError(dateNacimiento, errFechaNacimiento, parsed.message());
+        } else {
+            mostrarError(parsed.message() != null ? parsed.message() : "No se pudo guardar los cambios.");
+        }
+    }
+
+    private boolean aplicarErrorCampo(String field, String message) {
+        return switch (field) {
+            case "primerNombre" -> {
+                FormFieldHelper.showFieldError(txtPrimerNombre, errPrimerNombre, message);
+                yield true;
+            }
+            case "segundoNombre" -> {
+                FormFieldHelper.showFieldError(txtSegundoNombre, errSegundoNombre, message);
+                yield true;
+            }
+            case "primerApellido" -> {
+                FormFieldHelper.showFieldError(txtPrimerApellido, errPrimerApellido, message);
+                yield true;
+            }
+            case "segundoApellido" -> {
+                FormFieldHelper.showFieldError(txtSegundoApellido, errSegundoApellido, message);
+                yield true;
+            }
+            case "genero" -> {
+                FormFieldHelper.showFieldError(cmbGenero, errGenero, message);
+                yield true;
+            }
+            case "fechaNacimiento" -> {
+                FormFieldHelper.showFieldError(dateNacimiento, errFechaNacimiento, message);
+                yield true;
+            }
+            case "telefono" -> {
+                FormFieldHelper.showFieldError(txtTelefono, errTelefono, message);
+                yield true;
+            }
+            default -> false;
+        };
     }
 
     private void mostrarCarga(String mensaje) {
@@ -393,17 +444,17 @@ public class AdministrarUsuariosController {
         lblFormError.setManaged(true);
     }
 
-    private void mostrarExito(String mensaje) {
-        lblEstadoGuardado.setText(mensaje);
-        lblEstadoGuardado.setVisible(true);
-        lblEstadoGuardado.setManaged(true);
+    private void mostrarAlerta(String titulo, String mensaje, Alert.AlertType tipo) {
+        Alert alert = new Alert(tipo);
+        alert.setTitle(titulo);
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
     }
 
     private void ocultarMensajes() {
         lblFormError.setVisible(false);
         lblFormError.setManaged(false);
-        lblEstadoGuardado.setVisible(false);
-        lblEstadoGuardado.setManaged(false);
         ocultarCarga();
     }
 
@@ -419,30 +470,6 @@ public class AdministrarUsuariosController {
     private void ocultarMensajesParcial() {
         lblFormError.setVisible(false);
         lblFormError.setManaged(false);
-        lblEstadoGuardado.setVisible(false);
-        lblEstadoGuardado.setManaged(false);
     }
 
-    private TextFormatter<String> digitsOnlyFormatter(int maxLength) {
-        UnaryOperator<TextFormatter.Change> filter = change -> {
-            String next = change.getControlNewText();
-            if (!DIGITS_ONLY.matcher(next).matches() || next.length() > maxLength) {
-                return null;
-            }
-            return change;
-        };
-        return new TextFormatter<>(filter);
-    }
-
-    private String trim(TextField field) {
-        return field.getText() == null ? "" : field.getText().trim();
-    }
-
-    private String normalizedName(TextField field) {
-        return NameNormalizer.normalize(field.getText());
-    }
-
-    private String normalizedNameOrNull(TextField field) {
-        return NameNormalizer.normalizeOrNull(field.getText());
-    }
 }

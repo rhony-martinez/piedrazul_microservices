@@ -80,11 +80,13 @@ public class Persona {
             String segundoNombre,
             String primerApellido,
             String segundoApellido,
+            Genero genero,
             LocalDate fechaNacimiento,
             String telefono
     ) {
         validarPrimerNombre(primerNombre);
         validarPrimerApellido(primerApellido);
+        validarGenero(genero);
         validarFechaNacimiento(fechaNacimiento);
         validarTelefono(telefono);
 
@@ -92,6 +94,7 @@ public class Persona {
         this.segundoNombre = limpiarOpcional(segundoNombre);
         this.primerApellido = primerApellido.trim();
         this.segundoApellido = limpiarOpcional(segundoApellido);
+        this.genero = genero;
         this.fechaNacimiento = fechaNacimiento;
         this.telefono = telefono.trim();
     }

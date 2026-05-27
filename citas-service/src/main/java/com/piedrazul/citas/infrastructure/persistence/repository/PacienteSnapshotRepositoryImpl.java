@@ -22,19 +22,20 @@ public class PacienteSnapshotRepositoryImpl implements PacienteSnapshotRepositor
 
     @Override
     public PacienteSnapshot save(PacienteSnapshot snapshot) {
-        PacienteSnapshotEntity entity = toEntity(snapshot);
+        Long pacienteId = snapshot.getId().value();
+
+        PacienteSnapshotEntity entity = repository.findById(pacienteId)
+                .orElseGet(() -> PacienteSnapshotEntity.builder()
+                        .id(pacienteId)
+                        .build());
+
+        entity.setNombreCompleto(snapshot.getNombreCompleto());
+        entity.setEmail(snapshot.getEmail());
+        entity.setTelefono(snapshot.getTelefono());
+        entity.setActivo(snapshot.isActivo());
+
         PacienteSnapshotEntity savedEntity = repository.save(entity);
         return toDomain(savedEntity);
-    }
-
-    private PacienteSnapshotEntity toEntity(PacienteSnapshot snapshot) {
-        return PacienteSnapshotEntity.builder()
-                .id(snapshot.getId().value())
-                .nombreCompleto(snapshot.getNombreCompleto())
-                .email(snapshot.getEmail())
-                .telefono(snapshot.getTelefono())
-                .activo(snapshot.isActivo())
-                .build();
     }
 
     private PacienteSnapshot toDomain(PacienteSnapshotEntity entity) {

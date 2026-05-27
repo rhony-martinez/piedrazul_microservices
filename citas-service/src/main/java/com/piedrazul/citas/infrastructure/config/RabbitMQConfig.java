@@ -31,6 +31,9 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.queue.paciente-creado}")
     private String queuePacienteCreado;
 
+    @Value("${rabbitmq.queue.paciente-actualizado}")
+    private String queuePacienteActualizado;
+
     @Value("${rabbitmq.queue.medico-creado}")
     private String queueMedicoCreado;
 
@@ -59,6 +62,11 @@ public class RabbitMQConfig {
     @Bean
     public Queue pacienteCreadoQueue() {
         return new Queue(queuePacienteCreado, true);
+    }
+
+    @Bean
+    public Queue pacienteActualizadoQueue() {
+        return new Queue(queuePacienteActualizado, true);
     }
 
     @Bean
@@ -92,6 +100,14 @@ public class RabbitMQConfig {
                 .bind(pacienteCreadoQueue())
                 .to(personasExchange())
                 .with("paciente.creado");
+    }
+
+    @Bean
+    public Binding pacienteActualizadoBinding() {
+        return BindingBuilder
+                .bind(pacienteActualizadoQueue())
+                .to(personasExchange())
+                .with("paciente.actualizado");
     }
 
     @Bean

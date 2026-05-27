@@ -8,6 +8,7 @@ public class ActualizarPersonaRequest {
     private String segundoNombre;
     private String primerApellido;
     private String segundoApellido;
+    private String genero;
     private LocalDate fechaNacimiento;
     private String telefono;
 
@@ -41,6 +42,14 @@ public class ActualizarPersonaRequest {
 
     public void setSegundoApellido(String segundoApellido) {
         this.segundoApellido = segundoApellido;
+    }
+
+    public String getGenero() {
+        return genero;
+    }
+
+    public void setGenero(String genero) {
+        this.genero = genero;
     }
 
     public LocalDate getFechaNacimiento() {

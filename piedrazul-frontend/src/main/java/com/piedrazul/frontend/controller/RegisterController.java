@@ -9,12 +9,11 @@ import com.piedrazul.frontend.dto.request.CrearUsuarioRequest;
 import com.piedrazul.frontend.util.ApiClientException;
 import com.piedrazul.frontend.util.ApiErrorParser;
 import com.piedrazul.frontend.util.FormFieldHelper;
-import com.piedrazul.frontend.util.NameNormalizer;
+import com.piedrazul.frontend.util.PersonaFormSupport;
 import com.piedrazul.frontend.session.SessionManager;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDate;
@@ -22,18 +21,14 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 public class RegisterController {
 
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}$");
-    private static final Pattern NAME_PATTERN =
-            Pattern.compile("^[\\p{L}\\s'-]+$");
     private static final Pattern USERNAME_PATTERN =
             Pattern.compile("^[\\w.]{3,50}$");
-    private static final Pattern DIGITS_ONLY = Pattern.compile("\\d*");
 
     private static final String ROL_MEDICO_TERAPISTA = "MEDICO_TERAPISTA";
 
@@ -95,13 +90,13 @@ public class RegisterController {
         cmbRol.getItems().addAll("PACIENTE", "MEDICO_TERAPISTA", "ADMINISTRADOR", "AGENDADOR");
         cmbRol.setValue("PACIENTE");
 
-        txtTelefono.setTextFormatter(digitsOnlyFormatter(10));
-        txtDni.setTextFormatter(digitsOnlyFormatter(12));
+        txtTelefono.setTextFormatter(PersonaFormSupport.digitsOnlyFormatter(10));
+        txtDni.setTextFormatter(PersonaFormSupport.digitsOnlyFormatter(12));
 
-        bindNameNormalization(txtPrimerNombre);
-        bindNameNormalization(txtSegundoNombre);
-        bindNameNormalization(txtPrimerApellido);
-        bindNameNormalization(txtSegundoApellido);
+        PersonaFormSupport.bindNameNormalization(txtPrimerNombre);
+        PersonaFormSupport.bindNameNormalization(txtSegundoNombre);
+        PersonaFormSupport.bindNameNormalization(txtPrimerApellido);
+        PersonaFormSupport.bindNameNormalization(txtSegundoApellido);
 
         bindClearOnChange(txtPrimerNombre, errPrimerNombre);
         bindClearOnChange(txtSegundoNombre, errSegundoNombre);
@@ -196,15 +191,15 @@ public class RegisterController {
 
         try {
             CrearPersonaRequest personaRequest = new CrearPersonaRequest();
-            personaRequest.setPrimerNombre(normalizedName(txtPrimerNombre));
-            personaRequest.setSegundoNombre(normalizedNameOrNull(txtSegundoNombre));
-            personaRequest.setPrimerApellido(normalizedName(txtPrimerApellido));
-            personaRequest.setSegundoApellido(normalizedNameOrNull(txtSegundoApellido));
+            personaRequest.setPrimerNombre(PersonaFormSupport.normalizedName(txtPrimerNombre));
+            personaRequest.setSegundoNombre(PersonaFormSupport.normalizedNameOrNull(txtSegundoNombre));
+            personaRequest.setPrimerApellido(PersonaFormSupport.normalizedName(txtPrimerApellido));
+            personaRequest.setSegundoApellido(PersonaFormSupport.normalizedNameOrNull(txtSegundoApellido));
             personaRequest.setGenero(cmbGenero.getValue());
             personaRequest.setFechaNacimiento(dateNacimiento.getValue().toString());
-            personaRequest.setTelefono(trim(txtTelefono));
-            personaRequest.setDni(trim(txtDni));
-            personaRequest.setCorreo(trimOrNull(txtCorreo));
+            personaRequest.setTelefono(PersonaFormSupport.trim(txtTelefono));
+            personaRequest.setDni(PersonaFormSupport.trim(txtDni));
+            personaRequest.setCorreo(PersonaFormSupport.trimOrNull(txtCorreo));
 
             personaId = personaClient.crearPersona(personaRequest);
             String rol = cmbRol.getValue();
@@ -221,11 +216,11 @@ public class RegisterController {
 
             CrearUsuarioRequest usuarioRequest = new CrearUsuarioRequest();
             usuarioRequest.setPersonaId(personaId);
-            usuarioRequest.setUsername(trim(txtUsername));
+            usuarioRequest.setUsername(PersonaFormSupport.trim(txtUsername));
             usuarioRequest.setPassword(txtPassword.getText());
-            usuarioRequest.setEmail(trimOrNull(txtCorreo));
-            usuarioRequest.setFirstName(normalizedName(txtPrimerNombre));
-            usuarioRequest.setLastName(normalizedName(txtPrimerApellido));
+            usuarioRequest.setEmail(PersonaFormSupport.trimOrNull(txtCorreo));
+            usuarioRequest.setFirstName(PersonaFormSupport.normalizedName(txtPrimerNombre));
+            usuarioRequest.setLastName(PersonaFormSupport.normalizedName(txtPrimerApellido));
             usuarioRequest.setRoles(List.of(rol));
 
             usuarioClient.crearUsuario(usuarioRequest);
@@ -306,14 +301,19 @@ public class RegisterController {
     }
 
     private boolean validateForm() {
-        normalizeNameFields();
+        PersonaFormSupport.normalizeNameFields(
+                txtPrimerNombre,
+                txtSegundoNombre,
+                txtPrimerApellido,
+                txtSegundoApellido
+        );
 
         boolean valid = true;
 
-        valid &= requireName(txtPrimerNombre, errPrimerNombre, "Ingrese el primer nombre");
-        valid &= optionalName(txtSegundoNombre, errSegundoNombre);
-        valid &= requireName(txtPrimerApellido, errPrimerApellido, "Ingrese el primer apellido");
-        valid &= optionalName(txtSegundoApellido, errSegundoApellido);
+        valid &= PersonaFormSupport.requireName(txtPrimerNombre, errPrimerNombre, "Ingrese el primer nombre");
+        valid &= PersonaFormSupport.optionalName(txtSegundoNombre, errSegundoNombre);
+        valid &= PersonaFormSupport.requireName(txtPrimerApellido, errPrimerApellido, "Ingrese el primer apellido");
+        valid &= PersonaFormSupport.optionalName(txtSegundoApellido, errSegundoApellido);
 
         if (cmbGenero.getValue() == null) {
             FormFieldHelper.showFieldError(cmbGenero, errGenero, "Seleccione un género");
@@ -330,7 +330,7 @@ public class RegisterController {
             valid = false;
         }
 
-        String telefono = trim(txtTelefono);
+        String telefono = PersonaFormSupport.trim(txtTelefono);
         if (telefono.isEmpty()) {
             FormFieldHelper.showFieldError(txtTelefono, errTelefono, "Ingrese el teléfono");
             valid = false;
@@ -340,7 +340,7 @@ public class RegisterController {
             valid = false;
         }
 
-        String dni = trim(txtDni);
+        String dni = PersonaFormSupport.trim(txtDni);
         if (dni.isEmpty()) {
             FormFieldHelper.showFieldError(txtDni, errDni, "Ingrese el DNI");
             valid = false;
@@ -350,14 +350,14 @@ public class RegisterController {
             valid = false;
         }
 
-        String correo = trimOrNull(txtCorreo);
+        String correo = PersonaFormSupport.trimOrNull(txtCorreo);
         if (correo != null && !EMAIL_PATTERN.matcher(correo).matches()) {
             FormFieldHelper.showFieldError(txtCorreo, errCorreo,
                     "Ingrese un correo válido. Ej: nombre@ejemplo.com");
             valid = false;
         }
 
-        String username = trim(txtUsername);
+        String username = PersonaFormSupport.trim(txtUsername);
         if (username.isEmpty()) {
             FormFieldHelper.showFieldError(txtUsername, errUsername, "Ingrese un usuario");
             valid = false;
@@ -397,64 +397,6 @@ public class RegisterController {
         return valid;
     }
 
-    private boolean requireName(TextField field, Label errorLabel, String blankMessage) {
-        String value = normalizedName(field);
-        if (value.isEmpty()) {
-            FormFieldHelper.showFieldError(field, errorLabel, blankMessage);
-            return false;
-        }
-        if (!NAME_PATTERN.matcher(value).matches()) {
-            FormFieldHelper.showFieldError(field, errorLabel,
-                    "Solo letras, espacios, apóstrofes o guiones");
-            return false;
-        }
-        return true;
-    }
-
-    private boolean optionalName(TextField field, Label errorLabel) {
-        String value = normalizedName(field);
-        if (value.isEmpty()) {
-            return true;
-        }
-        if (!NAME_PATTERN.matcher(value).matches()) {
-            FormFieldHelper.showFieldError(field, errorLabel,
-                    "Solo letras, espacios, apóstrofes o guiones");
-            return false;
-        }
-        return true;
-    }
-
-    private void bindNameNormalization(TextField field) {
-        field.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
-            if (wasFocused && !isFocused) {
-                applyNameNormalization(field);
-            }
-        });
-    }
-
-    private void normalizeNameFields() {
-        applyNameNormalization(txtPrimerNombre);
-        applyNameNormalization(txtSegundoNombre);
-        applyNameNormalization(txtPrimerApellido);
-        applyNameNormalization(txtSegundoApellido);
-    }
-
-    private void applyNameNormalization(TextField field) {
-        String current = field.getText() == null ? "" : field.getText();
-        String normalized = NameNormalizer.normalize(current);
-        if (!normalized.equals(current)) {
-            field.setText(normalized);
-        }
-    }
-
-    private String normalizedName(TextField field) {
-        return NameNormalizer.normalize(field.getText());
-    }
-
-    private String normalizedNameOrNull(TextField field) {
-        return NameNormalizer.normalizeOrNull(field.getText());
-    }
-
     private void mapServerError(ApiErrorParser.ParsedApiError parsed) {
         if (parsed == null) {
             showFormError("No se pudo completar el registro. Intente nuevamente.");
@@ -491,8 +433,24 @@ public class RegisterController {
                 FormFieldHelper.showFieldError(txtPrimerNombre, errPrimerNombre, message);
                 yield true;
             }
+            case "segundoNombre" -> {
+                FormFieldHelper.showFieldError(txtSegundoNombre, errSegundoNombre, message);
+                yield true;
+            }
             case "primerApellido" -> {
                 FormFieldHelper.showFieldError(txtPrimerApellido, errPrimerApellido, message);
+                yield true;
+            }
+            case "segundoApellido" -> {
+                FormFieldHelper.showFieldError(txtSegundoApellido, errSegundoApellido, message);
+                yield true;
+            }
+            case "genero" -> {
+                FormFieldHelper.showFieldError(cmbGenero, errGenero, message);
+                yield true;
+            }
+            case "fechaNacimiento" -> {
+                FormFieldHelper.showFieldError(dateNacimiento, errFechaNacimiento, message);
                 yield true;
             }
             case "telefono" -> {
@@ -569,29 +527,6 @@ public class RegisterController {
                     (obs, oldVal, newVal) -> clearFormError()
             );
         }
-    }
-
-    private TextFormatter<String> digitsOnlyFormatter(int maxLength) {
-        UnaryOperator<TextFormatter.Change> filter = change -> {
-            String next = change.getControlNewText();
-            if (!DIGITS_ONLY.matcher(next).matches()) {
-                return null;
-            }
-            if (next.length() > maxLength) {
-                return null;
-            }
-            return change;
-        };
-        return new TextFormatter<>(filter);
-    }
-
-    private String trim(TextField field) {
-        return field.getText() == null ? "" : field.getText().trim();
-    }
-
-    private String trimOrNull(TextField field) {
-        String value = trim(field);
-        return value.isEmpty() ? null : value;
     }
 
     private void showAlert(String title, String msg, Alert.AlertType type) {

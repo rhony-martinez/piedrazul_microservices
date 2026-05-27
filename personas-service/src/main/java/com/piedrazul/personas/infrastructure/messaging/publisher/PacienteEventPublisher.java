@@ -38,4 +38,27 @@ public class PacienteEventPublisher {
         rabbitTemplate.convertAndSend(personasExchange, "paciente.creado", event);
         log.info("Evento PacienteCreado publicado exitosamente");
     }
+
+    public void publicarPacienteActualizado(Long pacienteId,
+                                            String nombreCompleto,
+                                            String email,
+                                            String telefono) {
+        log.info("Publicando evento PacienteActualizado para paciente: {}", pacienteId);
+
+        PacienteCreadoEvent event = PacienteCreadoEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .eventType("PACIENTE_ACTUALIZADO")
+                .timestamp(LocalDateTime.now())
+                .data(PacienteCreadoEvent.PacienteData.builder()
+                        .pacienteId(pacienteId)
+                        .nombreCompleto(nombreCompleto)
+                        .email(email)
+                        .telefono(telefono)
+                        .activo(true)
+                        .build())
+                .build();
+
+        rabbitTemplate.convertAndSend(personasExchange, "paciente.actualizado", event);
+        log.info("Evento PacienteActualizado publicado exitosamente");
+    }
 }

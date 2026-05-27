@@ -23,23 +23,39 @@ public class PersonaEventConsumer {
     @RabbitListener(queues = "${rabbitmq.queue.paciente-creado}")
     public void consumePacienteCreado(PacienteCreadoEvent event) {
         log.info("Recibido evento PacienteCreado: {}", event.getEventId());
+        guardarPacienteSnapshot(event.getData(), true);
+    }
 
+    @RabbitListener(queues = "${rabbitmq.queue.paciente-actualizado}")
+    public void consumePacienteActualizado(PacienteCreadoEvent event) {
+        log.info("Recibido evento PacienteActualizado: {}", event.getEventId());
+        guardarPacienteSnapshot(event.getData(), false);
+    }
+
+    private void guardarPacienteSnapshot(PacienteCreadoEvent.PacienteData data, boolean usarActivoDelEvento) {
         try {
-            PacienteCreadoEvent.PacienteData data = event.getData();
+            PacienteId pacienteId = PacienteId.of(data.getPacienteId());
+            boolean activo = data.isActivo();
+
+            if (!usarActivoDelEvento) {
+                activo = pacienteSnapshotRepository.findById(pacienteId)
+                        .map(PacienteSnapshot::isActivo)
+                        .orElse(data.isActivo());
+            }
 
             PacienteSnapshot snapshot = new PacienteSnapshot(
-                    PacienteId.of(data.getPacienteId()),
+                    pacienteId,
                     data.getNombreCompleto(),
                     data.getEmail(),
                     data.getTelefono(),
-                    data.isActivo()
+                    activo
             );
 
             pacienteSnapshotRepository.save(snapshot);
             log.info("Snapshot de paciente actualizado: {}", data.getPacienteId());
 
         } catch (Exception e) {
-            log.error("Error procesando evento PacienteCreado: {}", e.getMessage(), e);
+            log.error("Error procesando snapshot de paciente: {}", e.getMessage(), e);
         }
     }
 
