@@ -56,6 +56,29 @@
     -fx-padding: 40 60 40 60;
 }
 
+.especialidades-panel {
+    -fx-background-color: #eee8e8;
+    -fx-background-radius: 8px;
+    -fx-border-color: #24c0eb;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-padding: 12px 14px;
+}
+
+.especialidades-panel .check-box {
+    -fx-text-fill: #333333;
+    -fx-font-size: 14px;
+}
+
+.especialidades-panel .check-box:disabled {
+    -fx-opacity: 0.55;
+}
+
+.especialidades-panel.input-error {
+    -fx-border-color: #e53935;
+    -fx-border-width: 2px;
+}
+
 .form-grid .input {
     -fx-pref-width: 320px;
     -fx-max-width: Infinity;

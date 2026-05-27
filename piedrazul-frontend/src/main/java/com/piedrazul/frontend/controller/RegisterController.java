@@ -14,8 +14,11 @@ import com.piedrazul.frontend.util.SceneManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.layout.VBox;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.UnaryOperator;
@@ -31,6 +34,15 @@ public class RegisterController {
             Pattern.compile("^[\\w.]{3,50}$");
     private static final Pattern DIGITS_ONLY = Pattern.compile("\\d*");
 
+    private static final String ROL_MEDICO_TERAPISTA = "MEDICO_TERAPISTA";
+
+    private static final List<String> CODIGOS_ESPECIALIDAD = List.of(
+            "GENERAL",
+            "TERAPEUTA_NEURAL",
+            "QUIROPRACTICO",
+            "FISIOTERAPEUTA"
+    );
+
     @FXML private TextField txtPrimerNombre;
     @FXML private TextField txtSegundoNombre;
     @FXML private TextField txtPrimerApellido;
@@ -43,6 +55,10 @@ public class RegisterController {
     @FXML private TextField txtUsername;
     @FXML private PasswordField txtPassword;
     @FXML private ComboBox<String> cmbRol;
+    @FXML private Label lblEspecialidadesTitulo;
+    @FXML private VBox panelEspecialidades;
+    @FXML private VBox boxEspecialidades;
+    @FXML private Label errEspecialidades;
     @FXML private Label lblFormError;
 
     @FXML private Label errPrimerNombre;
@@ -62,6 +78,8 @@ public class RegisterController {
     private final UsuarioClient usuarioClient = new UsuarioClient();
     private final PacienteClient pacienteClient = new PacienteClient();
     private final MedicoClient medicoClient = new MedicoClient();
+
+    private final Map<String, CheckBox> especialidadChecks = new LinkedHashMap<>();
 
     @FXML
     public void initialize() {
@@ -89,6 +107,73 @@ public class RegisterController {
         bindClearOnChange(txtUsername, errUsername);
         bindClearOnChange(txtPassword, errPassword);
         bindClearOnChange(cmbRol, errRol);
+
+        inicializarEspecialidades();
+        configurarVisibilidadEspecialidades(cmbRol.getValue());
+        cmbRol.valueProperty().addListener((obs, anterior, nuevo) ->
+                configurarVisibilidadEspecialidades(nuevo)
+        );
+    }
+
+    private void inicializarEspecialidades() {
+        for (String codigo : CODIGOS_ESPECIALIDAD) {
+            CheckBox checkBox = new CheckBox(etiquetaEspecialidad(codigo));
+            checkBox.setUserData(codigo);
+            checkBox.selectedProperty().addListener((obs, oldVal, newVal) ->
+                    limpiarErrorEspecialidades()
+            );
+            especialidadChecks.put(codigo, checkBox);
+            boxEspecialidades.getChildren().add(checkBox);
+        }
+    }
+
+    private void configurarVisibilidadEspecialidades(String rol) {
+        boolean esMedicoTerapeuta = ROL_MEDICO_TERAPISTA.equals(rol);
+
+        lblEspecialidadesTitulo.setVisible(esMedicoTerapeuta);
+        lblEspecialidadesTitulo.setManaged(esMedicoTerapeuta);
+
+        panelEspecialidades.setVisible(esMedicoTerapeuta);
+        panelEspecialidades.setManaged(esMedicoTerapeuta);
+
+        especialidadChecks.values().forEach(cb -> cb.setDisable(!esMedicoTerapeuta));
+
+        if (!esMedicoTerapeuta) {
+            limpiarEspecialidadesSeleccionadas();
+            limpiarErrorEspecialidades();
+        }
+    }
+
+    private void limpiarErrorEspecialidades() {
+        CheckBox referencia = especialidadChecks.isEmpty()
+                ? null
+                : especialidadChecks.get(CODIGOS_ESPECIALIDAD.get(0));
+        if (referencia != null) {
+            FormFieldHelper.clearFieldError(referencia, boxEspecialidades, errEspecialidades);
+        }
+    }
+
+    private void limpiarEspecialidadesSeleccionadas() {
+        especialidadChecks.values().forEach(cb -> cb.setSelected(false));
+    }
+
+    private List<String> obtenerEspecialidadesSeleccionadas() {
+        List<String> seleccionadas = new ArrayList<>();
+        for (Map.Entry<String, CheckBox> entry : especialidadChecks.entrySet()) {
+            if (entry.getValue().isSelected()) {
+                seleccionadas.add(entry.getKey());
+            }
+        }
+        return seleccionadas;
+    }
+
+    private static String etiquetaEspecialidad(String codigo) {
+        return switch (codigo) {
+            case "TERAPEUTA_NEURAL" -> "Terapeuta Neural";
+            case "QUIROPRACTICO" -> "Quiropráctico";
+            case "FISIOTERAPEUTA" -> "Fisioterapeuta";
+            default -> "Medicina General";
+        };
     }
 
     @FXML
@@ -118,8 +203,12 @@ public class RegisterController {
 
             if ("PACIENTE".equals(rol)) {
                 pacienteClient.crearPaciente(personaId);
-            } else if ("MEDICO_TERAPISTA".equals(rol)) {
-                medicoClient.crearMedico(personaId, "MEDICO", List.of("GENERAL"));
+            } else if (ROL_MEDICO_TERAPISTA.equals(rol)) {
+                medicoClient.crearMedico(
+                        personaId,
+                        "MEDICO",
+                        obtenerEspecialidadesSeleccionadas()
+                );
             }
 
             CrearUsuarioRequest usuarioRequest = new CrearUsuarioRequest();
@@ -230,6 +319,18 @@ public class RegisterController {
 
         if (cmbRol.getValue() == null) {
             FormFieldHelper.showFieldError(cmbRol, errRol, "Seleccione un rol");
+            valid = false;
+        }
+
+        if (ROL_MEDICO_TERAPISTA.equals(cmbRol.getValue())
+                && obtenerEspecialidadesSeleccionadas().isEmpty()) {
+            CheckBox referencia = especialidadChecks.get(CODIGOS_ESPECIALIDAD.get(0));
+            FormFieldHelper.showFieldError(
+                    referencia,
+                    boxEspecialidades,
+                    errEspecialidades,
+                    "Seleccione al menos una especialidad"
+            );
             valid = false;
         }
 

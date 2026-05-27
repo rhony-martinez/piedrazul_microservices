@@ -157,6 +157,20 @@
                                    visible="false" managed="false"/>
                         </VBox>
 
+                        <Label fx:id="lblEspecialidadesTitulo" text="Especialidades *"
+                               styleClass="label" GridPane.rowIndex="3"
+                               visible="false" managed="false"/>
+                        <VBox fx:id="panelEspecialidades" spacing="4"
+                              GridPane.rowIndex="3" GridPane.columnIndex="1"
+                              visible="false" managed="false">
+                            <VBox fx:id="boxEspecialidades" spacing="6"
+                                  styleClass="especialidades-panel"/>
+                            <Label text="Marque al menos una especialidad del médico/terapeuta"
+                                   styleClass="hint-label"/>
+                            <Label fx:id="errEspecialidades" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
+
                     </GridPane>
                 </VBox>
 
