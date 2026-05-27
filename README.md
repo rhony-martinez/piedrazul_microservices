@@ -25,8 +25,9 @@ Este documento es la **guía oficial de onboarding** para el equipo. Cubre la co
 15. [Servicios y responsabilidades](#servicios-y-responsabilidades)
 16. [Troubleshooting](#troubleshooting)
 17. [Deuda técnica / próximos pasos](#deuda-técnica--próximos-pasos)
-18. [Arquitectura DDD de citas-service](#arquitectura-ddd-de-citas-service)
-19. [Autores](#autores)
+18. [Funcionalidades recientes del producto](#funcionalidades-recientes-del-producto)
+19. [Arquitectura DDD de citas-service](#arquitectura-ddd-de-citas-service)
+20. [Autores](#autores)
 
 ---
 
@@ -47,6 +48,19 @@ Este documento es la **guía oficial de onboarding** para el equipo. Cubre la co
 - El **Gateway** es el único componente que valida JWT y aplica reglas por rol.
 - Los microservicios downstream **confían** en el Gateway (no revalidan el token por ahora).
 - El frontend **no** llama a `/api/auth/login` (eliminado). Autenticación = Keycloak OIDC.
+
+### Arquitectura del repositorio
+
+```text
+piedrazul_microservices/
+|- api-gateway/              Punto de entrada, JWT, autorización por rol
+|- usuarios-service/         Registro + enlace con Keycloak Admin API
+|- personas-service/         Personas, pacientes, médicos, disponibilidad
+|- citas-service/            Citas, configuración, festivos (DDD + hexagonal)
+|- notifications-service/    Notificaciones por eventos RabbitMQ
+|- piedrazul-frontend/       Cliente JavaFX
+`- README.md
+```
 
 ---
 
@@ -396,6 +410,11 @@ El path que entra al Gateway es el **mismo** que llega al microservicio (sin ree
 | `/api/configuracion/**` | http://localhost:8083 |
 | `/api/notificaciones/**` | http://localhost:8084 |
 
+Rutas bajo `/api/citas/**` que el Gateway enruta al mismo servicio (8083) sin regla extra:
+
+- `/api/citas/disponibilidad/**` — validación de cambios de disponibilidad
+- `/api/citas/especialidades` — catálogo para agendamiento autónomo
+
 > **`/api/auth/**` ya no existe.** La autenticación vive en Keycloak.
 
 ### Seguridad (código)
@@ -634,7 +653,16 @@ $env:PIEDRAZUL_KEYCLOAK_ADMIN_CLIENT_SECRET = "tu-secret-aqui"
 1. PostgreSQL en marcha
 2. RabbitMQ en marcha
 3. Keycloak en marcha (puerto 8080)
-4. Bases de datos creadas por servicio (mínimo `piedrazul_usuarios`; las demás según tu `application.properties` local de cada microservicio)
+4. Bases de datos creadas por servicio (ver tabla siguiente)
+
+| Servicio | Base de datos típica | Puerto app |
+|---|---|---|
+| usuarios-service | `piedrazul_usuarios` | 8081 |
+| personas-service | `piedrazul_personas` | 8082 |
+| citas-service | `piedrazul_citas` | 8083 |
+| notifications-service | *(según tu config local)* | 8084 |
+
+`citas-service` incluye `src/main/resources/application.properties` en el repo (PostgreSQL, RabbitMQ, colas y routing keys). Ajusta credenciales según tu entorno.
 
 ### 2. Microservicios backend
 
@@ -773,40 +801,74 @@ Pega el `access_token` en https://jwt.io
 ### `api-gateway`
 
 - Spring Cloud Gateway (WebFlux) + OAuth2 Resource Server
-- Valida JWT contra Keycloak
-- Autoriza por rol
-- Enruta al microservicio correcto
+- Valida JWT contra Keycloak y autoriza por rol antes de enrutar
+- CORS global habilitado para futuros clientes web
+- Diagnóstico: `/actuator/health`, `/actuator/gateway/routes`
 
 ### `usuarios-service`
 
-Endpoints actuales:
-
 | Método | Ruta | Descripción |
 |---|---|---|
-| POST | `/api/usuarios` | Registro (Keycloak + BD local) |
-| GET | `/api/usuarios/{id}` | Consulta por UUID |
+| POST | `/api/usuarios` | Registro (Keycloak Admin API + fila local) |
+| GET | `/api/usuarios/{id}` | Consulta por UUID de dominio |
 | GET | `/api/usuarios/by-username/{username}` | Consulta por username |
 | GET | `/api/usuarios` | Listado |
 
+Keycloak es la fuente de verdad de credenciales y roles. No existe `POST /api/auth/login`.
+
 ### `personas-service`
 
-- Personas, pacientes, médicos, disponibilidad
-- Swagger: `http://localhost:8082/swagger-ui/index.html`
+| Área | Rutas principales |
+|---|---|
+| Personas | `POST/GET/PUT /api/personas`, `DELETE /api/personas/{id}/registro-fallido` (compensación si falla el registro) |
+| Pacientes | `POST/GET /api/pacientes` |
+| Médicos | `POST/GET /api/medicos`, `GET /api/medicos/activos`, `PATCH /api/medicos/{id}/estado`, `PUT /api/medicos/{id}/especialidades` |
+| Disponibilidad | `POST/PUT/DELETE/GET /api/disponibilidad` |
+| Catálogo | `GET /api/especialidades` (enum de especialidades médicas) |
+
+Swagger: `http://localhost:8082/swagger-ui/index.html`
+
+Eventos publicados hacia `citas-service`: paciente/médico creado o actualizado, disponibilidad creada/modificada/eliminada.
 
 ### `citas-service`
 
-- Citas y configuración
-- Swagger: `http://localhost:8083/swagger-ui/index.html`
+Microservicio con **DDD + arquitectura hexagonal** (ver sección dedicada más abajo).
+
+| Área | Rutas principales |
+|---|---|
+| Citas | `POST /api/citas/manual`, `POST /api/citas/autonoma`, `PUT /api/citas/{id}/cancelar`, `PUT /api/citas/reagendar`, `PUT /api/citas/asistencia`, `GET /api/citas/medicos/{medicoId}/slots?pacienteId=`, `GET /api/citas/historial?medicoId=&pacienteId=&fecha=` |
+| Configuración | `GET/PUT /api/configuracion` (semanas de agendamiento, etc.) |
+| Festivos | `GET/PUT /api/configuracion/festivos` |
+| Especialidades | `GET /api/citas/especialidades` |
+| Validación disponibilidad | `POST /api/citas/disponibilidad/validar-eliminacion`, `POST /api/citas/disponibilidad/validar-modificacion` |
+
+Swagger: `http://localhost:8083/swagger-ui/index.html`
+
+Reglas de negocio destacadas:
+
+- Validación de **solapamiento** de citas por paciente (`PacienteNoDisponibleException`)
+- Restricción de **24 h** en agendamiento autónomo (`RestriccionAutoservicioException`)
+- Bloqueo de edición/eliminación de disponibilidad si hay citas activas (`DisponibilidadConCitasActivasException`)
+- Eventos de salida enriquecidos con datos reales de snapshots (nombre/email paciente y médico)
 
 ### `notifications-service`
 
-- Notificaciones y consumo RabbitMQ
+- Notificaciones y consumo de eventos RabbitMQ (`CITA_AGENDADA`, `CITA_CANCELADA`, etc.)
 - Configurar `server.port=8084` en su `application.properties` local
 
 ### `piedrazul-frontend`
 
-- Login/registro vía Keycloak + APIs vía Gateway
-- **Nunca** apuntar clientes HTTP directamente a puertos 8081–8084 en producción/desarrollo normal
+Cliente JavaFX. **Todas** las APIs de negocio pasan por el Gateway (`http://localhost:8085`); login/refresh solo contra Keycloak.
+
+| Rol | Funcionalidades en la app |
+|---|---|
+| Todos | Login Keycloak, registro con compensación si falla un paso |
+| PACIENTE | Dashboard, agendamiento autónomo por especialidad/médico/slot, historial de citas |
+| MEDICO_TERAPISTA | Dashboard, mis citas |
+| AGENDADOR | Dashboard, historial de citas |
+| ADMINISTRADOR | Configuración de parámetros y disponibilidades (crear/editar/eliminar), festivos, administración de usuarios, registro de staff |
+
+Patrones en frontend: **Decorator** en flujo de cita (`CitaBase`, `PrioridadAltaDecorator`, `RecordatorioDecorator`).
 
 ---
 
@@ -885,9 +947,25 @@ Endpoints actuales:
 
 ---
 
+## Funcionalidades recientes del producto
+
+Resumen de evolución reciente del repositorio (además de la migración Keycloak + Gateway):
+
+| Área | Cambio |
+|---|---|
+| Seguridad | API Gateway en **8085**, JWT Keycloak, registro E2E sin `/api/auth/login` |
+| Citas | Refactor DDD/hexagonal: Factory inyectada, puerto de eventos completo, excepciones de dominio, eventos con datos reales |
+| Agendamiento | Autónomo por especialidad, validación de solapamiento por paciente, slots con `pacienteId` |
+| Configuración | Festivos (admin), semanas de agendamiento, validación antes de editar/eliminar disponibilidades |
+| Personas | Especialidades en médicos, compensación `registro-fallido`, más eventos RabbitMQ |
+| Frontend | Administración de usuarios (admin), pantallas de citas por rol, UX DatePicker autónomo |
+| Disponibilidad | Editar y eliminar bloques con validación contra citas activas en `citas-service` |
+
+---
+
 ## Arquitectura DDD de citas-service
 
-El microservicio `citas-service` implementa **Domain-Driven Design** y **Arquitectura Hexagonal** (Ports & Adapters).
+El microservicio `citas-service` implementa **Domain-Driven Design** y **Arquitectura Hexagonal** (Ports & Adapters), alineado al taller del curso (punto 3: microservicio con lógica de negocio rica).
 
 ### Vista por capas
 
@@ -895,17 +973,109 @@ El microservicio `citas-service` implementa **Domain-Driven Design** y **Arquite
 citas-service/
 `- src/main/java/com/piedrazul/citas/
    |- domain/                Reglas de negocio puras
+   |  |- model/              Cita, snapshots, configuración, festivos
+   |  |- valueobjects/       CitaId, PacienteId, MedicoId, UsuarioId
+   |  |- builder/            CitaBuilder (Builder Pattern)
+   |  |- factory/            CitaBuilderFactory + impls (Factory Pattern)
+   |  `- exception/          Lenguaje ubicuo de errores
+   |
    |- application/           Casos de uso / orquestación
-   |- infrastructure/        Adaptadores técnicos (JPA, RabbitMQ)
-   `- interfaces/rest/       Controllers REST
+   |  |- port/incoming/      Puertos de entrada (use cases)
+   |  |- port/outgoing/      Puertos de salida
+   |  |- service/            Implementación de casos de uso
+   |  |  `- agendamiento/    AbstractAgendamientoService (Template Method)
+   |  |- dto/                Requests/responses de aplicación
+   |  `- mapper/             Dominio -> respuesta API
+   |
+   |- infrastructure/        Adaptadores técnicos
+   |  |- persistence/        JPA + PostgreSQL
+   |  |- messaging/          RabbitMQ publishers/consumers
+   |  `- config/             Spring, RabbitMQ, OpenAPI
+   |
+   `- interfaces/rest/       Adaptadores de entrada HTTP
+      |- controller/         REST + validación
+      |- dto/                Contratos REST
+      `- exception/          GlobalExceptionHandler
 ```
 
-### Patrones implementados
+### Puertos y adaptadores
 
-- **Builder** (`CitaBuilder`)
-- **Factory** (`CitaBuilderFactory`)
-- **Template Method** (`AbstractAgendamientoService`)
-- **Singleton** (`ConfiguracionManager`)
+**Entrada (use cases → controllers REST):**
+
+| Puerto | Adaptador |
+|---|---|
+| `CrearCitaManualUseCase` | `POST /api/citas/manual` |
+| `CrearCitaAutonomaUseCase` | `POST /api/citas/autonoma` |
+| `CancelarCitaUseCase` | `PUT /api/citas/{id}/cancelar` |
+| `ReagendarCitaUseCase` | `PUT /api/citas/reagendar` |
+| `MarcarAsistenciaUseCase` | `PUT /api/citas/asistencia` |
+| `ConsultarSlotsDisponiblesUseCase` | `GET /api/citas/medicos/{id}/slots` |
+| `ListarCitasUseCase` | `GET /api/citas/historial` |
+| `ConsultarConfiguracionUseCase` / `ActualizarConfiguracionUseCase` | `/api/configuracion` |
+
+**Salida (puertos → infraestructura):**
+
+| Puerto | Adaptador |
+|---|---|
+| `CitaRepositoryPort` | `CitaRepositoryImpl` (JPA) |
+| `PacienteSnapshotRepositoryPort` | `PacienteSnapshotRepositoryImpl` |
+| `MedicoSnapshotRepositoryPort` | `MedicoSnapshotRepositoryImpl` |
+| `DisponibilidadSnapshotRepositoryPort` | `DisponibilidadSnapshotRepositoryImpl` |
+| `ConfiguracionRepositoryPort` | `ConfiguracionRepositoryImpl` |
+| `CitaEventPublisherPort` | `CitaEventPublisherImpl` (RabbitMQ) |
+
+Consumers en `infrastructure/messaging/consumer/` sincronizan snapshots desde `personas-service` (anti-corruption layer del bus).
+
+### Patrones de diseño (requisito del curso)
+
+- **Builder** — `CitaManualBuilder`, `CitaAutonomaBuilder`: validan y construyen el agregado `Cita`.
+- **Factory** — `CitaManualFactory`, `CitaAutonomaFactory`: inyectadas en los servicios de agendamiento vía `CitaBuilderFactory`.
+- **Template Method** — `AbstractAgendamientoService.crearCita()`: algoritmo común; hooks por tipo (`validarTipoAgendamiento`, factory del builder).
+- **Singleton** — `ConfiguracionManager`: configuración en memoria del sistema.
+
+### Excepciones de dominio y HTTP
+
+| Excepción | HTTP típico |
+|---|---|
+| `CitaNoEncontradaException` | 404 |
+| `PacienteNoExisteException` | 404 |
+| `MedicoNoDisponibleException` | 409 |
+| `DisponibilidadNoDisponibleException` | 409 |
+| `PacienteNoDisponibleException` | 409 |
+| `DisponibilidadConCitasActivasException` | 409 |
+| `CitaNoCancelableException` | 400 |
+| `CitaNoReagendableException` | 409 |
+| `CitaNoMarcableException` | 409 |
+| `RestriccionAutoservicioException` | 400 |
+
+Mapeo centralizado en `interfaces/rest/exception/GlobalExceptionHandler`.
+
+### Eventos de dominio (salida)
+
+`CitaEventPublisherPort` publica con datos reales del paciente y médico (snapshots), no placeholders:
+
+- `CITA_AGENDADA` — al crear cita (manual o autónoma)
+- `CITA_CANCELADA` — al cancelar
+- `CITA_REAGENDADA` — al reagendar (incluye fecha original)
+
+### Flujo de agendamiento (Template Method + Factory + Builder)
+
+```mermaid
+flowchart LR
+    A[CitaController REST] --> B[CrearCitaManualService / CrearCitaAutonomaService]
+    B --> T[AbstractAgendamientoService]
+    T --> F[CitaManualFactory / CitaAutonomaFactory]
+    F --> BD[CitaBuilder]
+    BD --> C[Agregado Cita]
+    T --> R[(PostgreSQL)]
+    T --> Q[(RabbitMQ)]
+```
+
+### Configuración local (`application.properties`)
+
+Ubicación: `citas-service/src/main/resources/application.properties`
+
+Incluye: `server.port=8083`, datasource `piedrazul_citas`, RabbitMQ, exchanges, routing keys y colas de consumo (`paciente-creado`, `medico-actualizado`, `disponibilidad-modificada`, etc.).
 
 ### Pruebas
 
@@ -914,7 +1084,9 @@ cd citas-service
 mvn test
 ```
 
-Suite actual: tests unitarios de dominio (~49 tests).
+Suite actual: **49 tests** unitarios de dominio (agregado `Cita`, builders, value objects, snapshots).
+
+Refactors recientes validados: uso real de Factory en agendamiento, contrato `publicarCitaReagendada` en el puerto, excepciones de dominio explícitas, eventos enriquecidos con snapshots.
 
 ---
 
