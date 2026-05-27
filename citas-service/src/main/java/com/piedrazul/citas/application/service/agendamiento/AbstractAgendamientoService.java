@@ -8,6 +8,7 @@ import com.piedrazul.citas.domain.exception.*;
 import com.piedrazul.citas.domain.factory.CitaBuilderFactory;
 import com.piedrazul.citas.domain.model.*;
 import com.piedrazul.citas.domain.valueobjects.*;
+import com.piedrazul.citas.application.service.singleton.ConfiguracionManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ public abstract class AbstractAgendamientoService {
     protected final CitaEventPublisherPort eventPublisher;
     protected final CitaApplicationMapper mapper;
     protected final CitaBuilderFactory builderFactory;
+    protected final ConfiguracionManager configuracionManager;
 
     // Template Method
     public final CitaResponse crearCita(CrearCitaRequest request) {
@@ -152,6 +154,12 @@ public abstract class AbstractAgendamientoService {
 
             throw new PacienteNoDisponibleException(
                     "El paciente ya tiene una cita agendada en el horario seleccionado"
+            );
+        }
+
+        if (configuracionManager.obtenerConfiguracion().esFestivo(fechaHora.toLocalDate())) {
+            throw new DisponibilidadNoDisponibleException(
+                    "La fecha seleccionada es un día festivo y no está disponible para agendamiento"
             );
         }
 

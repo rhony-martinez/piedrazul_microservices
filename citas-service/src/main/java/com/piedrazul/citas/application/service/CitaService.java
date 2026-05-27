@@ -10,6 +10,7 @@ import com.piedrazul.citas.domain.model.*;
 import com.piedrazul.citas.domain.valueobjects.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.piedrazul.citas.application.service.singleton.ConfiguracionManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -29,6 +30,7 @@ public class CitaService implements CancelarCitaUseCase,
     private final DisponibilidadSnapshotRepositoryPort disponibilidadSnapshotRepository;
     private final CitaEventPublisherPort eventPublisher;
     private final CitaApplicationMapper mapper;
+    private final ConfiguracionManager configuracionManager;
 
     @Override
     public CitaResponse cancelarCita(CancelarCitaRequest request) {
@@ -85,6 +87,11 @@ public class CitaService implements CancelarCitaUseCase,
                 cita.getPacienteId(), nuevaFechaHora, cita.getId())) {
             throw new PacienteNoDisponibleException(
                     "El paciente ya tiene una cita agendada en el horario seleccionado");
+        }
+
+        if (configuracionManager.obtenerConfiguracion().esFestivo(nuevaFechaHora.toLocalDate())) {
+            throw new DisponibilidadNoDisponibleException(
+                    "La fecha seleccionada es un día festivo y no está disponible para agendamiento");
         }
 
         cita.reagendar(nuevaFechaHora, disponibilidad);

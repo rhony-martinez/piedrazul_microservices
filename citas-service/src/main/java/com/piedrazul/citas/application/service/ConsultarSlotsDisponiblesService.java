@@ -28,7 +28,8 @@ public class ConsultarSlotsDisponiblesService implements ConsultarSlotsDisponibl
         DisponibilidadSnapshot snapshot = disponibilidadRepo.findByMedicoId(medicoId)
                 .orElseThrow(() -> new RuntimeException("No hay disponibilidad"));
 
-        int semanas = configRepo.obtener().getSemanasDisponibles();
+        var configuracion = configRepo.obtener();
+        int semanas = configuracion.getSemanasDisponibles();
 
         LocalDateTime ahora = LocalDateTime.now();
         LocalDateTime fin = ahora.plusWeeks(semanas);
@@ -46,6 +47,11 @@ public class ConsultarSlotsDisponiblesService implements ConsultarSlotsDisponibl
         LocalDate fecha = ahora.toLocalDate();
 
         while (!fecha.isAfter(fin.toLocalDate())) {
+
+            if (configuracion.esFestivo(fecha)) {
+                fecha = fecha.plusDays(1);
+                continue;
+            }
 
             DayOfWeek dia = fecha.getDayOfWeek();
 

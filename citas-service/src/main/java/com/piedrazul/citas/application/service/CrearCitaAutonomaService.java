@@ -6,6 +6,7 @@ import com.piedrazul.citas.application.mapper.CitaApplicationMapper;
 import com.piedrazul.citas.application.port.incoming.CrearCitaAutonomaUseCase;
 import com.piedrazul.citas.application.port.outgoing.*;
 import com.piedrazul.citas.application.service.agendamiento.AbstractAgendamientoService;
+import com.piedrazul.citas.application.service.singleton.ConfiguracionManager;
 import com.piedrazul.citas.domain.factory.CitaAutonomaFactory;
 import com.piedrazul.citas.domain.model.*;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,8 @@ public class CrearCitaAutonomaService
             DisponibilidadSnapshotRepositoryPort disponibilidadRepository,
             CitaEventPublisherPort eventPublisher,
             CitaApplicationMapper mapper,
-            CitaAutonomaFactory citaAutonomaFactory
+            CitaAutonomaFactory citaAutonomaFactory,
+            ConfiguracionManager configuracionManager
     ) {
         super(
                 citaRepository,
@@ -31,7 +33,8 @@ public class CrearCitaAutonomaService
                 disponibilidadRepository,
                 eventPublisher,
                 mapper,
-                citaAutonomaFactory
+                citaAutonomaFactory,
+                configuracionManager
         );
     }
 

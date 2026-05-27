@@ -6,6 +6,9 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.util.Set;
+
 @Component
 @RequiredArgsConstructor
 public class ConfiguracionManager {
@@ -16,15 +19,10 @@ public class ConfiguracionManager {
 
     @PostConstruct
     public void inicializar() {
-
         configuracionCache = configuracionRepository.obtener();
 
         if (configuracionCache == null) {
-
-            configuracionCache =
-                    configuracionRepository.guardar(
-                            new ConfiguracionSistema(4)
-                    );
+            configuracionCache = configuracionRepository.guardar(new ConfiguracionSistema(4));
         }
     }
 
@@ -32,16 +30,15 @@ public class ConfiguracionManager {
         return configuracionCache;
     }
 
-    public ConfiguracionSistema actualizarConfiguracion(
-            Integer semanasDisponibles
-    ) {
+    public ConfiguracionSistema actualizarConfiguracion(Integer semanasDisponibles) {
+        ConfiguracionSistema nuevaConfiguracion = configuracionCache.conSemanas(semanasDisponibles);
+        configuracionCache = configuracionRepository.guardar(nuevaConfiguracion);
+        return configuracionCache;
+    }
 
-        ConfiguracionSistema nuevaConfiguracion =
-                new ConfiguracionSistema(semanasDisponibles);
-
-        configuracionCache =
-                configuracionRepository.guardar(nuevaConfiguracion);
-
+    public ConfiguracionSistema actualizarFestivos(Set<LocalDate> festivos) {
+        ConfiguracionSistema nuevaConfiguracion = configuracionCache.conFestivos(festivos);
+        configuracionCache = configuracionRepository.guardar(nuevaConfiguracion);
         return configuracionCache;
     }
 }

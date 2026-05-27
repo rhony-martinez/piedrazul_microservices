@@ -64,4 +64,19 @@ public class AdministradorDashboardController {
     private void handleConfiguracionHorarios() {
         SceneManager.switchScene("/view/admin/configuracion-disponibilidad.fxml",lblBienvenida,"Configuración de Parámetros");
     }
+
+    @FXML
+    private void handleConfigurarFestivos() {
+        if (!SessionManager.isLoggedIn() || !SessionManager.hasRole("ADMINISTRADOR")) {
+            SessionManager.clear();
+            SceneManager.showLogin("/view/auth_register/loginView.fxml", lblBienvenida);
+            return;
+        }
+
+        SceneManager.switchScene(
+                "/view/admin/configurar-festivos.fxml",
+                lblBienvenida,
+                "PIEDRAZUL - Configurar festivos"
+        );
+    }
 }

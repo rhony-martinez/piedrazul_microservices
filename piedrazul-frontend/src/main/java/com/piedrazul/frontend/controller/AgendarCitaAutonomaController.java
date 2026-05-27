@@ -1,6 +1,7 @@
 package com.piedrazul.frontend.controller;
 
 import com.piedrazul.frontend.client.CitaClient;
+import com.piedrazul.frontend.client.ConfiguracionClient;
 import com.piedrazul.frontend.client.MedicoClient;
 import com.piedrazul.frontend.dto.request.CrearCitaAutonomaRequest;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
@@ -13,7 +14,9 @@ import javafx.scene.control.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class AgendarCitaAutonomaController {
@@ -46,8 +49,10 @@ public class AgendarCitaAutonomaController {
 
     private final MedicoClient medicoClient = new MedicoClient();
     private final CitaClient citaClient = new CitaClient();
+    private final ConfiguracionClient configuracionClient = new ConfiguracionClient();
 
     private List<MedicoResponse> todosLosMedicos = List.of();
+    private Set<LocalDate> fechasFestivas = new HashSet<>();
     private String especialidadSeleccionada;
     private MedicoResponse medicoSeleccionado;
     private LocalDateTime slotSeleccionado;
@@ -101,11 +106,16 @@ public class AgendarCitaAutonomaController {
             @Override
             public void updateItem(LocalDate date, boolean empty) {
                 super.updateItem(date, empty);
-                setDisable(empty || date.isBefore(LocalDate.now()));
+                boolean esFestivo = !empty && fechasFestivas.contains(date);
+                setDisable(empty || date.isBefore(LocalDate.now()) || esFestivo);
+                if (esFestivo) {
+                    setStyle("-fx-background-color: #fde8e8;");
+                }
             }
         });
 
         cmbEspecialidad.setItems(FXCollections.observableArrayList(ESPECIALIDADES));
+        cargarFestivos();
         configurarBienvenida();
         cargarMedicos();
         actualizarGuia();
@@ -129,6 +139,14 @@ public class AgendarCitaAutonomaController {
                             + "Solicite al administrador que vincule su cuenta antes de agendar.",
                     "agendar-status-warning"
             );
+        }
+    }
+
+    private void cargarFestivos() {
+        try {
+            fechasFestivas = new HashSet<>(configuracionClient.obtenerFestivos());
+        } catch (Exception e) {
+            fechasFestivas = new HashSet<>();
         }
     }
 

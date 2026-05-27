@@ -61,7 +61,6 @@
                       spacing="55"
                       styleClass="main-actions-grid">
 
-                    <!-- Fila superior -->
                     <HBox alignment="CENTER"
                           spacing="55"
                           styleClass="main-actions-row">
@@ -71,19 +70,6 @@
 
                         <Button text="MIS CITAS"
                                 onAction="#handleMisCitas"
-                                styleClass="dashboard-main-button"/>
-
-                    </HBox>
-
-                    <!-- Fila inferior -->
-                    <HBox alignment="CENTER"
-                          spacing="55"
-                          styleClass="main-actions-row">
-
-                        <Button text="HISTORIAL"
-                                styleClass="dashboard-main-button"/>
-
-                        <Button text="PACIENTES ATENDIDOS"
                                 styleClass="dashboard-main-button"/>
 
                     </HBox>
