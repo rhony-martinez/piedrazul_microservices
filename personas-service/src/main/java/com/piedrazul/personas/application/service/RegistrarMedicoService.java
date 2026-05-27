@@ -1,8 +1,10 @@
 package com.piedrazul.personas.application.service;
 
+import com.piedrazul.personas.application.exception.MedicoYaRegistradoException;
+import com.piedrazul.personas.application.exception.PersonaNoEncontradaException;
 import com.piedrazul.personas.domain.model.Medico;
 import com.piedrazul.personas.domain.model.Persona;
-import com.piedrazul.personas.domain.repository.IEspecialidadRepository;
+import com.piedrazul.personas.domain.repository.IMedicoEspecialidadRepository;
 import com.piedrazul.personas.domain.repository.IMedicoRepository;
 import com.piedrazul.personas.domain.repository.IPersonaRepository;
 import com.piedrazul.personas.infrastructure.messaging.publisher.MedicoEventPublisher;
@@ -12,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -20,49 +24,51 @@ public class RegistrarMedicoService {
 
     private final IPersonaRepository personaRepository;
     private final IMedicoRepository medicoRepository;
-    private final IEspecialidadRepository especialidadRepository;
+    private final IMedicoEspecialidadRepository medicoEspecialidadRepository;
     private final MedicoEventPublisher medicoEventPublisher;
 
     public Medico registrarMedico(RegistrarMedicoRequest request) {
         log.info("Registrando nuevo médico con personaId: {}", request.getPersonaId());
 
-        // Validar que la persona existe
         Persona persona = personaRepository.buscarPorId(request.getPersonaId())
-                .orElseThrow(() -> new RuntimeException("Persona no encontrada con ID: " + request.getPersonaId()));
+                .orElseThrow(() -> new PersonaNoEncontradaException(
+                        "Persona no encontrada con ID: " + request.getPersonaId()
+                ));
 
-        // Validar que no sea ya un médico
         if (medicoRepository.existePorPersonaId(request.getPersonaId())) {
-            throw new RuntimeException("La persona ya está registrada como médico");
+            throw new MedicoYaRegistradoException(
+                    "La persona ya está registrada como médico: " + request.getPersonaId()
+            );
         }
 
-        // Crear médico
-        Medico medico = Medico.crear(request.getPersonaId(), request.getTipoProfesional());
+        Medico medico = Medico.crear(
+                request.getPersonaId(),
+                request.getTipoProfesional(),
+                request.getEspecialidades()
+        );
         Medico medicoGuardado = medicoRepository.guardar(medico);
+        medicoEspecialidadRepository.reemplazarEspecialidades(
+                request.getPersonaId(),
+                medico.getEspecialidades()
+        );
+        medicoGuardado.setEspecialidades(medico.getEspecialidades());
 
         log.info("Médico registrado exitosamente con ID: {}", request.getPersonaId());
 
-        // Obtener especialidad
-        String especialidadNombre = "Cardiología";
-        try {
-            var especialidades = especialidadRepository.listarTodos();
-            if (!especialidades.isEmpty()) {
-                especialidadNombre = especialidades.get(0).getNombre();
-            }
-        } catch (Exception e) {
-            log.warn("No se pudo obtener especialidad, usando valor por defecto: {}", e.getMessage());
-        }
+        String especialidadResumen = medico.getEspecialidades().stream()
+                .map(Enum::name)
+                .collect(Collectors.joining(", "));
 
-        // Publicar evento para citas-service (ASÍNCRONO)
         String nombreCompleto = persona.getPrimerNombre() + " " + persona.getPrimerApellido();
         medicoEventPublisher.publicarMedicoCreado(
                 request.getPersonaId(),
                 nombreCompleto,
                 persona.getCorreo(),
-                especialidadNombre
+                especialidadResumen
         );
 
         log.info("Evento MedicoCreado publicado para ID: {}", request.getPersonaId());
 
-        return medicoGuardado;  // ← Devuelve el médico creado
+        return medicoGuardado;
     }
 }

@@ -3,6 +3,8 @@ package com.piedrazul.personas.domain.model;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Pruebas de Medico")
@@ -52,5 +54,27 @@ class MedicoTest {
 
         assertEquals(EstadoMedico.INACTIVO, medico.getEstado());
         assertFalse(medico.estaActivo());
+    }
+
+    @Test
+    @DisplayName("Debería crear médico con especialidades")
+    void testCrearMedicoConEspecialidades() {
+        Medico medico = Medico.crear(
+                1L,
+                TipoProfesional.MEDICO,
+                Set.of(EspecialidadMedica.GENERAL, EspecialidadMedica.FISIOTERAPEUTA)
+        );
+
+        assertEquals(2, medico.getEspecialidades().size());
+        assertTrue(medico.tieneEspecialidad(EspecialidadMedica.GENERAL));
+        assertTrue(medico.tieneEspecialidad(EspecialidadMedica.FISIOTERAPEUTA));
+    }
+
+    @Test
+    @DisplayName("Debería rechazar médico sin especialidades")
+    void testEspecialidadesVacias() {
+        assertThrows(IllegalArgumentException.class, () ->
+                Medico.crear(1L, TipoProfesional.MEDICO, Set.of())
+        );
     }
 }

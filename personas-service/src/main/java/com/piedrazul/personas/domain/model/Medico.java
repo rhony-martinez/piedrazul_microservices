@@ -1,6 +1,9 @@
 package com.piedrazul.personas.domain.model;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class Medico {
 
@@ -8,6 +11,7 @@ public class Medico {
     private TipoProfesional tipoProfesional;
     private EstadoMedico estado;
     private Integer intervaloMinutos;
+    private Set<EspecialidadMedica> especialidades = new LinkedHashSet<>();
 
     public Medico() {
     }
@@ -24,6 +28,17 @@ public class Medico {
 
     public static Medico crear(Long personaId, TipoProfesional tipoProfesional) {
         return new Medico(personaId, tipoProfesional, EstadoMedico.ACTIVO);
+    }
+
+    public static Medico crear(Long personaId, TipoProfesional tipoProfesional, Set<EspecialidadMedica> especialidades) {
+        Medico medico = crear(personaId, tipoProfesional);
+        medico.asignarEspecialidades(especialidades);
+        return medico;
+    }
+
+    public void asignarEspecialidades(Set<EspecialidadMedica> nuevasEspecialidades) {
+        validarEspecialidades(nuevasEspecialidades);
+        this.especialidades = new LinkedHashSet<>(nuevasEspecialidades);
     }
 
     public void cambiarEstado(EstadoMedico nuevoEstado) {
@@ -47,6 +62,32 @@ public class Medico {
         if (estado == null) {
             throw new IllegalArgumentException("El estado del médico es obligatorio");
         }
+    }
+
+    private void validarEspecialidades(Set<EspecialidadMedica> especialidades) {
+        if (especialidades == null || especialidades.isEmpty()) {
+            throw new IllegalArgumentException("El médico debe tener al menos una especialidad");
+        }
+        if (especialidades.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalArgumentException("Las especialidades no pueden contener valores nulos");
+        }
+    }
+
+    public Set<EspecialidadMedica> getEspecialidades() {
+        return Collections.unmodifiableSet(especialidades);
+    }
+
+    public void setEspecialidades(Set<EspecialidadMedica> especialidades) {
+        if (especialidades == null || especialidades.isEmpty()) {
+            this.especialidades = new LinkedHashSet<>();
+            return;
+        }
+        validarEspecialidades(especialidades);
+        this.especialidades = new LinkedHashSet<>(especialidades);
+    }
+
+    public boolean tieneEspecialidad(EspecialidadMedica especialidad) {
+        return especialidades.contains(especialidad);
     }
 
     public Long getPersonaId() {

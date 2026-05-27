@@ -19,6 +19,7 @@ public class MedicoController {
     private final RegistrarMedicoService registrarMedicoService;
     private final ConsultarMedicoService consultarMedicoService;
     private final CambiarEstadoMedicoService cambiarEstadoMedicoService;
+    private final AsignarEspecialidadesMedicoService asignarEspecialidadesMedicoService;
     private final MedicoRestMapper mapper;
 
     @PostMapping
@@ -57,6 +58,18 @@ public class MedicoController {
         Medico medico = cambiarEstadoMedicoService.ejecutar(
                 personaId,
                 request.getEstado()
+        );
+        return mapper.toResponse(medico);
+    }
+
+    @PutMapping("/{personaId}/especialidades")
+    public MedicoResponse asignarEspecialidades(
+            @PathVariable Long personaId,
+            @Valid @RequestBody AsignarEspecialidadesMedicoRequest request
+    ) {
+        Medico medico = asignarEspecialidadesMedicoService.ejecutar(
+                personaId,
+                request.getEspecialidades()
         );
         return mapper.toResponse(medico);
     }

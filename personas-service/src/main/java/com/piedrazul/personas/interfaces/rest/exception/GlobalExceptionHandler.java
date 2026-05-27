@@ -9,7 +9,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(PersonaNoEncontradaException.class)
+    @ExceptionHandler({PersonaNoEncontradaException.class, MedicoNoEncontradoException.class})
     public ResponseEntity<?> handleNotFound(RuntimeException ex) {
         return ResponseEntity.status(404)
                 .body(Map.of("error", ex.getMessage()));
@@ -29,6 +29,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DisponibilidadNoEncontradaException.class)
     public ResponseEntity<?> handleDisponibilidadNoEncontrada(DisponibilidadNoEncontradaException ex) {
         return ResponseEntity.status(404)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest()
                 .body(Map.of("error", ex.getMessage()));
     }
 }

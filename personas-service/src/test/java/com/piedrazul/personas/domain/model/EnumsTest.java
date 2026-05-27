@@ -32,4 +32,14 @@ class EnumsTest {
         assertTrue(TipoProfesional.valueOf("MEDICO") == TipoProfesional.MEDICO);
         assertTrue(TipoProfesional.valueOf("TERAPISTA") == TipoProfesional.TERAPISTA);
     }
+
+    @Test
+    @DisplayName("EspecialidadMedica debe tener los valores correctos")
+    void testEspecialidadMedica() {
+        assertEquals(4, EspecialidadMedica.values().length);
+        assertEquals(EspecialidadMedica.GENERAL, EspecialidadMedica.valueOf("GENERAL"));
+        assertEquals(EspecialidadMedica.TERAPEUTA_NEURAL, EspecialidadMedica.valueOf("TERAPEUTA_NEURAL"));
+        assertEquals(EspecialidadMedica.QUIROPRACTICO, EspecialidadMedica.valueOf("QUIROPRACTICO"));
+        assertEquals(EspecialidadMedica.FISIOTERAPEUTA, EspecialidadMedica.valueOf("FISIOTERAPEUTA"));
+    }
 }

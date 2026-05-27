@@ -35,6 +35,7 @@ public class MedicoRestMapper {
 
                 .tipoProfesional(medico.getTipoProfesional())
                 .estado(medico.getEstado())
+                .especialidades(medico.getEspecialidades())
                 .build();
     }
 }

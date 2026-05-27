@@ -119,7 +119,7 @@ public class RegisterController {
             if ("PACIENTE".equals(rol)) {
                 pacienteClient.crearPaciente(personaId);
             } else if ("MEDICO_TERAPISTA".equals(rol)) {
-                medicoClient.crearMedico(personaId, "MEDICO");
+                medicoClient.crearMedico(personaId, "MEDICO", List.of("GENERAL"));
             }
 
             CrearUsuarioRequest usuarioRequest = new CrearUsuarioRequest();

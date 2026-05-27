@@ -1,5 +1,7 @@
 package com.piedrazul.frontend.dto.response;
 
+import java.util.List;
+
 public class MedicoResponse {
 
     private Long personaId;
@@ -9,6 +11,7 @@ public class MedicoResponse {
 
     private String tipoProfesional;
     private String estado;
+    private List<String> especialidades;
 
     public Long getPersonaId() {
         return personaId;
@@ -48,6 +51,14 @@ public class MedicoResponse {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public List<String> getEspecialidades() {
+        return especialidades;
+    }
+
+    public void setEspecialidades(List<String> especialidades) {
+        this.especialidades = especialidades;
     }
 
     @Override
