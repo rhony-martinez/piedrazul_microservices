@@ -38,7 +38,7 @@
                            wrapText="true"
                            textAlignment="CENTER"/>
                     <Label fx:id="lblPasoActual"
-                           text="Paso 1 de 3: Seleccione su médico"
+                           text="Paso 1 de 4: Seleccione el tipo de consulta"
                            styleClass="agendar-step-indicator"
                            wrapText="true"
                            textAlignment="CENTER"/>
@@ -52,9 +52,25 @@
 
                     <VBox spacing="18">
                         <VBox spacing="4">
+                            <Label text="Tipo de consulta *"
+                                   styleClass="agendar-field-label"/>
+                            <Label text="Seleccione la especialidad que necesita"
+                                   styleClass="agendar-field-hint"/>
+                            <ComboBox fx:id="cmbEspecialidad"
+                                      promptText="— Elija una especialidad —"
+                                      prefWidth="360"
+                                      maxWidth="360"
+                                      styleClass="agendar-input"/>
+                            <Label fx:id="errEspecialidad"
+                                   styleClass="agendar-field-error"
+                                   visible="false"
+                                   managed="false"/>
+                        </VBox>
+
+                        <VBox spacing="4">
                             <Label text="Médico *"
                                    styleClass="agendar-field-label"/>
-                            <Label text="Seleccione aquí su médico"
+                            <Label text="Solo se muestran médicos que atienden esa especialidad"
                                    styleClass="agendar-field-hint"/>
                             <ComboBox fx:id="cmbMedicos"
                                       promptText="— Elija un médico —"

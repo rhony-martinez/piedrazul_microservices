@@ -1,5 +1,6 @@
 package com.piedrazul.citas.infrastructure.persistence.entity;
 
+import com.piedrazul.citas.domain.model.EspecialidadMedica;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +36,10 @@ public class CitaEntity {
 
     @Column(name = "medico_id", nullable = false)
     private Long medicoId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "especialidad", nullable = false, length = 30)
+    private EspecialidadMedica especialidad;
 
     @Column(name = "creado_por", nullable = false)
     private Long creadoPor;

@@ -51,9 +51,20 @@ public abstract class AbstractAgendamientoService {
                 medico
         );
 
+        if (request.getEspecialidad() == null) {
+            throw new IllegalArgumentException("La especialidad de la cita es obligatoria");
+        }
+
+        if (!medico.tieneEspecialidad(request.getEspecialidad())) {
+            throw new MedicoNoDisponibleException(
+                    "El médico no atiende la especialidad solicitada: " + request.getEspecialidad()
+            );
+        }
+
         Cita cita = builderFactory.crearBuilder()
                 .conPaciente(pacienteId, paciente)
                 .conMedico(medicoId, medico)
+                .conEspecialidad(request.getEspecialidad())
                 .creadaPor(creadoPor)
                 .paraFecha(request.getFechaHora())
                 .conDisponibilidad(disponibilidad)

@@ -1,5 +1,6 @@
 package com.piedrazul.citas.interfaces.rest.dto.request;
 
+import com.piedrazul.citas.domain.model.EspecialidadMedica;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -28,4 +29,7 @@ public class CrearCitaRestRequest {
 
     @NotNull(message = "La fecha y hora son obligatorias")
     private LocalDateTime fechaHora;
+
+    @NotNull(message = "La especialidad es obligatoria")
+    private EspecialidadMedica especialidad;
 }

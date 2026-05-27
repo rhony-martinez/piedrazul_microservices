@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,7 +38,13 @@ class CitaBuilderTest {
         fechaHora = calcularProximoLunes().withHour(10).withMinute(0).withSecond(0).withNano(0);
 
         pacienteSnapshot = new PacienteSnapshot(pacienteId, "Juan Pérez", "juan@email.com", "123456789", true);
-        medicoSnapshot = new MedicoSnapshot(medicoId, "Dr. Gómez", "dr@email.com", "Cardiología", EstadoMedico.ACTIVO);
+        medicoSnapshot = new MedicoSnapshot(
+                medicoId,
+                "Dr. Gómez",
+                "dr@email.com",
+                Set.of(EspecialidadMedica.GENERAL),
+                EstadoMedico.ACTIVO
+        );
 
         disponibilidadSnapshot = new DisponibilidadSnapshot(medicoId, 30);
 
@@ -77,6 +84,7 @@ class CitaBuilderTest {
         Cita cita = builder
                 .conPaciente(pacienteId, pacienteSnapshot)
                 .conMedico(medicoId, medicoSnapshot)
+                .conEspecialidad(EspecialidadMedica.GENERAL)
                 .creadaPor(creadoPor)
                 .paraFecha(fechaHora)
                 .conDisponibilidad(disponibilidadSnapshot)
@@ -98,6 +106,7 @@ class CitaBuilderTest {
         builder
                 .conPaciente(pacienteId, pacienteSnapshot) // Paciente activo
                 .conMedico(medicoId, medicoSnapshot)
+                .conEspecialidad(EspecialidadMedica.GENERAL)
                 .creadaPor(creadoPor)
                 .paraFecha(fechaHora)
                 .conDisponibilidad(disponibilidadSnapshot)
@@ -110,16 +119,41 @@ class CitaBuilderTest {
     @Test
     @DisplayName("Debería validar que el médico esté activo")
     void testValidarMedicoActivo() {
-        MedicoSnapshot medicoInactivo = new MedicoSnapshot(medicoId, "Dr. Inactivo", "i@i.com", "Cardiología", EstadoMedico.INACTIVO);
+        MedicoSnapshot medicoInactivo = new MedicoSnapshot(
+                medicoId, "Dr. Inactivo", "i@i.com", Set.of(EspecialidadMedica.GENERAL), EstadoMedico.INACTIVO);
 
         assertThrows(MedicoNoDisponibleException.class, () -> {
             builder
                     .conPaciente(pacienteId, pacienteSnapshot)
                     .conMedico(medicoId, medicoInactivo)
+                    .conEspecialidad(EspecialidadMedica.GENERAL)
                     .creadaPor(creadoPor)
                     .paraFecha(fechaHora)
                     .conDisponibilidad(disponibilidadSnapshot)
                     .build();
         });
+    }
+
+    @Test
+    @DisplayName("Debería rechazar cita si el médico no tiene la especialidad")
+    void testMedicoSinEspecialidadSolicitada() {
+        MedicoSnapshot medicoQuiro = new MedicoSnapshot(
+                medicoId,
+                "Dr. Quiro",
+                "q@q.com",
+                Set.of(EspecialidadMedica.QUIROPRACTICO),
+                EstadoMedico.ACTIVO
+        );
+
+        assertThrows(MedicoNoDisponibleException.class, () ->
+                builder
+                        .conPaciente(pacienteId, pacienteSnapshot)
+                        .conMedico(medicoId, medicoQuiro)
+                        .conEspecialidad(EspecialidadMedica.FISIOTERAPEUTA)
+                        .creadaPor(creadoPor)
+                        .paraFecha(fechaHora)
+                        .conDisponibilidad(disponibilidadSnapshot)
+                        .build()
+        );
     }
 }

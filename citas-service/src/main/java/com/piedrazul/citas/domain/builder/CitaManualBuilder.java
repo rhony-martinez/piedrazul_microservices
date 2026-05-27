@@ -9,8 +9,8 @@ public class CitaManualBuilder extends CitaBuilder {
 
         validarPacienteActivo();
         validarMedicoActivo();
-
-        // podría permitir excepciones
+        validarEspecialidad();
+        validarMedicoAtiendeEspecialidad();
         validarDisponibilidad();
 
         return construir();

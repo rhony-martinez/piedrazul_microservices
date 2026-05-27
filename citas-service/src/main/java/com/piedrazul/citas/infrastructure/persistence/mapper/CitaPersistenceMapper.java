@@ -1,6 +1,7 @@
 package com.piedrazul.citas.infrastructure.persistence.mapper;
 
 import com.piedrazul.citas.domain.model.Cita;
+import com.piedrazul.citas.domain.model.EspecialidadMedica;
 import com.piedrazul.citas.domain.model.EstadoCita;
 import com.piedrazul.citas.domain.valueobjects.*;
 import com.piedrazul.citas.infrastructure.persistence.entity.CitaEntity;
@@ -17,6 +18,7 @@ public class CitaPersistenceMapper {
                 .id(UUID.fromString(cita.getId().toString()))
                 .pacienteId(cita.getPacienteId().value())
                 .medicoId(cita.getMedicoId().value())
+                .especialidad(cita.getEspecialidad())
                 .creadoPor(cita.getCreadoPor().value())
                 .fechaHora(cita.getFechaHora())
                 .estado(cita.getEstado().name())
@@ -35,6 +37,9 @@ public class CitaPersistenceMapper {
                 CitaId.fromString(entity.getId().toString()),
                 PacienteId.of(entity.getPacienteId()),
                 MedicoId.of(entity.getMedicoId()),
+                entity.getEspecialidad() != null
+                        ? entity.getEspecialidad()
+                        : EspecialidadMedica.GENERAL,
                 UsuarioId.of(entity.getCreadoPor()),
                 entity.getFechaHora(),
                 EstadoCita.valueOf(entity.getEstado()),

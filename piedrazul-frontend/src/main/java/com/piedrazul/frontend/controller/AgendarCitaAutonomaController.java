@@ -14,19 +14,29 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AgendarCitaAutonomaController {
 
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("HH:mm");
+
+    private static final List<String> ESPECIALIDADES = List.of(
+            "GENERAL",
+            "TERAPEUTA_NEURAL",
+            "QUIROPRACTICO",
+            "FISIOTERAPEUTA"
+    );
 
     @FXML private Label lblBienvenida;
     @FXML private Label lblPasoActual;
     @FXML private Label lblSlotsGuia;
     @FXML private Label lblSlotsEstado;
     @FXML private Label lblEstadoGeneral;
+    @FXML private Label errEspecialidad;
     @FXML private Label errMedico;
     @FXML private Label errFecha;
     @FXML private Label errSlot;
+    @FXML private ComboBox<String> cmbEspecialidad;
     @FXML private ComboBox<MedicoResponse> cmbMedicos;
     @FXML private DatePicker dpFecha;
     @FXML private TableView<LocalDateTime> tablaSlots;
@@ -37,6 +47,8 @@ public class AgendarCitaAutonomaController {
     private final MedicoClient medicoClient = new MedicoClient();
     private final CitaClient citaClient = new CitaClient();
 
+    private List<MedicoResponse> todosLosMedicos = List.of();
+    private String especialidadSeleccionada;
     private MedicoResponse medicoSeleccionado;
     private LocalDateTime slotSeleccionado;
     private Long pacienteId;
@@ -56,6 +68,17 @@ public class AgendarCitaAutonomaController {
             if (newVal != null) {
                 ocultarEstadoSlots();
             }
+            actualizarGuia();
+        });
+
+        cmbEspecialidad.valueProperty().addListener((obs, oldVal, newVal) -> {
+            especialidadSeleccionada = newVal;
+            ocultarError(errEspecialidad);
+            medicoSeleccionado = null;
+            cmbMedicos.getSelectionModel().clearSelection();
+            limpiarEstadoGeneral();
+            aplicarFiltroMedicos();
+            cargarSlots();
             actualizarGuia();
         });
 
@@ -82,6 +105,7 @@ public class AgendarCitaAutonomaController {
             }
         });
 
+        cmbEspecialidad.setItems(FXCollections.observableArrayList(ESPECIALIDADES));
         configurarBienvenida();
         cargarMedicos();
         actualizarGuia();
@@ -110,9 +134,9 @@ public class AgendarCitaAutonomaController {
 
     private void cargarMedicos() {
         try {
-            List<MedicoResponse> medicos = medicoClient.obtenerMedicos();
-            cmbMedicos.setItems(FXCollections.observableArrayList(medicos));
-            if (medicos.isEmpty()) {
+            todosLosMedicos = medicoClient.obtenerMedicos();
+            aplicarFiltroMedicos();
+            if (todosLosMedicos.isEmpty()) {
                 mostrarEstadoGeneral(
                         "No hay médicos disponibles en este momento. Intente más tarde.",
                         "agendar-status-warning"
@@ -126,6 +150,35 @@ public class AgendarCitaAutonomaController {
         }
     }
 
+    private void aplicarFiltroMedicos() {
+        if (especialidadSeleccionada == null || especialidadSeleccionada.isBlank()) {
+            cmbMedicos.setItems(FXCollections.observableArrayList());
+            cmbMedicos.setDisable(true);
+            return;
+        }
+
+        cmbMedicos.setDisable(false);
+        List<MedicoResponse> filtrados = todosLosMedicos.stream()
+                .filter(m -> medicoAtiendeEspecialidad(m, especialidadSeleccionada))
+                .collect(Collectors.toList());
+
+        cmbMedicos.setItems(FXCollections.observableArrayList(filtrados));
+
+        if (filtrados.isEmpty()) {
+            mostrarEstadoGeneral(
+                    "No hay médicos disponibles para " + etiquetaEspecialidad(especialidadSeleccionada) + ".",
+                    "agendar-status-warning"
+            );
+        }
+    }
+
+    private boolean medicoAtiendeEspecialidad(MedicoResponse medico, String especialidad) {
+        if (medico.getEspecialidades() == null || medico.getEspecialidades().isEmpty()) {
+            return "GENERAL".equals(especialidad);
+        }
+        return medico.getEspecialidades().contains(especialidad);
+    }
+
     private void cargarSlots() {
         tablaSlots.getSelectionModel().clearSelection();
         slotSeleccionado = null;
@@ -133,7 +186,7 @@ public class AgendarCitaAutonomaController {
         ocultarError(errSlot);
         ocultarEstadoSlots();
 
-        if (medicoSeleccionado == null || dpFecha.getValue() == null) {
+        if (especialidadSeleccionada == null || medicoSeleccionado == null || dpFecha.getValue() == null) {
             tablaSlots.setItems(FXCollections.observableArrayList());
             actualizarGuia();
             return;
@@ -184,15 +237,19 @@ public class AgendarCitaAutonomaController {
 
         lblPasoActual.getStyleClass().setAll("agendar-step-indicator");
 
-        if (medicoSeleccionado == null) {
-            lblPasoActual.setText("Paso 1 de 3: Seleccione su médico");
-            lblSlotsGuia.setText("Los horarios aparecerán cuando elija médico y fecha.");
+        if (especialidadSeleccionada == null) {
+            lblPasoActual.setText("Paso 1 de 4: Seleccione el tipo de consulta");
+            lblSlotsGuia.setText("Primero elija la especialidad que necesita.");
+        } else if (medicoSeleccionado == null) {
+            lblPasoActual.setText("Paso 2 de 4: Seleccione su médico");
+            lblSlotsGuia.setText("Elija un médico que atienda "
+                    + etiquetaEspecialidad(especialidadSeleccionada) + ".");
         } else if (dpFecha.getValue() == null) {
-            lblPasoActual.setText("Paso 2 de 3: Seleccione la fecha de su consulta");
+            lblPasoActual.setText("Paso 3 de 4: Seleccione la fecha de su consulta");
             lblSlotsGuia.setText("Elija una fecha para ver los horarios de "
                     + nombreMedico(medicoSeleccionado) + ".");
         } else if (slotSeleccionado == null) {
-            lblPasoActual.setText("Paso 3 de 3: Seleccione la hora de su cita");
+            lblPasoActual.setText("Paso 4 de 4: Seleccione la hora de su cita");
         } else {
             lblPasoActual.setText("Listo: confirme su cita con el botón «Agendar cita»");
         }
@@ -203,6 +260,12 @@ public class AgendarCitaAutonomaController {
         limpiarValidaciones();
 
         boolean valido = true;
+
+        if (especialidadSeleccionada == null || especialidadSeleccionada.isBlank()) {
+            mostrarError(errEspecialidad, "Debe seleccionar el tipo de consulta.");
+            marcarInputInvalido(cmbEspecialidad, true);
+            valido = false;
+        }
 
         if (medicoSeleccionado == null) {
             mostrarError(errMedico, "Debe seleccionar un médico.");
@@ -239,7 +302,8 @@ public class AgendarCitaAutonomaController {
                     pacienteId,
                     medicoSeleccionado.getPersonaId(),
                     pacienteId,
-                    slotSeleccionado
+                    slotSeleccionado,
+                    especialidadSeleccionada
             );
 
             citaClient.crearCitaAutonoma(request);
@@ -279,9 +343,11 @@ public class AgendarCitaAutonomaController {
     }
 
     private void limpiarValidaciones() {
+        ocultarError(errEspecialidad);
         ocultarError(errMedico);
         ocultarError(errFecha);
         ocultarError(errSlot);
+        marcarInputInvalido(cmbEspecialidad, false);
         marcarInputInvalido(cmbMedicos, false);
         marcarInputInvalido(dpFecha, false);
         limpiarEstadoGeneral();
@@ -339,6 +405,15 @@ public class AgendarCitaAutonomaController {
         return medico.getPrimerNombre() + " " + medico.getPrimerApellido();
     }
 
+    private static String etiquetaEspecialidad(String codigo) {
+        return switch (codigo) {
+            case "TERAPEUTA_NEURAL" -> "Terapeuta Neural";
+            case "QUIROPRACTICO" -> "Quiropráctico";
+            case "FISIOTERAPEUTA" -> "Fisioterapeuta";
+            default -> "Medicina General";
+        };
+    }
+
     private static String mensajeAgendamientoParaPaciente(String mensaje) {
         if (mensaje == null || mensaje.isBlank()) {
             return "No se pudo completar el agendamiento. Intente nuevamente.";
@@ -352,6 +427,9 @@ public class AgendarCitaAutonomaController {
         }
         if (mensaje.contains("ya no está disponible")) {
             return "El horario seleccionado ya no está disponible. Elija otra hora.";
+        }
+        if (mensaje.contains("no atiende la especialidad")) {
+            return "El médico seleccionado no atiende ese tipo de consulta. Elija otro médico o especialidad.";
         }
 
         return mensaje;

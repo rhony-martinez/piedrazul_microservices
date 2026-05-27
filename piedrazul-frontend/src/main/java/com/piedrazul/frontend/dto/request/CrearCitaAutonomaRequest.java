@@ -8,28 +8,57 @@ public class CrearCitaAutonomaRequest {
     private Long medicoId;
     private Long usuarioCreadorId;
     private LocalDateTime fechaHora;
+    private String especialidad;
 
-    // Constructor vacío
-    public CrearCitaAutonomaRequest() {}
+    public CrearCitaAutonomaRequest() {
+    }
 
-    // Constructor completo
-    public CrearCitaAutonomaRequest(Long pacienteId, Long medicoId, Long usuarioCreadorId, LocalDateTime fechaHora) {
+    public CrearCitaAutonomaRequest(Long pacienteId, Long medicoId, Long usuarioCreadorId,
+                                    LocalDateTime fechaHora, String especialidad) {
         this.pacienteId = pacienteId;
         this.medicoId = medicoId;
         this.usuarioCreadorId = usuarioCreadorId;
         this.fechaHora = fechaHora;
+        this.especialidad = especialidad;
     }
 
-    // Getters y Setters
-    public Long getPacienteId() { return pacienteId; }
-    public void setPacienteId(Long pacienteId) { this.pacienteId = pacienteId; }
+    public Long getPacienteId() {
+        return pacienteId;
+    }
 
-    public Long getMedicoId() { return medicoId; }
-    public void setMedicoId(Long medicoId) { this.medicoId = medicoId; }
+    public void setPacienteId(Long pacienteId) {
+        this.pacienteId = pacienteId;
+    }
 
-    public Long getUsuarioCreadorId() { return usuarioCreadorId; }
-    public void setUsuarioCreadorId(Long usuarioCreadorId) { this.usuarioCreadorId = usuarioCreadorId; }
+    public Long getMedicoId() {
+        return medicoId;
+    }
 
-    public LocalDateTime getFechaHora() { return fechaHora; }
-    public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
+    public void setMedicoId(Long medicoId) {
+        this.medicoId = medicoId;
+    }
+
+    public Long getUsuarioCreadorId() {
+        return usuarioCreadorId;
+    }
+
+    public void setUsuarioCreadorId(Long usuarioCreadorId) {
+        this.usuarioCreadorId = usuarioCreadorId;
+    }
+
+    public LocalDateTime getFechaHora() {
+        return fechaHora;
+    }
+
+    public void setFechaHora(LocalDateTime fechaHora) {
+        this.fechaHora = fechaHora;
+    }
+
+    public String getEspecialidad() {
+        return especialidad;
+    }
+
+    public void setEspecialidad(String especialidad) {
+        this.especialidad = especialidad;
+    }
 }

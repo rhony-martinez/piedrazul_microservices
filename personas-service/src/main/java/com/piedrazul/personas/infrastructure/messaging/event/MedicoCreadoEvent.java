@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -25,6 +26,7 @@ public class MedicoCreadoEvent {
         private String nombreCompleto;
         private String email;
         private String especialidad;
+        private List<String> especialidades;
         private String estado;
     }
 }

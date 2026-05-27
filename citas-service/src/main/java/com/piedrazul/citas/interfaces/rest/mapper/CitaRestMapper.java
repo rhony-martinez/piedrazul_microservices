@@ -24,6 +24,7 @@ public class CitaRestMapper {
                 .medicoId(request.getMedicoId())
                 .usuarioCreadorId(request.getUsuarioCreadorId())
                 .fechaHora(request.getFechaHora())
+                .especialidad(request.getEspecialidad())
                 .build();
     }
 
@@ -64,6 +65,7 @@ public class CitaRestMapper {
                 .pacienteNombre(response.getPacienteNombre())
                 .medicoId(response.getMedicoId())
                 .medicoNombre(response.getMedicoNombre())
+                .especialidad(response.getEspecialidad())
                 .fechaHora(response.getFechaHora())
                 .estado(response.getEstado())
                 .motivoCancelacion(response.getMotivoCancelacion())

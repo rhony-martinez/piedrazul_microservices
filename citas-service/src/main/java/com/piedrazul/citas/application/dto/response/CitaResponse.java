@@ -1,5 +1,6 @@
 package com.piedrazul.citas.application.dto.response;
 
+import com.piedrazul.citas.domain.model.EspecialidadMedica;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,7 @@ public class CitaResponse {
     private String pacienteNombre;
     private Long medicoId;
     private String medicoNombre;
+    private EspecialidadMedica especialidad;
     private LocalDateTime fechaHora;
     private String estado;
     private String motivoCancelacion;

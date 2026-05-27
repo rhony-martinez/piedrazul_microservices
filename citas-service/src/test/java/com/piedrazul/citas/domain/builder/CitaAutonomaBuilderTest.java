@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,7 +37,8 @@ class CitaAutonomaBuilderTest {
         fechaHora = calcularProximoLunes();
 
         pacienteSnapshot = new PacienteSnapshot(pacienteId, "Juan Pérez", "juan@email.com", "123456789", true);
-        medicoSnapshot = new MedicoSnapshot(medicoId, "Dr. Gómez", "dr@email.com", "Cardiología", EstadoMedico.ACTIVO);
+        medicoSnapshot = new MedicoSnapshot(
+                medicoId, "Dr. Gómez", "dr@email.com", Set.of(EspecialidadMedica.GENERAL), EstadoMedico.ACTIVO);
 
         disponibilidadSnapshot = new DisponibilidadSnapshot(medicoId, 30);
 
@@ -61,6 +63,7 @@ class CitaAutonomaBuilderTest {
         Cita cita = builder
                 .conPaciente(pacienteId, pacienteSnapshot)
                 .conMedico(medicoId, medicoSnapshot)
+                .conEspecialidad(EspecialidadMedica.GENERAL)
                 .creadaPor(creadoPor)
                 .paraFecha(fechaHora)
                 .conDisponibilidad(disponibilidadSnapshot)
@@ -94,6 +97,7 @@ class CitaAutonomaBuilderTest {
             builderLocal
                     .conPaciente(finalPacienteId, finalPacienteSnapshot)
                     .conMedico(finalMedicoId, finalMedicoSnapshot)
+                    .conEspecialidad(EspecialidadMedica.GENERAL)
                     .creadaPor(finalCreadoPor)
                     .paraFecha(fechaCercana)
                     .conDisponibilidad(disponibilidadLocal)
@@ -129,6 +133,7 @@ class CitaAutonomaBuilderTest {
             builderLocal
                     .conPaciente(finalPacienteId, finalPacienteSnapshot)
                     .conMedico(finalMedicoId, finalMedicoSnapshot)
+                    .conEspecialidad(EspecialidadMedica.GENERAL)
                     .creadaPor(finalCreadoPor)
                     .paraFecha(finalFechaSinDisponibilidad)
                     .conDisponibilidad(finalDisponibilidadSnapshot)

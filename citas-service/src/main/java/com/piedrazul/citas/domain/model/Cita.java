@@ -8,6 +8,7 @@ public class Cita {
     private final CitaId id;
     private final PacienteId pacienteId;
     private final MedicoId medicoId;
+    private final EspecialidadMedica especialidad;
     private final UsuarioId creadoPor;
     private LocalDateTime fechaHora;
     private EstadoCita estado;
@@ -16,10 +17,11 @@ public class Cita {
     private AuditMetadata audit;
 
     public Cita(CitaId id, PacienteId pacienteId, MedicoId medicoId,
-                UsuarioId creadoPor, LocalDateTime fechaHora) {
+                EspecialidadMedica especialidad, UsuarioId creadoPor, LocalDateTime fechaHora) {
         this.id = id;
         this.pacienteId = pacienteId;
         this.medicoId = medicoId;
+        this.especialidad = especialidad;
         this.creadoPor = creadoPor;
         this.fechaHora = fechaHora;
         this.estado = EstadoCita.PROGRAMADA;
@@ -28,12 +30,13 @@ public class Cita {
 
     // Constructor privado para reconstruir desde BD
     private Cita(CitaId id, PacienteId pacienteId, MedicoId medicoId,
-                 UsuarioId creadoPor, LocalDateTime fechaHora,
+                 EspecialidadMedica especialidad, UsuarioId creadoPor, LocalDateTime fechaHora,
                  EstadoCita estado, String motivoCancelacion,
                  LocalDateTime fechaAsistencia, AuditMetadata audit) {
         this.id = id;
         this.pacienteId = pacienteId;
         this.medicoId = medicoId;
+        this.especialidad = especialidad;
         this.creadoPor = creadoPor;
         this.fechaHora = fechaHora;
         this.estado = estado;
@@ -44,14 +47,14 @@ public class Cita {
 
     // Factory method para reconstruir desde base de datos
     public static Cita reconstruir(CitaId id, PacienteId pacienteId, MedicoId medicoId,
-                                   UsuarioId creadoPor, LocalDateTime fechaHora,
-                                   EstadoCita estado, String motivoCancelacion,
-                                   LocalDateTime fechaAsistencia, LocalDateTime createdAt,
-                                   LocalDateTime updatedAt, String createdBy) {
+                                   EspecialidadMedica especialidad, UsuarioId creadoPor,
+                                   LocalDateTime fechaHora, EstadoCita estado,
+                                   String motivoCancelacion, LocalDateTime fechaAsistencia,
+                                   LocalDateTime createdAt, LocalDateTime updatedAt, String createdBy) {
 
         AuditMetadata audit = AuditMetadata.reconstruir(createdAt, updatedAt, createdBy);
 
-        return new Cita(id, pacienteId, medicoId, creadoPor, fechaHora,
+        return new Cita(id, pacienteId, medicoId, especialidad, creadoPor, fechaHora,
                 estado, motivoCancelacion, fechaAsistencia, audit);
     }
 
@@ -121,6 +124,7 @@ public class Cita {
     public CitaId getId() { return id; }
     public PacienteId getPacienteId() { return pacienteId; }
     public MedicoId getMedicoId() { return medicoId; }
+    public EspecialidadMedica getEspecialidad() { return especialidad; }
     public UsuarioId getCreadoPor() { return creadoPor; }
     public LocalDateTime getFechaHora() { return fechaHora; }
     public EstadoCita getEstado() { return estado; }

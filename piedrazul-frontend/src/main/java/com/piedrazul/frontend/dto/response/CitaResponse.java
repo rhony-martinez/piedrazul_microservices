@@ -7,6 +7,7 @@ public class CitaResponse {
     private String pacienteNombre;
     private Long medicoId;
     private String medicoNombre;
+    private String especialidad;
     private String fechaHora;
     private String estado;
     private String motivoCancelacion;
@@ -34,6 +35,10 @@ public class CitaResponse {
 
     public String getMedicoNombre() {
         return medicoNombre;
+    }
+
+    public String getEspecialidad() {
+        return especialidad;
     }
 
     public String getFechaHora() {
@@ -70,6 +75,10 @@ public class CitaResponse {
 
     public void setMedicoNombre(String medicoNombre) {
         this.medicoNombre = medicoNombre;
+    }
+
+    public void setEspecialidad(String especialidad) {
+        this.especialidad = especialidad;
     }
 
     public void setFechaHora(String fechaHora) {

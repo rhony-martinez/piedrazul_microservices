@@ -18,6 +18,7 @@ public abstract class CitaBuilder {
     protected PacienteSnapshot paciente;
     protected MedicoSnapshot medico;
     protected DisponibilidadSnapshot disponibilidad;
+    protected EspecialidadMedica especialidad;
 
     public CitaBuilder conPaciente(PacienteId pacienteId,
                                    PacienteSnapshot paciente) {
@@ -52,6 +53,11 @@ public abstract class CitaBuilder {
         return this;
     }
 
+    public CitaBuilder conEspecialidad(EspecialidadMedica especialidad) {
+        this.especialidad = especialidad;
+        return this;
+    }
+
     public abstract Cita build();
 
     protected void validarPacienteActivo() {
@@ -70,6 +76,20 @@ public abstract class CitaBuilder {
 
             throw new MedicoNoDisponibleException(
                     "Médico inactivo"
+            );
+        }
+    }
+
+    protected void validarEspecialidad() {
+        if (especialidad == null) {
+            throw new IllegalArgumentException("La especialidad de la cita es obligatoria");
+        }
+    }
+
+    protected void validarMedicoAtiendeEspecialidad() {
+        if (!medico.tieneEspecialidad(especialidad)) {
+            throw new MedicoNoDisponibleException(
+                    "El médico no atiende la especialidad solicitada: " + especialidad
             );
         }
     }
@@ -93,6 +113,7 @@ public abstract class CitaBuilder {
                 CitaId.generate(),
                 pacienteId,
                 medicoId,
+                especialidad,
                 creadoPor,
                 fechaHora
         );

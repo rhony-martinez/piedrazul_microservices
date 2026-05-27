@@ -12,6 +12,8 @@ public class CitaAutonomaBuilder extends CitaBuilder {
 
         validarPacienteActivo();
         validarMedicoActivo();
+        validarEspecialidad();
+        validarMedicoAtiendeEspecialidad();
         validarDisponibilidad();
 
         validarRestriccionesAutoservicio();

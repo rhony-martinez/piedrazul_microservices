@@ -18,6 +18,7 @@ public class CitaApplicationMapper {
                 .pacienteNombre(paciente != null ? paciente.getNombreCompleto() : null)
                 .medicoId(cita.getMedicoId() != null ? cita.getMedicoId().value() : null)
                 .medicoNombre(medico != null ? medico.getNombreCompleto() : null)
+                .especialidad(cita.getEspecialidad())
                 .fechaHora(cita.getFechaHora())
                 .estado(cita.getEstado() != null ? cita.getEstado().getDescripcion() : null)
                 .motivoCancelacion(cita.getMotivoCancelacion())

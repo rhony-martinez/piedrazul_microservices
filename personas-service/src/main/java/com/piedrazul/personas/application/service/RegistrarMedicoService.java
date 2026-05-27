@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -55,16 +55,16 @@ public class RegistrarMedicoService {
 
         log.info("Médico registrado exitosamente con ID: {}", request.getPersonaId());
 
-        String especialidadResumen = medico.getEspecialidades().stream()
+        List<String> especialidadesEvento = medico.getEspecialidades().stream()
                 .map(Enum::name)
-                .collect(Collectors.joining(", "));
+                .toList();
 
         String nombreCompleto = persona.getPrimerNombre() + " " + persona.getPrimerApellido();
         medicoEventPublisher.publicarMedicoCreado(
                 request.getPersonaId(),
                 nombreCompleto,
                 persona.getCorreo(),
-                especialidadResumen
+                especialidadesEvento
         );
 
         log.info("Evento MedicoCreado publicado para ID: {}", request.getPersonaId());
