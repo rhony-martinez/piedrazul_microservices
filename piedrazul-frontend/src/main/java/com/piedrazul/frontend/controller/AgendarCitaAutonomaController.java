@@ -6,6 +6,7 @@ import com.piedrazul.frontend.client.MedicoClient;
 import com.piedrazul.frontend.dto.request.CrearCitaAutonomaRequest;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.EspecialidadLabels;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -424,12 +425,7 @@ public class AgendarCitaAutonomaController {
     }
 
     private static String etiquetaEspecialidad(String codigo) {
-        return switch (codigo) {
-            case "TERAPEUTA_NEURAL" -> "Terapeuta Neural";
-            case "QUIROPRACTICO" -> "Quiropráctico";
-            case "FISIOTERAPEUTA" -> "Fisioterapeuta";
-            default -> "Medicina General";
-        };
+        return EspecialidadLabels.etiqueta(codigo);
     }
 
     private static String mensajeAgendamientoParaPaciente(String mensaje) {

@@ -105,7 +105,7 @@
                                         <TableColumn fx:id="colFecha" text="Fecha" prefWidth="120"/>
                                         <TableColumn fx:id="colPaciente" text="Paciente" prefWidth="170"/>
                                         <TableColumn fx:id="colMedico" text="Médico" prefWidth="170"/>
-                                        <TableColumn fx:id="colTipo" text="Tipo" prefWidth="120"/>
+                                        <TableColumn fx:id="colTipo" text="Especialidad" prefWidth="120"/>
                                         <TableColumn fx:id="colEstado" text="Estado" prefWidth="120"/>
                                         <TableColumn fx:id="colMotivo" text="Motivo" prefWidth="300"/>
                                 </columns>

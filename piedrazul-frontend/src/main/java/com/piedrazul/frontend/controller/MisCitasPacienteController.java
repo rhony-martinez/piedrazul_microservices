@@ -3,6 +3,7 @@ package com.piedrazul.frontend.controller;
 import com.piedrazul.frontend.client.CitaClient;
 import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.EspecialidadLabels;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -77,7 +78,10 @@ public class MisCitasPacienteController {
                                 : String.valueOf(data.getValue().getMedicoId())
                 ));
 
-        colTipo.setCellValueFactory(data -> new SimpleStringProperty("General"));
+        colTipo.setCellValueFactory(data ->
+                new SimpleStringProperty(
+                        EspecialidadLabels.etiqueta(data.getValue().getEspecialidad())
+                ));
 
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
 

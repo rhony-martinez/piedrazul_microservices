@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.http.AuthenticatedHttpClient;
+import com.piedrazul.frontend.util.EspecialidadLabels;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -95,7 +96,9 @@ public class HistorialCitasController {
         );
 
         colTipo.setCellValueFactory(data ->
-                new SimpleStringProperty("General")
+                new SimpleStringProperty(
+                        EspecialidadLabels.etiqueta(data.getValue().getEspecialidad())
+                )
         );
 
         colEstado.setCellValueFactory(data ->
