@@ -67,6 +67,7 @@ public abstract class AbstractAgendamientoService {
                 .conPaciente(pacienteId, paciente)
                 .conMedico(medicoId, medico)
                 .conEspecialidad(request.getEspecialidad())
+                .conMotivoAgendamiento(normalizarMotivoAgendamiento(request.getMotivoAgendamiento()))
                 .creadaPor(creadoPor)
                 .paraFecha(request.getFechaHora())
                 .conDisponibilidad(disponibilidad)
@@ -128,6 +129,13 @@ public abstract class AbstractAgendamientoService {
                         new DisponibilidadNoDisponibleException(
                                 "No hay disponibilidad"
                         ));
+    }
+
+    private static String normalizarMotivoAgendamiento(String motivo) {
+        if (motivo == null || motivo.isBlank()) {
+            return null;
+        }
+        return motivo.trim();
     }
 
     private void validarHorarioDisponible(

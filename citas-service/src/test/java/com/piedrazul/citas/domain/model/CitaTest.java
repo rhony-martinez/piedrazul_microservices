@@ -31,7 +31,7 @@ class CitaTest {
         creadoPor = UsuarioId.of(1L);
         fechaHora = LocalDateTime.now().plusDays(2);
 
-        cita = new Cita(citaId, pacienteId, medicoId, EspecialidadMedica.GENERAL, creadoPor, fechaHora);
+        cita = new Cita(citaId, pacienteId, medicoId, EspecialidadMedica.GENERAL, creadoPor, fechaHora, null);
     }
 
     @Test
@@ -138,7 +138,7 @@ class CitaTest {
 
         Cita citaReconstruida = Cita.reconstruir(
                 citaId, pacienteId, medicoId, EspecialidadMedica.GENERAL, creadoPor, fechaHora,
-                EstadoCita.PROGRAMADA, null, null,
+                EstadoCita.PROGRAMADA, "Control rutinario", null, null,
                 createdAt, updatedAt, "system"
         );
 
@@ -151,7 +151,7 @@ class CitaTest {
     private Cita reconstruirCitaConEstado(EstadoCita estado) {
         return Cita.reconstruir(
                 citaId, pacienteId, medicoId, EspecialidadMedica.GENERAL, creadoPor, fechaHora,
-                estado, null, null,
+                estado, null, null, null,
                 LocalDateTime.now(), LocalDateTime.now(), "system"
         );
     }
@@ -159,7 +159,7 @@ class CitaTest {
     private Cita reconstruirCitaConEstado(EstadoCita estado, LocalDateTime fecha) {
         return Cita.reconstruir(
                 citaId, pacienteId, medicoId, EspecialidadMedica.GENERAL, creadoPor, fecha,
-                estado, null, null,
+                estado, null, null, null,
                 LocalDateTime.now(), LocalDateTime.now(), "system"
         );
     }

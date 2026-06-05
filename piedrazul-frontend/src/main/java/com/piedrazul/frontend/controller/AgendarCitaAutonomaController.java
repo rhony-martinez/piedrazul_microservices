@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 public class AgendarCitaAutonomaController {
 
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("HH:mm");
+    private static final int MAX_MOTIVO_CARACTERES = 500;
 
     private static final List<String> ESPECIALIDADES = List.of(
             "GENERAL",
@@ -40,11 +41,13 @@ public class AgendarCitaAutonomaController {
     @FXML private Label errMedico;
     @FXML private Label errFecha;
     @FXML private Label errSlot;
+    @FXML private Label errMotivo;
     @FXML private ComboBox<String> cmbEspecialidad;
     @FXML private ComboBox<MedicoResponse> cmbMedicos;
     @FXML private DatePicker dpFecha;
     @FXML private TableView<LocalDateTime> tablaSlots;
     @FXML private TableColumn<LocalDateTime, String> colSlot;
+    @FXML private TextArea txtMotivoAgendamiento;
     @FXML private Button btnAgendar;
     @FXML private Button btnVolver;
 
@@ -257,20 +260,22 @@ public class AgendarCitaAutonomaController {
         lblPasoActual.getStyleClass().setAll("agendar-step-indicator");
 
         if (especialidadSeleccionada == null) {
-            lblPasoActual.setText("Paso 1 de 4: Seleccione el tipo de consulta");
+            lblPasoActual.setText("Paso 1 de 5: Seleccione el tipo de consulta");
             lblSlotsGuia.setText("Primero elija la especialidad que necesita.");
         } else if (medicoSeleccionado == null) {
-            lblPasoActual.setText("Paso 2 de 4: Seleccione su médico");
+            lblPasoActual.setText("Paso 2 de 5: Seleccione su médico");
             lblSlotsGuia.setText("Elija un médico que atienda "
                     + etiquetaEspecialidad(especialidadSeleccionada) + ".");
         } else if (dpFecha.getValue() == null) {
-            lblPasoActual.setText("Paso 3 de 4: Seleccione la fecha de su consulta");
+            lblPasoActual.setText("Paso 3 de 5: Seleccione la fecha de su consulta");
             lblSlotsGuia.setText("Elija una fecha para ver los horarios de "
                     + nombreMedico(medicoSeleccionado) + ".");
         } else if (slotSeleccionado == null) {
-            lblPasoActual.setText("Paso 4 de 4: Seleccione la hora de su cita");
+            lblPasoActual.setText("Paso 4 de 5: Seleccione la hora de su cita");
         } else {
-            lblPasoActual.setText("Listo: confirme su cita con el botón «Agendar cita»");
+            lblPasoActual.setText(
+                    "Paso 5 de 5: Puede indicar el motivo de su consulta (opcional) y confirmar con «Agendar cita»"
+            );
         }
     }
 
@@ -303,6 +308,13 @@ public class AgendarCitaAutonomaController {
             valido = false;
         }
 
+        String motivo = motivoAgendamientoNormalizado();
+        if (motivo != null && motivo.length() > MAX_MOTIVO_CARACTERES) {
+            mostrarError(errMotivo, "El motivo no puede superar " + MAX_MOTIVO_CARACTERES + " caracteres.");
+            marcarTextAreaInvalida(true);
+            valido = false;
+        }
+
         if (pacienteId == null) {
             mostrarEstadoGeneral(
                     "No se pudo identificar su perfil de paciente.",
@@ -322,7 +334,8 @@ public class AgendarCitaAutonomaController {
                     medicoSeleccionado.getPersonaId(),
                     pacienteId,
                     slotSeleccionado,
-                    especialidadSeleccionada
+                    especialidadSeleccionada,
+                    motivo
             );
 
             citaClient.crearCitaAutonoma(request);
@@ -366,6 +379,8 @@ public class AgendarCitaAutonomaController {
         ocultarError(errMedico);
         ocultarError(errFecha);
         ocultarError(errSlot);
+        ocultarError(errMotivo);
+        marcarTextAreaInvalida(false);
         marcarInputInvalido(cmbEspecialidad, false);
         marcarInputInvalido(cmbMedicos, false);
         marcarInputInvalido(dpFecha, false);
@@ -382,6 +397,27 @@ public class AgendarCitaAutonomaController {
         label.setText("");
         label.setVisible(false);
         label.setManaged(false);
+    }
+
+    private String motivoAgendamientoNormalizado() {
+        if (txtMotivoAgendamiento == null) {
+            return null;
+        }
+        String texto = txtMotivoAgendamiento.getText();
+        if (texto == null || texto.isBlank()) {
+            return null;
+        }
+        return texto.trim();
+    }
+
+    private void marcarTextAreaInvalida(boolean invalida) {
+        if (invalida) {
+            if (!txtMotivoAgendamiento.getStyleClass().contains("agendar-textarea-error")) {
+                txtMotivoAgendamiento.getStyleClass().add("agendar-textarea-error");
+            }
+        } else {
+            txtMotivoAgendamiento.getStyleClass().remove("agendar-textarea-error");
+        }
     }
 
     private void marcarInputInvalido(Control control, boolean invalido) {

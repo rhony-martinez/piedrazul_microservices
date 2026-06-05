@@ -19,6 +19,7 @@ public abstract class CitaBuilder {
     protected MedicoSnapshot medico;
     protected DisponibilidadSnapshot disponibilidad;
     protected EspecialidadMedica especialidad;
+    protected String motivoAgendamiento;
 
     public CitaBuilder conPaciente(PacienteId pacienteId,
                                    PacienteSnapshot paciente) {
@@ -55,6 +56,11 @@ public abstract class CitaBuilder {
 
     public CitaBuilder conEspecialidad(EspecialidadMedica especialidad) {
         this.especialidad = especialidad;
+        return this;
+    }
+
+    public CitaBuilder conMotivoAgendamiento(String motivoAgendamiento) {
+        this.motivoAgendamiento = motivoAgendamiento;
         return this;
     }
 
@@ -115,7 +121,8 @@ public abstract class CitaBuilder {
                 medicoId,
                 especialidad,
                 creadoPor,
-                fechaHora
+                fechaHora,
+                motivoAgendamiento
         );
     }
 }

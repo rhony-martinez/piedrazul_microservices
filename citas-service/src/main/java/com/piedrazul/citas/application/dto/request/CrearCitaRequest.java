@@ -20,4 +20,6 @@ public class CrearCitaRequest {
 
     @NotNull(message = "La especialidad es obligatoria")
     private EspecialidadMedica especialidad;
+
+    private String motivoAgendamiento;
 }

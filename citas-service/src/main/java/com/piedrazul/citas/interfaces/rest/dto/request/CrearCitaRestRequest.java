@@ -3,6 +3,7 @@ package com.piedrazul.citas.interfaces.rest.dto.request;
 import com.piedrazul.citas.domain.model.EspecialidadMedica;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,4 +33,7 @@ public class CrearCitaRestRequest {
 
     @NotNull(message = "La especialidad es obligatoria")
     private EspecialidadMedica especialidad;
+
+    @Size(max = 500, message = "El motivo de agendamiento no puede superar 500 caracteres")
+    private String motivoAgendamiento;
 }

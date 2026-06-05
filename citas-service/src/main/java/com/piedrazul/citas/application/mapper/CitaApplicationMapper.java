@@ -21,6 +21,7 @@ public class CitaApplicationMapper {
                 .especialidad(cita.getEspecialidad())
                 .fechaHora(cita.getFechaHora())
                 .estado(cita.getEstado() != null ? cita.getEstado().getDescripcion() : null)
+                .motivoAgendamiento(cita.getMotivoAgendamiento())
                 .motivoCancelacion(cita.getMotivoCancelacion())
                 .fechaAsistencia(cita.getFechaAsistencia())
                 .createdAt(cita.getAudit() != null ? cita.getAudit().getCreatedAt() : null)

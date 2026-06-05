@@ -10,6 +10,7 @@ public class CitaResponse {
     private String especialidad;
     private String fechaHora;
     private String estado;
+    private String motivoAgendamiento;
     private String motivoCancelacion;
     private String fechaAsistencia;
     private String createdAt;
@@ -47,6 +48,10 @@ public class CitaResponse {
 
     public String getEstado() {
         return estado;
+    }
+
+    public String getMotivoAgendamiento() {
+        return motivoAgendamiento;
     }
 
     public String getMotivoCancelacion() {
@@ -87,6 +92,10 @@ public class CitaResponse {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public void setMotivoAgendamiento(String motivoAgendamiento) {
+        this.motivoAgendamiento = motivoAgendamiento;
     }
 
     public void setMotivoCancelacion(String motivoCancelacion) {

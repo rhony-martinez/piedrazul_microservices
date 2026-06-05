@@ -50,6 +50,9 @@ public class CitaEntity {
     @Column(name = "estado", nullable = false)
     private String estado;
 
+    @Column(name = "motivo_agendamiento", length = 500)
+    private String motivoAgendamiento;
+
     @Column(name = "motivo_cancelacion")
     private String motivoCancelacion;
 

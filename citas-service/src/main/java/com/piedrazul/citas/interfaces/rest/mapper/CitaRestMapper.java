@@ -25,6 +25,7 @@ public class CitaRestMapper {
                 .usuarioCreadorId(request.getUsuarioCreadorId())
                 .fechaHora(request.getFechaHora())
                 .especialidad(request.getEspecialidad())
+                .motivoAgendamiento(request.getMotivoAgendamiento())
                 .build();
     }
 
@@ -68,6 +69,7 @@ public class CitaRestMapper {
                 .especialidad(response.getEspecialidad())
                 .fechaHora(response.getFechaHora())
                 .estado(response.getEstado())
+                .motivoAgendamiento(response.getMotivoAgendamiento())
                 .motivoCancelacion(response.getMotivoCancelacion())
                 .fechaAsistencia(response.getFechaAsistencia())
                 .createdAt(response.getCreatedAt())

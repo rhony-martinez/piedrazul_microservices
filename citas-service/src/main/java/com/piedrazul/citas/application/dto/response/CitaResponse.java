@@ -20,6 +20,7 @@ public class CitaResponse {
     private EspecialidadMedica especialidad;
     private LocalDateTime fechaHora;
     private String estado;
+    private String motivoAgendamiento;
     private String motivoCancelacion;
     private LocalDateTime fechaAsistencia;
     private LocalDateTime createdAt;

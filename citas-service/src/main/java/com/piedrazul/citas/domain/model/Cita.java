@@ -12,18 +12,21 @@ public class Cita {
     private final UsuarioId creadoPor;
     private LocalDateTime fechaHora;
     private EstadoCita estado;
+    private String motivoAgendamiento;
     private String motivoCancelacion;
     private LocalDateTime fechaAsistencia;
     private AuditMetadata audit;
 
     public Cita(CitaId id, PacienteId pacienteId, MedicoId medicoId,
-                EspecialidadMedica especialidad, UsuarioId creadoPor, LocalDateTime fechaHora) {
+                EspecialidadMedica especialidad, UsuarioId creadoPor,
+                LocalDateTime fechaHora, String motivoAgendamiento) {
         this.id = id;
         this.pacienteId = pacienteId;
         this.medicoId = medicoId;
         this.especialidad = especialidad;
         this.creadoPor = creadoPor;
         this.fechaHora = fechaHora;
+        this.motivoAgendamiento = motivoAgendamiento;
         this.estado = EstadoCita.PROGRAMADA;
         this.audit = AuditMetadata.crear();
     }
@@ -31,7 +34,7 @@ public class Cita {
     // Constructor privado para reconstruir desde BD
     private Cita(CitaId id, PacienteId pacienteId, MedicoId medicoId,
                  EspecialidadMedica especialidad, UsuarioId creadoPor, LocalDateTime fechaHora,
-                 EstadoCita estado, String motivoCancelacion,
+                 EstadoCita estado, String motivoAgendamiento, String motivoCancelacion,
                  LocalDateTime fechaAsistencia, AuditMetadata audit) {
         this.id = id;
         this.pacienteId = pacienteId;
@@ -40,6 +43,7 @@ public class Cita {
         this.creadoPor = creadoPor;
         this.fechaHora = fechaHora;
         this.estado = estado;
+        this.motivoAgendamiento = motivoAgendamiento;
         this.motivoCancelacion = motivoCancelacion;
         this.fechaAsistencia = fechaAsistencia;
         this.audit = audit;
@@ -49,13 +53,14 @@ public class Cita {
     public static Cita reconstruir(CitaId id, PacienteId pacienteId, MedicoId medicoId,
                                    EspecialidadMedica especialidad, UsuarioId creadoPor,
                                    LocalDateTime fechaHora, EstadoCita estado,
-                                   String motivoCancelacion, LocalDateTime fechaAsistencia,
+                                   String motivoAgendamiento, String motivoCancelacion,
+                                   LocalDateTime fechaAsistencia,
                                    LocalDateTime createdAt, LocalDateTime updatedAt, String createdBy) {
 
         AuditMetadata audit = AuditMetadata.reconstruir(createdAt, updatedAt, createdBy);
 
         return new Cita(id, pacienteId, medicoId, especialidad, creadoPor, fechaHora,
-                estado, motivoCancelacion, fechaAsistencia, audit);
+                estado, motivoAgendamiento, motivoCancelacion, fechaAsistencia, audit);
     }
 
     // Cancelar cita
@@ -128,6 +133,7 @@ public class Cita {
     public UsuarioId getCreadoPor() { return creadoPor; }
     public LocalDateTime getFechaHora() { return fechaHora; }
     public EstadoCita getEstado() { return estado; }
+    public String getMotivoAgendamiento() { return motivoAgendamiento; }
     public String getMotivoCancelacion() { return motivoCancelacion; }
     public LocalDateTime getFechaAsistencia() { return fechaAsistencia; }
     public AuditMetadata getAudit() { return audit; }

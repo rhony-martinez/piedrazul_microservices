@@ -9,17 +9,25 @@ public class CrearCitaAutonomaRequest {
     private Long usuarioCreadorId;
     private LocalDateTime fechaHora;
     private String especialidad;
+    private String motivoAgendamiento;
 
     public CrearCitaAutonomaRequest() {
     }
 
     public CrearCitaAutonomaRequest(Long pacienteId, Long medicoId, Long usuarioCreadorId,
                                     LocalDateTime fechaHora, String especialidad) {
+        this(pacienteId, medicoId, usuarioCreadorId, fechaHora, especialidad, null);
+    }
+
+    public CrearCitaAutonomaRequest(Long pacienteId, Long medicoId, Long usuarioCreadorId,
+                                    LocalDateTime fechaHora, String especialidad,
+                                    String motivoAgendamiento) {
         this.pacienteId = pacienteId;
         this.medicoId = medicoId;
         this.usuarioCreadorId = usuarioCreadorId;
         this.fechaHora = fechaHora;
         this.especialidad = especialidad;
+        this.motivoAgendamiento = motivoAgendamiento;
     }
 
     public Long getPacienteId() {
@@ -60,5 +68,13 @@ public class CrearCitaAutonomaRequest {
 
     public void setEspecialidad(String especialidad) {
         this.especialidad = especialidad;
+    }
+
+    public String getMotivoAgendamiento() {
+        return motivoAgendamiento;
+    }
+
+    public void setMotivoAgendamiento(String motivoAgendamiento) {
+        this.motivoAgendamiento = motivoAgendamiento;
     }
 }

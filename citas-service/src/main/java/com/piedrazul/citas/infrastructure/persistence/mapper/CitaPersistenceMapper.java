@@ -22,6 +22,7 @@ public class CitaPersistenceMapper {
                 .creadoPor(cita.getCreadoPor().value())
                 .fechaHora(cita.getFechaHora())
                 .estado(cita.getEstado().name())
+                .motivoAgendamiento(cita.getMotivoAgendamiento())
                 .motivoCancelacion(cita.getMotivoCancelacion())
                 .fechaAsistencia(cita.getFechaAsistencia())
                 .createdAt(cita.getAudit().getCreatedAt())
@@ -43,6 +44,7 @@ public class CitaPersistenceMapper {
                 UsuarioId.of(entity.getCreadoPor()),
                 entity.getFechaHora(),
                 EstadoCita.valueOf(entity.getEstado()),
+                entity.getMotivoAgendamiento(),
                 entity.getMotivoCancelacion(),
                 entity.getFechaAsistencia(),
                 entity.getCreatedAt(),

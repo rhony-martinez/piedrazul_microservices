@@ -38,7 +38,7 @@
                            wrapText="true"
                            textAlignment="CENTER"/>
                     <Label fx:id="lblPasoActual"
-                           text="Paso 1 de 4: Seleccione el tipo de consulta"
+                           text="Paso 1 de 5: Seleccione el tipo de consulta"
                            styleClass="agendar-step-indicator"
                            wrapText="true"
                            textAlignment="CENTER"/>
@@ -142,6 +142,28 @@
                            managed="false"
                            wrapText="true"
                            textAlignment="CENTER"/>
+                </VBox>
+
+                <VBox styleClass="agendar-card"
+                      spacing="10"
+                      maxWidth="560">
+                    <Label text="2.1 Motivo de la consulta (opcional)"
+                           styleClass="agendar-section-title"/>
+                    <Label text="Indique brevemente por qué solicita la cita. Puede omitir este paso."
+                           styleClass="agendar-field-hint"
+                           wrapText="true"/>
+                    <TextArea fx:id="txtMotivoAgendamiento"
+                              promptText="Ej: Dolor lumbar, control rutinario, seguimiento..."
+                              wrapText="true"
+                              prefRowCount="3"
+                              prefWidth="360"
+                              maxWidth="360"
+                              styleClass="agendar-textarea"/>
+                    <Label fx:id="errMotivo"
+                           styleClass="agendar-field-error"
+                           visible="false"
+                           managed="false"
+                           wrapText="true"/>
                 </VBox>
 
                 <Label fx:id="lblEstadoGeneral"
