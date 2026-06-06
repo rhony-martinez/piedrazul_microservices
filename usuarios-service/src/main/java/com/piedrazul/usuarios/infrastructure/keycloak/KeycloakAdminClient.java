@@ -15,6 +15,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -75,17 +77,19 @@ public class KeycloakAdminClient {
             String email,
             String firstName,
             String lastName,
-            Map<String, String> attributes
+            Map<String, String> attributes,
+            String password
     ) {
-        Map<String, Object> body = Map.of(
-                "username", username,
-                "email", email == null ? "" : email,
-                "firstName", firstName == null ? "" : firstName,
-                "lastName", lastName == null ? "" : lastName,
-                "enabled", true,
-                "emailVerified", true,
-                "attributes", toMultiValueAttributes(attributes)
-        );
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("username", username);
+        body.put("email", emailNormalizado(username, email));
+        body.put("firstName", nombreNormalizado(firstName, username));
+        body.put("lastName", nombreNormalizado(lastName, username));
+        body.put("enabled", true);
+        body.put("emailVerified", true);
+        body.put("requiredActions", List.of());
+        body.put("attributes", toMultiValueAttributes(attributes));
+        body.put("credentials", List.of(credencialPassword(password)));
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, bearerHeaders());
 
@@ -124,9 +128,28 @@ public class KeycloakAdminClient {
 
         try {
             restTemplate.exchange(url, HttpMethod.PUT, request, Void.class);
+            limpiarAccionesRequeridas(keycloakUserId);
         } catch (HttpStatusCodeException e) {
             throw new KeycloakAdminException(
                     "Error seteando password (" + e.getStatusCode() + "): "
+                            + e.getResponseBodyAsString(), e);
+        }
+    }
+
+    /**
+     * Keycloak 26 puede dejar UPDATE_PASSWORD activo aun con temporary=false.
+     * El grant type password del frontend falla hasta limpiar esas acciones.
+     */
+    public void limpiarAccionesRequeridas(UUID keycloakUserId) {
+        String url = props.adminUsersEndpoint() + "/" + keycloakUserId;
+        Map<String, Object> body = Map.of("requiredActions", List.of());
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, bearerHeaders());
+
+        try {
+            restTemplate.exchange(url, HttpMethod.PUT, request, Void.class);
+        } catch (HttpStatusCodeException e) {
+            throw new KeycloakAdminException(
+                    "Error limpiando acciones requeridas (" + e.getStatusCode() + "): "
                             + e.getResponseBodyAsString(), e);
         }
     }
@@ -218,6 +241,28 @@ public class KeycloakAdminClient {
         } catch (IllegalArgumentException e) {
             throw new KeycloakAdminException("Location header invalido: " + location, e);
         }
+    }
+
+    private Map<String, Object> credencialPassword(String password) {
+        Map<String, Object> credential = new HashMap<>();
+        credential.put("type", "password");
+        credential.put("value", password);
+        credential.put("temporary", false);
+        return credential;
+    }
+
+    private String emailNormalizado(String username, String email) {
+        if (email != null && !email.isBlank()) {
+            return email.trim();
+        }
+        return username.trim().toLowerCase() + "@piedrazul.local";
+    }
+
+    private String nombreNormalizado(String value, String fallback) {
+        if (value != null && !value.isBlank()) {
+            return value.trim();
+        }
+        return fallback.trim();
     }
 
     private MultiValueMap<String, String> toMultiValueAttributes(Map<String, String> attributes) {
