@@ -3,6 +3,7 @@ package com.piedrazul.frontend.controller;
 import com.piedrazul.frontend.client.CitaClient;
 import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.CitaMotivoUtil;
 import com.piedrazul.frontend.util.EspecialidadLabels;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.beans.property.SimpleStringProperty;
@@ -86,11 +87,7 @@ public class MisCitasPacienteController {
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
 
         colMotivo.setCellValueFactory(data ->
-                new SimpleStringProperty(
-                        data.getValue().getMotivoCancelacion() != null
-                                ? data.getValue().getMotivoCancelacion()
-                                : "-"
-                ));
+                new SimpleStringProperty(CitaMotivoUtil.resolverMotivo(data.getValue())));
     }
 
     private void configurarResaltadoFilas() {

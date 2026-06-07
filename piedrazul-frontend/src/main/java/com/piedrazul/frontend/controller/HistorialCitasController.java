@@ -4,6 +4,7 @@ import com.piedrazul.frontend.client.CitaClient;
 import com.piedrazul.frontend.client.MedicoClient;
 import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
+import com.piedrazul.frontend.util.CitaMotivoUtil;
 import com.piedrazul.frontend.util.CitasExcelExporter;
 import com.piedrazul.frontend.util.CitasExportMessages;
 import com.piedrazul.frontend.util.EspecialidadLabels;
@@ -103,7 +104,7 @@ public class HistorialCitasController {
                 new SimpleStringProperty(data.getValue().getEstado()));
 
         colMotivo.setCellValueFactory(data ->
-                new SimpleStringProperty(resolverMotivo(data.getValue())));
+                new SimpleStringProperty(CitaMotivoUtil.resolverMotivo(data.getValue())));
     }
 
     private void configurarFiltros() {
@@ -170,16 +171,6 @@ public class HistorialCitasController {
         } catch (Exception e) {
             mostrarError(CitasExportMessages.ERROR);
         }
-    }
-
-    private String resolverMotivo(CitaResponse cita) {
-        if (cita.getMotivoAgendamiento() != null && !cita.getMotivoAgendamiento().isBlank()) {
-            return cita.getMotivoAgendamiento();
-        }
-        if (cita.getMotivoCancelacion() != null && !cita.getMotivoCancelacion().isBlank()) {
-            return cita.getMotivoCancelacion();
-        }
-        return "-";
     }
 
     private LocalDateTime parseFechaHora(CitaResponse cita) {
