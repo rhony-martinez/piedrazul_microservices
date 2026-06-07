@@ -119,7 +119,7 @@
                                         <TableColumn fx:id="colMedico" text="Médico" prefWidth="170"/>
                                         <TableColumn fx:id="colTipo" text="Especialidad" prefWidth="120"/>
                                         <TableColumn fx:id="colEstado" text="Estado" prefWidth="120"/>
-                                        <TableColumn fx:id="colMotivo" text="Motivo" prefWidth="300"/>
+                                        <TableColumn fx:id="colMotivo" text="Motivo consulta" prefWidth="300"/>
                                 </columns>
 
                         </TableView>
