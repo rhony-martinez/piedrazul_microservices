@@ -45,10 +45,21 @@
                                 </VBox>
 
                                 <VBox spacing="5">
-                                        <Label text="Fecha"
+                                        <Label text="Fecha inicial"
                                                style="-fx-text-fill: white;
                                   -fx-font-weight: bold;"/>
-                                        <DatePicker fx:id="dpFecha"
+                                        <DatePicker fx:id="dpFechaInicio"
+                                                    prefWidth="180"
+                                                    promptText="Seleccione fecha"
+                                                    style="-fx-background-radius: 8;
+                                       -fx-font-size: 14px;"/>
+                                </VBox>
+
+                                <VBox spacing="5">
+                                        <Label text="Fecha final"
+                                               style="-fx-text-fill: white;
+                                  -fx-font-weight: bold;"/>
+                                        <DatePicker fx:id="dpFechaFin"
                                                     prefWidth="180"
                                                     promptText="Seleccione fecha"
                                                     style="-fx-background-radius: 8;
@@ -124,6 +135,18 @@
                         <padding>
                                 <Insets top="15" right="15" bottom="15" left="15"/>
                         </padding>
+
+                        <Button text="EXPORTAR"
+                                fx:id="btnExportar"
+                                onAction="#exportarCitas"
+                                prefWidth="150"
+                                prefHeight="45"
+                                style="-fx-background-color: #4caf50;
+                           -fx-text-fill: white;
+                           -fx-font-weight: bold;
+                           -fx-font-size: 14px;
+                           -fx-background-radius: 10;
+                           -fx-cursor: hand;"/>
 
                         <Button text="Volver"
                                 fx:id="btnVolver"

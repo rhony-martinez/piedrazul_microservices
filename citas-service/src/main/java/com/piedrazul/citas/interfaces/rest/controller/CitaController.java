@@ -122,17 +122,24 @@ public class CitaController {
     public ResponseEntity<?> listar(
             @RequestParam(required = false) Long medicoId,
             @RequestParam(required = false) Long pacienteId,
-            @RequestParam(required = false) String fecha) {
+            @RequestParam(required = false) String fecha,
+            @RequestParam(required = false) String fechaInicio,
+            @RequestParam(required = false) String fechaFin) {
 
         try {
 
-            LocalDate fechaParsed = (fecha != null && !fecha.isEmpty())
-                    ? LocalDate.parse(fecha)
-                    : null;
+            LocalDate fechaInicioParsed = parseFechaParam(fechaInicio);
+            LocalDate fechaFinParsed = parseFechaParam(fechaFin);
+
+            if (fechaInicioParsed == null && fechaFinParsed == null && fecha != null && !fecha.isEmpty()) {
+                LocalDate dia = LocalDate.parse(fecha);
+                fechaInicioParsed = dia;
+                fechaFinParsed = dia;
+            }
 
             List<CitaRestResponse> response =
                     listarCitasPorMedicoUseCase
-                            .listar(medicoId, pacienteId, fechaParsed)
+                            .listar(medicoId, pacienteId, fechaInicioParsed, fechaFinParsed)
                             .stream()
                             .map(mapper::toRestResponse)
                             .toList();
@@ -145,5 +152,12 @@ public class CitaController {
                     .badRequest()
                     .body(e.getMessage());
         }
+    }
+
+    private LocalDate parseFechaParam(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return LocalDate.parse(value);
     }
 }

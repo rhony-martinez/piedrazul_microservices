@@ -83,7 +83,7 @@ public class CitaClient {
         }
     }
 
-    public List<CitaResponse> listarHistorial(Long medicoId, LocalDate fecha) {
+    public List<CitaResponse> listarHistorial(Long medicoId, LocalDate fechaInicio, LocalDate fechaFin) {
         try {
             StringBuilder url = new StringBuilder(citasBaseUrl() + "/historial");
             String separador = "?";
@@ -91,8 +91,12 @@ public class CitaClient {
                 url.append(separador).append("medicoId=").append(medicoId);
                 separador = "&";
             }
-            if (fecha != null) {
-                url.append(separador).append("fecha=").append(fecha);
+            if (fechaInicio != null) {
+                url.append(separador).append("fechaInicio=").append(fechaInicio);
+                separador = "&";
+            }
+            if (fechaFin != null) {
+                url.append(separador).append("fechaFin=").append(fechaFin);
             }
             AuthenticatedHttpClient.Response resp = AuthenticatedHttpClient.get(url.toString());
             return objectMapper.readValue(
@@ -106,14 +110,17 @@ public class CitaClient {
         }
     }
 
-    public List<CitaResponse> listarPorMedico(Long medicoId, Long pacienteId, LocalDate fecha) {
+    public List<CitaResponse> listarPorMedico(Long medicoId, Long pacienteId, LocalDate fechaInicio, LocalDate fechaFin) {
         try {
             StringBuilder url = new StringBuilder(citasBaseUrl() + "/historial?medicoId=" + medicoId);
             if (pacienteId != null) {
                 url.append("&pacienteId=").append(pacienteId);
             }
-            if (fecha != null) {
-                url.append("&fecha=").append(fecha);
+            if (fechaInicio != null) {
+                url.append("&fechaInicio=").append(fechaInicio);
+            }
+            if (fechaFin != null) {
+                url.append("&fechaFin=").append(fechaFin);
             }
             AuthenticatedHttpClient.Response resp = AuthenticatedHttpClient.get(url.toString());
             return objectMapper.readValue(

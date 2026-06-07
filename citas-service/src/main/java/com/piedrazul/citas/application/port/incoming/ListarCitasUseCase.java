@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface ListarCitasUseCase {
 
-    List<CitaResponse> listar(Long medicoId, Long pacienteId, LocalDate fecha);
+    List<CitaResponse> listar(Long medicoId, Long pacienteId, LocalDate fechaInicio, LocalDate fechaFin);
 }

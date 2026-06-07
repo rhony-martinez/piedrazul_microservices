@@ -8,7 +8,10 @@ import com.piedrazul.frontend.dto.response.PacienteListItem;
 import com.piedrazul.frontend.dto.response.PacienteResponse;
 import com.piedrazul.frontend.dto.response.PersonaResponse;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.CitasExcelExporter;
+import com.piedrazul.frontend.util.CitasExportMessages;
 import com.piedrazul.frontend.util.EspecialidadLabels;
+import com.piedrazul.frontend.util.RangoFechasUtil;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -31,9 +34,11 @@ public class MisCitasMedicoController {
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @FXML private ComboBox<PacienteListItem> cmbPacientes;
-    @FXML private DatePicker dpFecha;
+    @FXML private DatePicker dpFechaInicio;
+    @FXML private DatePicker dpFechaFin;
     @FXML private Label lblProximaCita;
     @FXML private Label lblLeyendaProxima;
+    @FXML private Button btnExportar;
     @FXML private Button btnVolver;
     @FXML private TableView<CitaResponse> tablaCitas;
 
@@ -107,11 +112,7 @@ public class MisCitasMedicoController {
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
 
         colMotivo.setCellValueFactory(data ->
-                new SimpleStringProperty(
-                        data.getValue().getMotivoCancelacion() != null
-                                ? data.getValue().getMotivoCancelacion()
-                                : "-"
-                ));
+                new SimpleStringProperty(resolverMotivo(data.getValue())));
     }
 
     private void configurarResaltadoFilas() {
@@ -148,19 +149,25 @@ public class MisCitasMedicoController {
             cmbPacientes.setPromptText("Todos los pacientes");
 
         } catch (Exception e) {
-            e.printStackTrace();
             mostrarError("No se pudo cargar el listado de pacientes: " + e.getMessage());
         }
     }
 
     @FXML
     private void buscarCitas() {
+        LocalDate fechaInicio = dpFechaInicio.getValue();
+        LocalDate fechaFin = dpFechaFin.getValue();
+
+        if (RangoFechasUtil.esRangoInvalido(fechaInicio, fechaFin)) {
+            mostrarAdvertencia(RangoFechasUtil.MSG_RANGO_INVALIDO);
+            return;
+        }
+
         try {
             PacienteListItem pacienteSeleccionado = cmbPacientes.getValue();
             Long pacienteId = pacienteSeleccionado != null ? pacienteSeleccionado.getPersonaId() : null;
-            LocalDate fecha = dpFecha.getValue();
 
-            List<CitaResponse> citas = citaClient.listarPorMedico(medicoId, pacienteId, fecha);
+            List<CitaResponse> citas = citaClient.listarPorMedico(medicoId, pacienteId, fechaInicio, fechaFin);
             citas.sort(Comparator.comparing(this::parseFechaHora).reversed());
 
             proximaCitaId = citas.stream()
@@ -175,8 +182,31 @@ public class MisCitasMedicoController {
             tablaCitas.refresh();
 
         } catch (Exception e) {
-            e.printStackTrace();
             mostrarError("No se pudieron cargar tus citas: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void exportarCitas() {
+        LocalDate fechaInicio = dpFechaInicio.getValue();
+        LocalDate fechaFin = dpFechaFin.getValue();
+
+        if (RangoFechasUtil.esRangoInvalido(fechaInicio, fechaFin)) {
+            mostrarAdvertencia(RangoFechasUtil.MSG_RANGO_INVALIDO);
+            return;
+        }
+
+        List<CitaResponse> citas = tablaCitas.getItems();
+        if (citas == null || citas.isEmpty()) {
+            mostrarAdvertencia(CitasExportMessages.SIN_DATOS);
+            return;
+        }
+
+        try {
+            CitasExcelExporter.exportar(citas, false, "informe_citas_medico");
+            mostrarInformacion(CitasExportMessages.EXITO);
+        } catch (Exception e) {
+            mostrarError(CitasExportMessages.ERROR);
         }
     }
 
@@ -207,6 +237,16 @@ public class MisCitasMedicoController {
                 });
     }
 
+    private String resolverMotivo(CitaResponse cita) {
+        if (cita.getMotivoAgendamiento() != null && !cita.getMotivoAgendamiento().isBlank()) {
+            return cita.getMotivoAgendamiento();
+        }
+        if (cita.getMotivoCancelacion() != null && !cita.getMotivoCancelacion().isBlank()) {
+            return cita.getMotivoCancelacion();
+        }
+        return "-";
+    }
+
     private boolean esCancelada(CitaResponse cita) {
         return cita.getEstado() != null && cita.getEstado().equalsIgnoreCase("Cancelada");
     }
@@ -228,6 +268,22 @@ public class MisCitasMedicoController {
         } catch (Exception e) {
             return cita.getFechaHora();
         }
+    }
+
+    private void mostrarInformacion(String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Mis citas");
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
+    }
+
+    private void mostrarAdvertencia(String mensaje) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Mis citas");
+        alert.setHeaderText(null);
+        alert.setContentText(mensaje);
+        alert.showAndWait();
     }
 
     private void mostrarError(String mensaje) {

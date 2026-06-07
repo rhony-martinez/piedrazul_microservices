@@ -137,53 +137,25 @@ public class CitaService implements CancelarCitaUseCase,
 
     @Override
     @Transactional(readOnly = true)
-    public List<CitaResponse> listar(Long medicoId, Long pacienteId, LocalDate fecha) {
+    public List<CitaResponse> listar(Long medicoId, Long pacienteId, LocalDate fechaInicio, LocalDate fechaFin) {
 
         List<Cita> citas;
 
         if (pacienteId != null) {
-
-            if (fecha != null) {
-                LocalDateTime inicio = fecha.atStartOfDay();
-                LocalDateTime fin = fecha.atTime(23, 59, 59);
-                citas = citaRepository.findByPacienteIdAndFecha(
-                        PacienteId.of(pacienteId), inicio, fin
-                );
-            } else {
-                citas = citaRepository.findByPacienteId(PacienteId.of(pacienteId));
-            }
-
+            citas = citaRepository.findByPacienteId(PacienteId.of(pacienteId));
             if (medicoId != null) {
                 MedicoId medicoIdVo = MedicoId.of(medicoId);
                 citas = citas.stream()
                         .filter(c -> c.getMedicoId().equals(medicoIdVo))
                         .toList();
             }
-
-        } else if (medicoId != null && fecha != null) {
-
-            LocalDateTime inicio = fecha.atStartOfDay();
-            LocalDateTime fin = fecha.atTime(23, 59, 59);
-
-            citas = citaRepository.findByMedicoIdAndFecha(
-                    MedicoId.of(medicoId), inicio, fin
-            );
-
         } else if (medicoId != null) {
-
             citas = citaRepository.findByMedicoId(MedicoId.of(medicoId));
-
-        } else if (fecha != null) {
-
-            LocalDateTime inicio = fecha.atStartOfDay();
-            LocalDateTime fin = fecha.atTime(23, 59, 59);
-
-            citas = citaRepository.findByFecha(inicio, fin);
-
         } else {
-
             citas = citaRepository.findAll();
         }
+
+        citas = filtrarPorRangoFechas(citas, fechaInicio, fechaFin);
 
         return citas.stream()
                 .map(cita -> {
@@ -195,6 +167,22 @@ public class CitaService implements CancelarCitaUseCase,
 
                     return mapper.toResponse(cita, paciente, medico);
                 })
+                .toList();
+    }
+
+    private List<Cita> filtrarPorRangoFechas(List<Cita> citas, LocalDate fechaInicio, LocalDate fechaFin) {
+        if (fechaInicio == null && fechaFin == null) {
+            return citas;
+        }
+
+        LocalDate inicio = fechaInicio != null ? fechaInicio : fechaFin;
+        LocalDate fin = fechaFin != null ? fechaFin : fechaInicio;
+        LocalDateTime desde = inicio.atStartOfDay();
+        LocalDateTime hasta = fin.atTime(23, 59, 59);
+
+        return citas.stream()
+                .filter(c -> c.getFechaHora() != null)
+                .filter(c -> !c.getFechaHora().isBefore(desde) && !c.getFechaHora().isAfter(hasta))
                 .toList();
     }
 }

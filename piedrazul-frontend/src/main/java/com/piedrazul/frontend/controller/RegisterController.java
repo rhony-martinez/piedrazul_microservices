@@ -229,9 +229,17 @@ public class RegisterController {
             volverDespuesDeRegistro();
 
         } catch (ApiClientException e) {
+            System.err.println("=== ERROR ApiClientException ===");
+            System.err.println("Mensaje: " + e.getMessage());
+            e.printStackTrace();
+
             revertirRegistro(personaId);
             mapServerError(e.getParsedError());
         } catch (Exception e) {
+            System.err.println("=== ERROR GENERAL ===");
+            System.err.println("Mensaje: " + e.getMessage());
+            e.printStackTrace();
+
             revertirRegistro(personaId);
             mapServerError(ApiErrorParser.parse(e.getMessage()));
         }
