@@ -63,7 +63,7 @@ public final class CitasExcelExporter {
                 }
                 row.createCell(col++).setCellValue(EspecialidadLabels.etiqueta(cita.getEspecialidad()));
                 row.createCell(col++).setCellValue(valor(cita.getEstado()));
-                row.createCell(col).setCellValue(resolverMotivo(cita));
+                row.createCell(col).setCellValue(CitaMotivoUtil.resolverMotivo(cita));
             }
 
             for (int i = 0; i <= (incluirMedico ? 6 : 5); i++) {
@@ -99,16 +99,6 @@ public final class CitasExcelExporter {
         Cell cell = row.createCell(index);
         cell.setCellValue(value);
         cell.setCellStyle(style);
-    }
-
-    private static String resolverMotivo(CitaResponse cita) {
-        if (cita.getMotivoAgendamiento() != null && !cita.getMotivoAgendamiento().isBlank()) {
-            return cita.getMotivoAgendamiento();
-        }
-        if (cita.getMotivoCancelacion() != null && !cita.getMotivoCancelacion().isBlank()) {
-            return cita.getMotivoCancelacion();
-        }
-        return "-";
     }
 
     private static String formatearFecha(CitaResponse cita) {

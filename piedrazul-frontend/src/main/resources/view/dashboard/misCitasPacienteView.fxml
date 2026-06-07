@@ -67,7 +67,7 @@
                                         <TableColumn fx:id="colMedico" text="Médico" prefWidth="200"/>
                                         <TableColumn fx:id="colTipo" text="Especialidad" prefWidth="100"/>
                                         <TableColumn fx:id="colEstado" text="Estado" prefWidth="120"/>
-                                        <TableColumn fx:id="colMotivo" text="Motivo" prefWidth="280"/>
+                                        <TableColumn fx:id="colMotivo" text="Motivo consulta" prefWidth="280"/>
                                 </columns>
 
                         </TableView>
