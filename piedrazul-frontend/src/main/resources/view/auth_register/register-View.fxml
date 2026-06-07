@@ -180,7 +180,8 @@
                 <Label text="* Campo obligatorio" styleClass="hint-label"/>
 
                 <VBox spacing="10" alignment="CENTER">
-                    <Button text="Registrarse"
+                    <Button fx:id="btnRegistrarse"
+                            text="Registrarse"
                             onAction="#handleRegister"
                             styleClass="btn-primary"/>
 
