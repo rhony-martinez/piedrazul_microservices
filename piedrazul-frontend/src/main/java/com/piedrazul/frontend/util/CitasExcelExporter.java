@@ -17,15 +17,17 @@ public final class CitasExcelExporter {
 
     private static final DateTimeFormatter FECHA_DISPLAY =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private static final DateTimeFormatter NOMBRE_ARCHIVO =
-            DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
 
     private CitasExcelExporter() {
     }
 
     public static Path exportar(List<CitaResponse> citas, boolean incluirMedico, String prefijoArchivo)
             throws IOException {
-        Path destino = resolverRutaDescarga(prefijoArchivo);
+        return exportar(citas, incluirMedico, CitasExportPaths.rutaExcel(prefijoArchivo));
+    }
+
+    public static Path exportar(List<CitaResponse> citas, boolean incluirMedico, Path destino)
+            throws IOException {
 
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Informe de citas");
@@ -76,13 +78,6 @@ public final class CitasExcelExporter {
         }
 
         return destino;
-    }
-
-    private static Path resolverRutaDescarga(String prefijoArchivo) throws IOException {
-        Path downloads = Path.of(System.getProperty("user.home"), "Downloads");
-        Files.createDirectories(downloads);
-        String nombre = prefijoArchivo + "_" + LocalDateTime.now().format(NOMBRE_ARCHIVO) + ".xlsx";
-        return downloads.resolve(nombre);
     }
 
     private static CellStyle crearEstiloEncabezado(Workbook workbook) {

@@ -69,6 +69,22 @@
                                        -fx-font-size: 14px;"/>
                                 </VBox>
 
+                                <VBox alignment="BOTTOM_CENTER">
+                                        <Button text="LISTAR"
+                                                onAction="#buscarCitas"
+                                                prefWidth="150"
+                                                prefHeight="45"
+                                                style="-fx-background-color: #5cceee;
+                                   -fx-text-fill: white;
+                                   -fx-font-weight: bold;
+                                   -fx-font-size: 16px;
+                                   -fx-background-radius: 10;
+                                   -fx-border-radius: 10;
+                                   -fx-border-color: #24c0eb;
+                                   -fx-border-width: 2;
+                                   -fx-cursor: hand;"/>
+                                </VBox>
+
                         </HBox>
 
                 </VBox>
@@ -123,12 +139,24 @@
                                 <Insets top="15" right="15" bottom="15" left="15"/>
                         </padding>
 
-                        <Button text="EXPORTAR"
-                                fx:id="btnExportar"
-                                onAction="#exportarCitas"
-                                prefWidth="150"
+                        <Button text="EXPORTAR EXCEL"
+                                fx:id="btnExportarExcel"
+                                onAction="#exportarCitasExcel"
+                                prefWidth="170"
                                 prefHeight="45"
-                                style="-fx-background-color: #4caf50;
+                                style="-fx-background-color: #217346;
+                           -fx-text-fill: white;
+                           -fx-font-weight: bold;
+                           -fx-font-size: 14px;
+                           -fx-background-radius: 10;
+                           -fx-cursor: hand;"/>
+
+                        <Button text="EXPORTAR CSV"
+                                fx:id="btnExportarCsv"
+                                onAction="#exportarCitasCsv"
+                                prefWidth="170"
+                                prefHeight="45"
+                                style="-fx-background-color: #1565c0;
                            -fx-text-fill: white;
                            -fx-font-weight: bold;
                            -fx-font-size: 14px;

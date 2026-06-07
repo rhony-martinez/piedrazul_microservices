@@ -4,8 +4,10 @@ import com.piedrazul.frontend.client.CitaClient;
 import com.piedrazul.frontend.client.MedicoClient;
 import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
+import com.piedrazul.frontend.util.CitasCsvExporter;
 import com.piedrazul.frontend.util.CitasExcelExporter;
 import com.piedrazul.frontend.util.CitasExportMessages;
+import com.piedrazul.frontend.util.CitasExportPaths;
 import com.piedrazul.frontend.util.EspecialidadLabels;
 import com.piedrazul.frontend.util.RangoFechasUtil;
 import com.piedrazul.frontend.util.SceneManager;
@@ -29,7 +31,8 @@ public class HistorialCitasController {
     @FXML private ComboBox<MedicoResponse> cmbMedicos;
     @FXML private DatePicker dpFechaInicio;
     @FXML private DatePicker dpFechaFin;
-    @FXML private Button btnExportar;
+    @FXML private Button btnExportarExcel;
+    @FXML private Button btnExportarCsv;
     @FXML private Button btnVolver;
     @FXML private TableView<CitaResponse> tablaCitas;
 
@@ -110,10 +113,6 @@ public class HistorialCitasController {
         cmbMedicos.setPromptText("Todos los médicos");
         dpFechaInicio.setPromptText("Fecha inicial");
         dpFechaFin.setPromptText("Fecha final");
-
-        cmbMedicos.valueProperty().addListener((obs, anterior, nuevo) -> buscarCitas());
-        dpFechaInicio.valueProperty().addListener((obs, anterior, nuevo) -> buscarCitas());
-        dpFechaFin.valueProperty().addListener((obs, anterior, nuevo) -> buscarCitas());
     }
 
     private void cargarMedicos() {
@@ -125,6 +124,7 @@ public class HistorialCitasController {
         }
     }
 
+    @FXML
     private void buscarCitas() {
         LocalDate fechaInicio = dpFechaInicio.getValue();
         LocalDate fechaFin = dpFechaFin.getValue();
@@ -149,7 +149,16 @@ public class HistorialCitasController {
     }
 
     @FXML
-    private void exportarCitas() {
+    private void exportarCitasExcel() {
+        exportarCitas(CitasExportMessages.TIPO_EXCEL, "historial_citas_agendador", true);
+    }
+
+    @FXML
+    private void exportarCitasCsv() {
+        exportarCitas(CitasExportMessages.TIPO_CSV, "historial_citas_agendador", false);
+    }
+
+    private void exportarCitas(String tipoArchivo, String prefijoArchivo, boolean excel) {
         LocalDate fechaInicio = dpFechaInicio.getValue();
         LocalDate fechaFin = dpFechaFin.getValue();
 
@@ -165,7 +174,19 @@ public class HistorialCitasController {
         }
 
         try {
-            CitasExcelExporter.exportar(citas, true, "historial_citas_agendador");
+            java.nio.file.Path destino = excel
+                    ? CitasExportPaths.rutaExcel(prefijoArchivo)
+                    : CitasExportPaths.rutaCsv(prefijoArchivo);
+
+            if (!CitasExportMessages.confirmarExportacion(tipoArchivo, destino)) {
+                return;
+            }
+
+            if (excel) {
+                CitasExcelExporter.exportar(citas, true, destino);
+            } else {
+                CitasCsvExporter.exportar(citas, true, destino);
+            }
             mostrarInformacion(CitasExportMessages.EXITO);
         } catch (Exception e) {
             mostrarError(CitasExportMessages.ERROR);

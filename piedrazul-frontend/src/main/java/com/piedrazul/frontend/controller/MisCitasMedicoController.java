@@ -8,8 +8,10 @@ import com.piedrazul.frontend.dto.response.PacienteListItem;
 import com.piedrazul.frontend.dto.response.PacienteResponse;
 import com.piedrazul.frontend.dto.response.PersonaResponse;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.CitasCsvExporter;
 import com.piedrazul.frontend.util.CitasExcelExporter;
 import com.piedrazul.frontend.util.CitasExportMessages;
+import com.piedrazul.frontend.util.CitasExportPaths;
 import com.piedrazul.frontend.util.EspecialidadLabels;
 import com.piedrazul.frontend.util.RangoFechasUtil;
 import com.piedrazul.frontend.util.SceneManager;
@@ -38,7 +40,8 @@ public class MisCitasMedicoController {
     @FXML private DatePicker dpFechaFin;
     @FXML private Label lblProximaCita;
     @FXML private Label lblLeyendaProxima;
-    @FXML private Button btnExportar;
+    @FXML private Button btnExportarExcel;
+    @FXML private Button btnExportarCsv;
     @FXML private Button btnVolver;
     @FXML private TableView<CitaResponse> tablaCitas;
 
@@ -187,7 +190,16 @@ public class MisCitasMedicoController {
     }
 
     @FXML
-    private void exportarCitas() {
+    private void exportarCitasExcel() {
+        exportarCitas(CitasExportMessages.TIPO_EXCEL, "informe_citas_medico", true);
+    }
+
+    @FXML
+    private void exportarCitasCsv() {
+        exportarCitas(CitasExportMessages.TIPO_CSV, "informe_citas_medico", false);
+    }
+
+    private void exportarCitas(String tipoArchivo, String prefijoArchivo, boolean excel) {
         LocalDate fechaInicio = dpFechaInicio.getValue();
         LocalDate fechaFin = dpFechaFin.getValue();
 
@@ -203,7 +215,19 @@ public class MisCitasMedicoController {
         }
 
         try {
-            CitasExcelExporter.exportar(citas, false, "informe_citas_medico");
+            java.nio.file.Path destino = excel
+                    ? CitasExportPaths.rutaExcel(prefijoArchivo)
+                    : CitasExportPaths.rutaCsv(prefijoArchivo);
+
+            if (!CitasExportMessages.confirmarExportacion(tipoArchivo, destino)) {
+                return;
+            }
+
+            if (excel) {
+                CitasExcelExporter.exportar(citas, false, destino);
+            } else {
+                CitasCsvExporter.exportar(citas, false, destino);
+            }
             mostrarInformacion(CitasExportMessages.EXITO);
         } catch (Exception e) {
             mostrarError(CitasExportMessages.ERROR);
