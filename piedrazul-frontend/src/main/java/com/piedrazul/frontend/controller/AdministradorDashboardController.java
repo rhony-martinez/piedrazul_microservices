@@ -79,4 +79,20 @@ public class AdministradorDashboardController {
                 "PIEDRAZUL - Configurar festivos"
         );
     }
+
+    @FXML
+    private void handleReportes() {
+        if (!SessionManager.isLoggedIn()
+                || (!SessionManager.hasRole("ADMINISTRADOR") && !SessionManager.hasRole("AGENDADOR"))) {
+            SessionManager.clear();
+            SceneManager.showLogin("/view/auth_register/loginView.fxml", lblBienvenida);
+            return;
+        }
+
+        SceneManager.switchScene(
+                "/view/dashboard/reportesView.fxml",
+                lblBienvenida,
+                "PIEDRAZUL - Reportes"
+        );
+    }
 }
