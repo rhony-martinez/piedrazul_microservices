@@ -1,6 +1,7 @@
 package com.piedrazul.frontend.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.request.CrearCitaAutonomaRequest;
@@ -24,6 +25,7 @@ public class  CitaClient {
     public CitaClient() {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
+        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
     public List<LocalDateTime> obtenerSlotsDisponibles(Long medicoId, Long pacienteId) {

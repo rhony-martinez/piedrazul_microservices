@@ -17,6 +17,7 @@ import com.piedrazul.frontend.util.EspecialidadLabels;
 import com.piedrazul.frontend.util.FormFieldHelper;
 import com.piedrazul.frontend.util.PersonaFormSupport;
 import com.piedrazul.frontend.util.SceneManager;
+import com.piedrazul.frontend.util.SessionPersonaResolver;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -112,10 +113,17 @@ public class AgendarCitaManualController {
             return;
         }
 
-        agendadorId = SessionManager.getPersonaId();
+        agendadorId = SessionPersonaResolver.resolverPersonaId();
         String username = SessionManager.getUsername();
         if (username != null && !username.isBlank()) {
             lblBienvenida.setText("Agendamiento Manual - " + username);
+        }
+        if (agendadorId == null) {
+            mostrarEstadoGeneral(
+                    "Su cuenta de agendador no tiene una persona vinculada. "
+                            + "Solicite al administrador que revise su usuario antes de agendar citas.",
+                    "agendar-status-warning"
+            );
         }
 
         colSlot.setCellValueFactory(cellData ->
@@ -426,12 +434,24 @@ public class AgendarCitaManualController {
             return;
         }
 
+        Long idAgendador = agendadorId != null ? agendadorId : SessionPersonaResolver.resolverPersonaId();
+        if (idAgendador == null) {
+            mostrarEstadoGeneral(
+                    "No se pudo identificar su perfil de agendador. "
+                            + "Cierre sesión e ingrese nuevamente, o contacte al administrador.",
+                    "agendar-status-error"
+            );
+            return;
+        }
+        agendadorId = idAgendador;
+
         setAgendamientoEnProgreso(true);
 
+        final Long agendadorIdFinal = idAgendador;
         CrearCitaAutonomaRequest requestBase = new CrearCitaAutonomaRequest(
                 null,
                 medicoSeleccionado.getPersonaId(),
-                agendadorId,
+                agendadorIdFinal,
                 slotSeleccionado,
                 especialidadSeleccionada,
                 motivo
@@ -736,6 +756,9 @@ public class AgendarCitaManualController {
         }
         if (mensaje.contains("Paciente no encontrado")) {
             return "El paciente aún no está disponible en el sistema. Intente de nuevo en unos segundos.";
+        }
+        if (mensaje.contains("usuario creador") || mensaje.contains("usuarioCreadorId")) {
+            return "No se pudo identificar al agendador. Cierre sesión e ingrese nuevamente.";
         }
         return mensaje;
     }

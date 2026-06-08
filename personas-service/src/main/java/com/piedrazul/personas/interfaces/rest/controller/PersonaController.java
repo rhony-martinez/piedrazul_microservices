@@ -47,6 +47,11 @@ public class PersonaController {
         compensarRegistroFallidoService.ejecutar(id);
     }
 
+    @GetMapping("/dni/{dni}")
+    public PersonaResponse buscarPorDni(@PathVariable String dni) {
+        return mapper.toResponse(consultarPersonaService.buscarPorDni(dni));
+    }
+
     @GetMapping("/{id}")
     public PersonaResponse buscarPorId(@PathVariable Long id) {
         return mapper.toResponse(consultarPersonaService.buscarPorId(id));
