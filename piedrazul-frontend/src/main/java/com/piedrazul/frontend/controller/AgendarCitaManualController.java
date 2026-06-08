@@ -6,31 +6,44 @@ import com.piedrazul.frontend.client.MedicoClient;
 import com.piedrazul.frontend.client.PacienteClient;
 import com.piedrazul.frontend.client.PersonaClient;
 import com.piedrazul.frontend.dto.request.CrearCitaAutonomaRequest;
+import com.piedrazul.frontend.dto.request.CrearPersonaRequest;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
 import com.piedrazul.frontend.dto.response.PacienteListItem;
 import com.piedrazul.frontend.dto.response.PacienteResponse;
 import com.piedrazul.frontend.dto.response.PersonaResponse;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.ApiClientException;
 import com.piedrazul.frontend.util.EspecialidadLabels;
+import com.piedrazul.frontend.util.FormFieldHelper;
+import com.piedrazul.frontend.util.PersonaFormSupport;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.collections.FXCollections;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class AgendarCitaManualController {
 
     private static final DateTimeFormatter FORMATO_HORA = DateTimeFormatter.ofPattern("HH:mm");
     private static final int MAX_MOTIVO_CARACTERES = 500;
+    private static final int MAX_REINTENTOS_CITA = 8;
+    private static final long ESPERA_INICIAL_MS = 250L;
+
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,}$");
 
     private static final List<String> ESPECIALIDADES = List.of(
             "GENERAL", "TERAPEUTA_NEURAL", "QUIROPRACTICO", "FISIOTERAPEUTA"
@@ -48,6 +61,25 @@ public class AgendarCitaManualController {
     @FXML private Label errSlot;
     @FXML private Label errMotivo;
     @FXML private ComboBox<PacienteListItem> cmbPacientes;
+    @FXML private VBox panelNuevoPaciente;
+    @FXML private TextField txtPrimerNombre;
+    @FXML private TextField txtSegundoNombre;
+    @FXML private TextField txtPrimerApellido;
+    @FXML private TextField txtSegundoApellido;
+    @FXML private ComboBox<String> cmbGenero;
+    @FXML private DatePicker dpNacimiento;
+    @FXML private TextField txtTelefono;
+    @FXML private TextField txtDni;
+    @FXML private TextField txtCorreo;
+    @FXML private Label errPrimerNombre;
+    @FXML private Label errSegundoNombre;
+    @FXML private Label errPrimerApellido;
+    @FXML private Label errSegundoApellido;
+    @FXML private Label errGenero;
+    @FXML private Label errFechaNacimiento;
+    @FXML private Label errTelefono;
+    @FXML private Label errDni;
+    @FXML private Label errCorreo;
     @FXML private ComboBox<String> cmbEspecialidad;
     @FXML private ComboBox<MedicoResponse> cmbMedicos;
     @FXML private DatePicker dpFecha;
@@ -66,6 +98,7 @@ public class AgendarCitaManualController {
     private List<MedicoResponse> todosLosMedicos = List.of();
     private Set<LocalDate> fechasFestivas = new HashSet<>();
     private PacienteListItem pacienteSeleccionado;
+    private boolean registrandoNuevoPaciente;
     private String especialidadSeleccionada;
     private MedicoResponse medicoSeleccionado;
     private LocalDateTime slotSeleccionado;
@@ -90,6 +123,8 @@ public class AgendarCitaManualController {
                         cellData.getValue().format(FORMATO_HORA)
                 ));
 
+        configurarFormularioNuevoPaciente();
+
         tablaSlots.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             slotSeleccionado = newVal;
             btnAgendar.setDisable(newVal == null);
@@ -102,6 +137,8 @@ public class AgendarCitaManualController {
 
         cmbPacientes.valueProperty().addListener((obs, oldVal, newVal) -> {
             pacienteSeleccionado = newVal;
+            registrandoNuevoPaciente = newVal != null && newVal.esNuevoPaciente();
+            actualizarPanelNuevoPaciente();
             ocultarError(errPaciente);
             limpiarEstadoGeneral();
             cargarSlots();
@@ -153,6 +190,35 @@ public class AgendarCitaManualController {
         actualizarGuia();
     }
 
+    private void configurarFormularioNuevoPaciente() {
+        cmbGenero.setItems(FXCollections.observableArrayList("HOMBRE", "MUJER", "OTRO"));
+        txtTelefono.setTextFormatter(PersonaFormSupport.digitsOnlyFormatter(10));
+        txtDni.setTextFormatter(PersonaFormSupport.digitsOnlyFormatter(12));
+
+        PersonaFormSupport.bindNameNormalization(txtPrimerNombre);
+        PersonaFormSupport.bindNameNormalization(txtSegundoNombre);
+        PersonaFormSupport.bindNameNormalization(txtPrimerApellido);
+        PersonaFormSupport.bindNameNormalization(txtSegundoApellido);
+
+        FormFieldHelper.bindClearOnChange(txtPrimerNombre, errPrimerNombre);
+        FormFieldHelper.bindClearOnChange(txtSegundoNombre, errSegundoNombre);
+        FormFieldHelper.bindClearOnChange(txtPrimerApellido, errPrimerApellido);
+        FormFieldHelper.bindClearOnChange(txtSegundoApellido, errSegundoApellido);
+        FormFieldHelper.bindClearOnChange(cmbGenero, errGenero);
+        FormFieldHelper.bindClearOnChange(dpNacimiento, errFechaNacimiento);
+        FormFieldHelper.bindClearOnChange(txtTelefono, errTelefono);
+        FormFieldHelper.bindClearOnChange(txtDni, errDni);
+        FormFieldHelper.bindClearOnChange(txtCorreo, errCorreo);
+    }
+
+    private void actualizarPanelNuevoPaciente() {
+        panelNuevoPaciente.setVisible(registrandoNuevoPaciente);
+        panelNuevoPaciente.setManaged(registrandoNuevoPaciente);
+        if (!registrandoNuevoPaciente) {
+            limpiarErroresNuevoPaciente();
+        }
+    }
+
     private void cargarFestivos() {
         try {
             fechasFestivas = new HashSet<>(configuracionClient.obtenerFestivos());
@@ -167,7 +233,9 @@ public class AgendarCitaManualController {
             Map<Long, PersonaResponse> personasPorId = personaClient.listarPersonas().stream()
                     .collect(Collectors.toMap(PersonaResponse::getId, p -> p, (a, b) -> a));
 
-            List<PacienteListItem> items = pacientes.stream()
+            List<PacienteListItem> items = new ArrayList<>();
+            items.add(PacienteListItem.nuevoPaciente());
+            pacientes.stream()
                     .map(p -> {
                         PersonaResponse persona = personasPorId.get(p.getPersonaId());
                         String nombre = persona != null
@@ -176,16 +244,9 @@ public class AgendarCitaManualController {
                         return new PacienteListItem(p.getPersonaId(), nombre.trim());
                     })
                     .sorted(Comparator.comparing(PacienteListItem::getNombreCompleto))
-                    .toList();
+                    .forEach(items::add);
 
             cmbPacientes.setItems(FXCollections.observableArrayList(items));
-
-            if (items.isEmpty()) {
-                mostrarEstadoGeneral(
-                        "No hay pacientes registrados en el sistema.",
-                        "agendar-status-warning"
-                );
-            }
         } catch (Exception e) {
             mostrarEstadoGeneral(
                     "No se pudieron cargar los pacientes: " + e.getMessage(),
@@ -249,7 +310,10 @@ public class AgendarCitaManualController {
         ocultarError(errSlot);
         ocultarEstadoSlots();
 
-        if (pacienteSeleccionado == null || especialidadSeleccionada == null
+        boolean pacienteListo = pacienteSeleccionado != null
+                && (!registrandoNuevoPaciente || pacienteSeleccionado.esNuevoPaciente());
+
+        if (!pacienteListo || especialidadSeleccionada == null
                 || medicoSeleccionado == null || dpFecha.getValue() == null) {
             tablaSlots.setItems(FXCollections.observableArrayList());
             actualizarGuia();
@@ -257,9 +321,10 @@ public class AgendarCitaManualController {
         }
 
         try {
+            Long pacienteId = registrandoNuevoPaciente ? null : pacienteSeleccionado.getPersonaId();
             List<LocalDateTime> slots = citaClient.obtenerSlotsDisponibles(
                     medicoSeleccionado.getPersonaId(),
-                    pacienteSeleccionado.getPersonaId()
+                    pacienteId
             );
             LocalDate fechaSeleccionada = dpFecha.getValue();
             List<LocalDateTime> slotsFiltrados = slots.stream()
@@ -296,7 +361,9 @@ public class AgendarCitaManualController {
         lblPasoActual.getStyleClass().setAll("agendar-step-indicator");
 
         if (pacienteSeleccionado == null) {
-            lblPasoActual.setText("Paso 1: Seleccione el paciente");
+            lblPasoActual.setText("Paso 1: Seleccione o registre el paciente");
+        } else if (registrandoNuevoPaciente) {
+            lblPasoActual.setText("Paso 1: Complete los datos del nuevo paciente");
         } else if (especialidadSeleccionada == null) {
             lblPasoActual.setText("Paso 2: Seleccione la especialidad");
         } else if (medicoSeleccionado == null) {
@@ -317,9 +384,11 @@ public class AgendarCitaManualController {
         boolean valido = true;
 
         if (pacienteSeleccionado == null) {
-            mostrarError(errPaciente, "Debe seleccionar un paciente.");
+            mostrarError(errPaciente, "Debe seleccionar un paciente o registrar uno nuevo.");
             marcarInputInvalido(cmbPacientes, true);
             valido = false;
+        } else if (registrandoNuevoPaciente) {
+            valido &= validarFormularioNuevoPaciente();
         }
 
         if (especialidadSeleccionada == null || especialidadSeleccionada.isBlank()) {
@@ -357,20 +426,40 @@ public class AgendarCitaManualController {
             return;
         }
 
-        try {
-            CrearCitaAutonomaRequest request = new CrearCitaAutonomaRequest(
-                    pacienteSeleccionado.getPersonaId(),
-                    medicoSeleccionado.getPersonaId(),
-                    agendadorId,
-                    slotSeleccionado,
-                    especialidadSeleccionada,
-                    motivo
-            );
+        setAgendamientoEnProgreso(true);
 
-            citaClient.crearCitaManual(request);
+        CrearCitaAutonomaRequest requestBase = new CrearCitaAutonomaRequest(
+                null,
+                medicoSeleccionado.getPersonaId(),
+                agendadorId,
+                slotSeleccionado,
+                especialidadSeleccionada,
+                motivo
+        );
 
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                Long pacienteId;
+
+                if (registrandoNuevoPaciente) {
+                    pacienteId = registrarNuevoPaciente();
+                } else {
+                    pacienteId = pacienteSeleccionado.getPersonaId();
+                }
+
+                requestBase.setPacienteId(pacienteId);
+                crearCitaConReintento(requestBase);
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            setAgendamientoEnProgreso(false);
             mostrarEstadoGeneral(
-                    "¡Cita agendada correctamente!",
+                    registrandoNuevoPaciente
+                            ? "¡Paciente registrado y cita agendada correctamente!"
+                            : "¡Cita agendada correctamente!",
                     "agendar-status-success"
             );
             btnAgendar.setDisable(true);
@@ -378,16 +467,155 @@ public class AgendarCitaManualController {
             javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(
                     javafx.util.Duration.seconds(1.5)
             );
-            pause.setOnFinished(e -> volverAlDashboard());
+            pause.setOnFinished(ev -> volverAlDashboard());
             pause.play();
+        });
 
-        } catch (Exception e) {
-            mostrarEstadoGeneral(
-                    mensajeAmigable(e.getMessage()),
-                    "agendar-status-error"
-            );
+        task.setOnFailed(e -> {
+            setAgendamientoEnProgreso(false);
+            Throwable ex = task.getException();
+            String mensaje = ex instanceof ApiClientException apiEx
+                    ? apiEx.getMessage()
+                    : (ex == null ? "No se pudo completar el agendamiento." : ex.getMessage());
+            mostrarEstadoGeneral(mensajeAmigable(mensaje), "agendar-status-error");
             cargarSlots();
+        });
+
+        Thread worker = new Thread(task, "agendar-manual-worker");
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    private Long registrarNuevoPaciente() throws Exception {
+        CrearPersonaRequest personaRequest = buildPersonaRequest();
+        Long personaId = null;
+
+        try {
+            personaId = personaClient.crearPersona(personaRequest);
+            pacienteClient.crearPaciente(personaId);
+            return personaId;
+        } catch (Exception e) {
+            if (personaId != null) {
+                personaClient.compensarRegistroFallido(personaId);
+            }
+            throw e;
         }
+    }
+
+    private CrearPersonaRequest buildPersonaRequest() {
+        CrearPersonaRequest request = new CrearPersonaRequest();
+        request.setPrimerNombre(PersonaFormSupport.normalizedName(txtPrimerNombre));
+        request.setSegundoNombre(PersonaFormSupport.normalizedNameOrNull(txtSegundoNombre));
+        request.setPrimerApellido(PersonaFormSupport.normalizedName(txtPrimerApellido));
+        request.setSegundoApellido(PersonaFormSupport.normalizedNameOrNull(txtSegundoApellido));
+        request.setGenero(cmbGenero.getValue());
+        if (dpNacimiento.getValue() != null) {
+            request.setFechaNacimiento(dpNacimiento.getValue().toString());
+        }
+        request.setTelefono(PersonaFormSupport.trim(txtTelefono));
+        request.setDni(PersonaFormSupport.trim(txtDni));
+        request.setCorreo(PersonaFormSupport.trimOrNull(txtCorreo));
+        return request;
+    }
+
+    private void crearCitaConReintento(CrearCitaAutonomaRequest request) throws Exception {
+        long espera = ESPERA_INICIAL_MS;
+
+        for (int intento = 1; intento <= MAX_REINTENTOS_CITA; intento++) {
+            try {
+                citaClient.crearCitaManual(request);
+                return;
+            } catch (Exception e) {
+                if (!esErrorPacienteNoEncontrado(e) || intento == MAX_REINTENTOS_CITA) {
+                    throw e;
+                }
+                Thread.sleep(espera);
+                espera = Math.min(espera * 2, 2000L);
+            }
+        }
+    }
+
+    private boolean esErrorPacienteNoEncontrado(Exception e) {
+        String mensaje = e.getMessage();
+        if (mensaje == null) {
+            return false;
+        }
+        String lower = mensaje.toLowerCase();
+        return lower.contains("paciente no encontrado")
+                || lower.contains("patient not found");
+    }
+
+    private boolean validarFormularioNuevoPaciente() {
+        PersonaFormSupport.normalizeNameFields(
+                txtPrimerNombre,
+                txtSegundoNombre,
+                txtPrimerApellido,
+                txtSegundoApellido
+        );
+
+        boolean valido = true;
+        valido &= PersonaFormSupport.requireName(txtPrimerNombre, errPrimerNombre, "Ingrese el primer nombre");
+        valido &= PersonaFormSupport.optionalName(txtSegundoNombre, errSegundoNombre);
+        valido &= PersonaFormSupport.requireName(txtPrimerApellido, errPrimerApellido, "Ingrese el primer apellido");
+        valido &= PersonaFormSupport.optionalName(txtSegundoApellido, errSegundoApellido);
+
+        if (cmbGenero.getValue() == null) {
+            FormFieldHelper.showFieldError(cmbGenero, errGenero, "Seleccione un género");
+            valido = false;
+        }
+
+        if (dpNacimiento.getValue() != null && dpNacimiento.getValue().isAfter(LocalDate.now())) {
+            FormFieldHelper.showFieldError(dpNacimiento, errFechaNacimiento,
+                    "La fecha no puede ser futura");
+            valido = false;
+        }
+
+        String telefono = PersonaFormSupport.trim(txtTelefono);
+        if (telefono.isEmpty()) {
+            FormFieldHelper.showFieldError(txtTelefono, errTelefono, "Ingrese el teléfono");
+            valido = false;
+        } else if (telefono.length() != 10) {
+            FormFieldHelper.showFieldError(txtTelefono, errTelefono,
+                    "El teléfono debe tener 10 dígitos");
+            valido = false;
+        }
+
+        String dni = PersonaFormSupport.trim(txtDni);
+        if (dni.isEmpty()) {
+            FormFieldHelper.showFieldError(txtDni, errDni, "Ingrese el DNI");
+            valido = false;
+        } else if (dni.length() < 6) {
+            FormFieldHelper.showFieldError(txtDni, errDni,
+                    "El DNI debe tener al menos 6 dígitos");
+            valido = false;
+        }
+
+        String correo = PersonaFormSupport.trimOrNull(txtCorreo);
+        if (correo != null && !EMAIL_PATTERN.matcher(correo).matches()) {
+            FormFieldHelper.showFieldError(txtCorreo, errCorreo,
+                    "Ingrese un correo válido. Ej: nombre@ejemplo.com");
+            valido = false;
+        }
+
+        return valido;
+    }
+
+    private void limpiarErroresNuevoPaciente() {
+        FormFieldHelper.clearFieldError(txtPrimerNombre, errPrimerNombre);
+        FormFieldHelper.clearFieldError(txtSegundoNombre, errSegundoNombre);
+        FormFieldHelper.clearFieldError(txtPrimerApellido, errPrimerApellido);
+        FormFieldHelper.clearFieldError(txtSegundoApellido, errSegundoApellido);
+        FormFieldHelper.clearFieldError(cmbGenero, errGenero);
+        FormFieldHelper.clearFieldError(dpNacimiento, errFechaNacimiento);
+        FormFieldHelper.clearFieldError(txtTelefono, errTelefono);
+        FormFieldHelper.clearFieldError(txtDni, errDni);
+        FormFieldHelper.clearFieldError(txtCorreo, errCorreo);
+    }
+
+    private void setAgendamientoEnProgreso(boolean enProgreso) {
+        btnAgendar.setDisable(enProgreso || slotSeleccionado == null);
+        btnVolver.setDisable(enProgreso);
+        btnAgendar.setText(enProgreso ? "Agendando..." : "Agendar cita");
     }
 
     @FXML
@@ -410,6 +638,7 @@ public class AgendarCitaManualController {
         ocultarError(errFecha);
         ocultarError(errSlot);
         ocultarError(errMotivo);
+        limpiarErroresNuevoPaciente();
         marcarTextAreaInvalida(false);
         marcarInputInvalido(cmbPacientes, false);
         marcarInputInvalido(cmbEspecialidad, false);
@@ -498,6 +727,15 @@ public class AgendarCitaManualController {
         }
         if (mensaje.contains("no atiende la especialidad")) {
             return "El médico no atiende esa especialidad.";
+        }
+        if (mensaje.contains("Ya existe una persona registrada con el DNI")) {
+            return "Ya existe una persona con ese DNI. Búsquela en la lista de pacientes.";
+        }
+        if (mensaje.contains("ya está registrada como paciente")) {
+            return "Esa persona ya es paciente. Búsquela en la lista.";
+        }
+        if (mensaje.contains("Paciente no encontrado")) {
+            return "El paciente aún no está disponible en el sistema. Intente de nuevo en unos segundos.";
         }
         return mensaje;
     }

@@ -50,6 +50,8 @@
                       spacing="14"
                       maxWidth="700">
                     <Label text="1. Datos del paciente" styleClass="agendar-section-title"/>
+                    <Label text="Seleccione un paciente registrado o elija «Registrar nuevo paciente» si llama o escribe por WhatsApp."
+                           styleClass="agendar-field-hint" wrapText="true"/>
 
                     <GridPane styleClass="form-grid" hgap="20" vgap="14">
                         <columnConstraints>
@@ -68,8 +70,97 @@
                                    visible="false" managed="false"/>
                         </VBox>
 
-                        <Label text="Especialidad *" styleClass="agendar-field-label" GridPane.rowIndex="1"/>
-                        <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                        <VBox fx:id="panelNuevoPaciente"
+                              spacing="12"
+                              visible="false"
+                              managed="false"
+                              GridPane.columnSpan="2"
+                              GridPane.rowIndex="1">
+                            <Label text="Datos del nuevo paciente"
+                                   styleClass="agendar-field-label"/>
+
+                            <GridPane hgap="20" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="200" prefWidth="220" halignment="RIGHT"/>
+                                    <ColumnConstraints minWidth="350" hgrow="ALWAYS"/>
+                                </columnConstraints>
+
+                                <Label text="Primer nombre *" styleClass="agendar-field-label"/>
+                                <VBox spacing="4" GridPane.columnIndex="1">
+                                    <TextField fx:id="txtPrimerNombre" promptText="Ej: Juan"
+                                               prefWidth="400" maxWidth="400" styleClass="agendar-input"/>
+                                    <Label fx:id="errPrimerNombre" styleClass="agendar-field-error"
+                                           visible="false" managed="false"/>
+                                </VBox>
+
+                                <Label text="Segundo nombre" styleClass="agendar-field-label" GridPane.rowIndex="1"/>
+                                <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                                    <TextField fx:id="txtSegundoNombre" promptText="Opcional"
+                                               prefWidth="400" maxWidth="400" styleClass="agendar-input"/>
+                                    <Label fx:id="errSegundoNombre" styleClass="agendar-field-error"
+                                           visible="false" managed="false"/>
+                                </VBox>
+
+                                <Label text="Primer apellido *" styleClass="agendar-field-label" GridPane.rowIndex="2"/>
+                                <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="1">
+                                    <TextField fx:id="txtPrimerApellido" promptText="Ej: Pérez"
+                                               prefWidth="400" maxWidth="400" styleClass="agendar-input"/>
+                                    <Label fx:id="errPrimerApellido" styleClass="agendar-field-error"
+                                           visible="false" managed="false"/>
+                                </VBox>
+
+                                <Label text="Segundo apellido" styleClass="agendar-field-label" GridPane.rowIndex="3"/>
+                                <VBox spacing="4" GridPane.rowIndex="3" GridPane.columnIndex="1">
+                                    <TextField fx:id="txtSegundoApellido" promptText="Opcional"
+                                               prefWidth="400" maxWidth="400" styleClass="agendar-input"/>
+                                    <Label fx:id="errSegundoApellido" styleClass="agendar-field-error"
+                                           visible="false" managed="false"/>
+                                </VBox>
+
+                                <Label text="Género *" styleClass="agendar-field-label" GridPane.rowIndex="4"/>
+                                <VBox spacing="4" GridPane.rowIndex="4" GridPane.columnIndex="1">
+                                    <ComboBox fx:id="cmbGenero" promptText="— Seleccione —"
+                                              prefWidth="400" maxWidth="400" styleClass="agendar-input"/>
+                                    <Label fx:id="errGenero" styleClass="agendar-field-error"
+                                           visible="false" managed="false"/>
+                                </VBox>
+
+                                <Label text="Fecha de nacimiento" styleClass="agendar-field-label" GridPane.rowIndex="5"/>
+                                <VBox spacing="4" GridPane.rowIndex="5" GridPane.columnIndex="1">
+                                    <DatePicker fx:id="dpNacimiento" promptText="Opcional"
+                                                prefWidth="400" maxWidth="400" styleClass="agendar-input"/>
+                                    <Label fx:id="errFechaNacimiento" styleClass="agendar-field-error"
+                                           visible="false" managed="false"/>
+                                </VBox>
+
+                                <Label text="Teléfono *" styleClass="agendar-field-label" GridPane.rowIndex="6"/>
+                                <VBox spacing="4" GridPane.rowIndex="6" GridPane.columnIndex="1">
+                                    <TextField fx:id="txtTelefono" promptText="10 dígitos"
+                                               prefWidth="400" maxWidth="400" styleClass="agendar-input"/>
+                                    <Label fx:id="errTelefono" styleClass="agendar-field-error"
+                                           visible="false" managed="false"/>
+                                </VBox>
+
+                                <Label text="DNI *" styleClass="agendar-field-label" GridPane.rowIndex="7"/>
+                                <VBox spacing="4" GridPane.rowIndex="7" GridPane.columnIndex="1">
+                                    <TextField fx:id="txtDni" promptText="Mínimo 6 dígitos"
+                                               prefWidth="400" maxWidth="400" styleClass="agendar-input"/>
+                                    <Label fx:id="errDni" styleClass="agendar-field-error"
+                                           visible="false" managed="false"/>
+                                </VBox>
+
+                                <Label text="Correo" styleClass="agendar-field-label" GridPane.rowIndex="8"/>
+                                <VBox spacing="4" GridPane.rowIndex="8" GridPane.columnIndex="1">
+                                    <TextField fx:id="txtCorreo" promptText="Opcional — nombre@ejemplo.com"
+                                               prefWidth="400" maxWidth="400" styleClass="agendar-input"/>
+                                    <Label fx:id="errCorreo" styleClass="agendar-field-error"
+                                           visible="false" managed="false"/>
+                                </VBox>
+                            </GridPane>
+                        </VBox>
+
+                        <Label text="Especialidad *" styleClass="agendar-field-label" GridPane.rowIndex="2"/>
+                        <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="1">
                             <ComboBox fx:id="cmbEspecialidad"
                                       promptText="— Seleccione una especialidad —"
                                       prefWidth="400"
@@ -79,8 +170,8 @@
                                    visible="false" managed="false"/>
                         </VBox>
 
-                        <Label text="Médico *" styleClass="agendar-field-label" GridPane.rowIndex="2"/>
-                        <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="1">
+                        <Label text="Médico *" styleClass="agendar-field-label" GridPane.rowIndex="3"/>
+                        <VBox spacing="4" GridPane.rowIndex="3" GridPane.columnIndex="1">
                             <ComboBox fx:id="cmbMedicos"
                                       promptText="— Seleccione un médico —"
                                       prefWidth="400"
@@ -90,8 +181,8 @@
                                    visible="false" managed="false"/>
                         </VBox>
 
-                        <Label text="Fecha *" styleClass="agendar-field-label" GridPane.rowIndex="3"/>
-                        <VBox spacing="4" GridPane.rowIndex="3" GridPane.columnIndex="1">
+                        <Label text="Fecha *" styleClass="agendar-field-label" GridPane.rowIndex="4"/>
+                        <VBox spacing="4" GridPane.rowIndex="4" GridPane.columnIndex="1">
                             <DatePicker fx:id="dpFecha"
                                         promptText="— Seleccione una fecha —"
                                         prefWidth="400"
