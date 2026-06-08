@@ -12,7 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class CitaClient {
+public class  CitaClient {
 
     private final ObjectMapper objectMapper;
 
