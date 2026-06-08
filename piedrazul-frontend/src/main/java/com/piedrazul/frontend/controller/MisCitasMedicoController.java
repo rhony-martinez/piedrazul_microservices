@@ -8,9 +8,9 @@ import com.piedrazul.frontend.dto.response.PacienteListItem;
 import com.piedrazul.frontend.dto.response.PacienteResponse;
 import com.piedrazul.frontend.dto.response.PersonaResponse;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.CitasCsvExporter;
 import com.piedrazul.frontend.util.CitasExcelExporter;
 import com.piedrazul.frontend.util.CitasExportMessages;
-import com.piedrazul.frontend.util.CitaMotivoUtil;
 import com.piedrazul.frontend.util.EspecialidadLabels;
 import com.piedrazul.frontend.util.RangoFechasUtil;
 import com.piedrazul.frontend.util.SceneManager;
@@ -39,7 +39,6 @@ public class MisCitasMedicoController {
     @FXML private DatePicker dpFechaFin;
     @FXML private Label lblProximaCita;
     @FXML private Label lblLeyendaProxima;
-    @FXML private Button btnExportar;
     @FXML private Button btnVolver;
     @FXML private TableView<CitaResponse> tablaCitas;
 
@@ -113,7 +112,7 @@ public class MisCitasMedicoController {
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
 
         colMotivo.setCellValueFactory(data ->
-                new SimpleStringProperty(CitaMotivoUtil.resolverMotivo(data.getValue())));
+                new SimpleStringProperty(resolverMotivo(data.getValue())));
     }
 
     private void configurarResaltadoFilas() {
@@ -188,27 +187,46 @@ public class MisCitasMedicoController {
     }
 
     @FXML
-    private void exportarCitas() {
+    private void exportarCitasExcel() {
+        if (!validarDatosExportacion()) {
+            return;
+        }
+        try {
+            CitasExcelExporter.exportar(tablaCitas.getItems(), false, "informe_citas_medico");
+            mostrarInformacion(CitasExportMessages.EXITO);
+        } catch (Exception e) {
+            mostrarError(CitasExportMessages.ERROR);
+        }
+    }
+
+    @FXML
+    private void exportarCitasCsv() {
+        if (!validarDatosExportacion()) {
+            return;
+        }
+        try {
+            CitasCsvExporter.exportar(tablaCitas.getItems(), false, "informe_citas_medico");
+            mostrarInformacion(CitasExportMessages.EXITO);
+        } catch (Exception e) {
+            mostrarError(CitasExportMessages.ERROR);
+        }
+    }
+
+    private boolean validarDatosExportacion() {
         LocalDate fechaInicio = dpFechaInicio.getValue();
         LocalDate fechaFin = dpFechaFin.getValue();
 
         if (RangoFechasUtil.esRangoInvalido(fechaInicio, fechaFin)) {
             mostrarAdvertencia(RangoFechasUtil.MSG_RANGO_INVALIDO);
-            return;
+            return false;
         }
 
         List<CitaResponse> citas = tablaCitas.getItems();
         if (citas == null || citas.isEmpty()) {
             mostrarAdvertencia(CitasExportMessages.SIN_DATOS);
-            return;
+            return false;
         }
-
-        try {
-            CitasExcelExporter.exportar(citas, false, "informe_citas_medico");
-            mostrarInformacion(CitasExportMessages.EXITO);
-        } catch (Exception e) {
-            mostrarError(CitasExportMessages.ERROR);
-        }
+        return true;
     }
 
     private void actualizarEtiquetaProximaCita(List<CitaResponse> citas) {
@@ -236,6 +254,16 @@ public class MisCitasMedicoController {
                         lblProximaCita.getStyleClass().add("proxima-cita-label-activa");
                     }
                 });
+    }
+
+    private String resolverMotivo(CitaResponse cita) {
+        if (cita.getMotivoAgendamiento() != null && !cita.getMotivoAgendamiento().isBlank()) {
+            return cita.getMotivoAgendamiento();
+        }
+        if (cita.getMotivoCancelacion() != null && !cita.getMotivoCancelacion().isBlank()) {
+            return cita.getMotivoCancelacion();
+        }
+        return "-";
     }
 
     private boolean esCancelada(CitaResponse cita) {

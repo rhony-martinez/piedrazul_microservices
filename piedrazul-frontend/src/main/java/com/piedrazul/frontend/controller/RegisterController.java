@@ -12,6 +12,7 @@ import com.piedrazul.frontend.util.FormFieldHelper;
 import com.piedrazul.frontend.util.PersonaFormSupport;
 import com.piedrazul.frontend.session.SessionManager;
 import com.piedrazul.frontend.util.SceneManager;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -58,6 +59,7 @@ public class RegisterController {
     @FXML private Label lblTitulo;
     @FXML private Label lblSubtitulo;
     @FXML private Label lblFormError;
+    @FXML private Button btnRegistrarse;
     @FXML private Button btnVolver;
 
     @FXML private Label errPrimerNombre;
@@ -187,62 +189,97 @@ public class RegisterController {
             return;
         }
 
-        Long personaId = null;
+        CrearPersonaRequest personaRequest = buildPersonaRequest();
+        String rol = cmbRol.getValue();
+        List<String> especialidades = ROL_MEDICO_TERAPISTA.equals(rol)
+                ? List.copyOf(obtenerEspecialidadesSeleccionadas())
+                : List.of();
+        String username = PersonaFormSupport.trim(txtUsername);
+        String password = txtPassword.getText();
+        String correo = PersonaFormSupport.trimOrNull(txtCorreo);
+        String firstName = PersonaFormSupport.normalizedName(txtPrimerNombre);
+        String lastName = PersonaFormSupport.normalizedName(txtPrimerApellido);
 
-        try {
-            CrearPersonaRequest personaRequest = new CrearPersonaRequest();
-            personaRequest.setPrimerNombre(PersonaFormSupport.normalizedName(txtPrimerNombre));
-            personaRequest.setSegundoNombre(PersonaFormSupport.normalizedNameOrNull(txtSegundoNombre));
-            personaRequest.setPrimerApellido(PersonaFormSupport.normalizedName(txtPrimerApellido));
-            personaRequest.setSegundoApellido(PersonaFormSupport.normalizedNameOrNull(txtSegundoApellido));
-            personaRequest.setGenero(cmbGenero.getValue());
-            personaRequest.setFechaNacimiento(dateNacimiento.getValue().toString());
-            personaRequest.setTelefono(PersonaFormSupport.trim(txtTelefono));
-            personaRequest.setDni(PersonaFormSupport.trim(txtDni));
-            personaRequest.setCorreo(PersonaFormSupport.trimOrNull(txtCorreo));
+        setRegistrationInProgress(true);
 
-            personaId = personaClient.crearPersona(personaRequest);
-            String rol = cmbRol.getValue();
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() {
+                Long personaId = null;
+                try {
+                    personaId = personaClient.crearPersona(personaRequest);
 
-            if ("PACIENTE".equals(rol)) {
-                pacienteClient.crearPaciente(personaId);
-            } else if (ROL_MEDICO_TERAPISTA.equals(rol)) {
-                medicoClient.crearMedico(
-                        personaId,
-                        "MEDICO",
-                        obtenerEspecialidadesSeleccionadas()
-                );
+                    if ("PACIENTE".equals(rol)) {
+                        pacienteClient.crearPaciente(personaId);
+                    } else if (ROL_MEDICO_TERAPISTA.equals(rol)) {
+                        medicoClient.crearMedico(personaId, "MEDICO", especialidades);
+                    }
+
+                    CrearUsuarioRequest usuarioRequest = new CrearUsuarioRequest();
+                    usuarioRequest.setPersonaId(personaId);
+                    usuarioRequest.setUsername(username);
+                    usuarioRequest.setPassword(password);
+                    usuarioRequest.setEmail(correo);
+                    usuarioRequest.setFirstName(firstName);
+                    usuarioRequest.setLastName(lastName);
+                    usuarioRequest.setRoles(List.of(rol));
+
+                    usuarioClient.crearUsuario(usuarioRequest);
+                    return null;
+                } catch (Exception e) {
+                    revertirRegistro(personaId);
+                    throw e;
+                }
             }
+        };
 
-            CrearUsuarioRequest usuarioRequest = new CrearUsuarioRequest();
-            usuarioRequest.setPersonaId(personaId);
-            usuarioRequest.setUsername(PersonaFormSupport.trim(txtUsername));
-            usuarioRequest.setPassword(txtPassword.getText());
-            usuarioRequest.setEmail(PersonaFormSupport.trimOrNull(txtCorreo));
-            usuarioRequest.setFirstName(PersonaFormSupport.normalizedName(txtPrimerNombre));
-            usuarioRequest.setLastName(PersonaFormSupport.normalizedName(txtPrimerApellido));
-            usuarioRequest.setRoles(List.of(rol));
-
-            usuarioClient.crearUsuario(usuarioRequest);
-
+        task.setOnSucceeded(e -> {
+            setRegistrationInProgress(false);
             showAlert("Éxito", "Usuario registrado correctamente", Alert.AlertType.INFORMATION);
             volverDespuesDeRegistro();
+        });
 
-        } catch (ApiClientException e) {
-            System.err.println("=== ERROR ApiClientException ===");
-            System.err.println("Mensaje: " + e.getMessage());
-            e.printStackTrace();
+        task.setOnFailed(e -> {
+            setRegistrationInProgress(false);
+            Throwable ex = task.getException();
+            if (ex instanceof ApiClientException apiEx) {
+                System.err.println("=== ERROR ApiClientException ===");
+                System.err.println("Mensaje: " + apiEx.getMessage());
+                apiEx.printStackTrace();
+                mapServerError(apiEx.getParsedError());
+            } else {
+                System.err.println("=== ERROR GENERAL ===");
+                System.err.println("Mensaje: " + (ex == null ? "desconocido" : ex.getMessage()));
+                if (ex != null) {
+                    ex.printStackTrace();
+                }
+                mapServerError(ApiErrorParser.parse(ex == null ? null : ex.getMessage()));
+            }
+        });
 
-            revertirRegistro(personaId);
-            mapServerError(e.getParsedError());
-        } catch (Exception e) {
-            System.err.println("=== ERROR GENERAL ===");
-            System.err.println("Mensaje: " + e.getMessage());
-            e.printStackTrace();
+        Thread worker = new Thread(task, "register-worker");
+        worker.setDaemon(true);
+        worker.start();
+    }
 
-            revertirRegistro(personaId);
-            mapServerError(ApiErrorParser.parse(e.getMessage()));
-        }
+    private CrearPersonaRequest buildPersonaRequest() {
+        CrearPersonaRequest personaRequest = new CrearPersonaRequest();
+        personaRequest.setPrimerNombre(PersonaFormSupport.normalizedName(txtPrimerNombre));
+        personaRequest.setSegundoNombre(PersonaFormSupport.normalizedNameOrNull(txtSegundoNombre));
+        personaRequest.setPrimerApellido(PersonaFormSupport.normalizedName(txtPrimerApellido));
+        personaRequest.setSegundoApellido(PersonaFormSupport.normalizedNameOrNull(txtSegundoApellido));
+        personaRequest.setGenero(cmbGenero.getValue());
+        personaRequest.setFechaNacimiento(dateNacimiento.getValue().toString());
+        personaRequest.setTelefono(PersonaFormSupport.trim(txtTelefono));
+        personaRequest.setDni(PersonaFormSupport.trim(txtDni));
+        personaRequest.setCorreo(PersonaFormSupport.trimOrNull(txtCorreo));
+        return personaRequest;
+    }
+
+    private void setRegistrationInProgress(boolean inProgress) {
+        btnRegistrarse.setDisable(inProgress);
+        btnVolver.setDisable(inProgress);
+        btnRegistrarse.setText(inProgress ? "Registrando..." : "Registrarse");
     }
 
     private void revertirRegistro(Long personaId) {
