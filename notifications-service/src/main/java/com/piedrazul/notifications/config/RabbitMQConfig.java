@@ -23,11 +23,17 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.queue.cita-cancelada}")
     private String queueCitaCancelada;
 
+    @Value("${rabbitmq.queue.cita-reagendada}")
+    private String queueCitaReagendada;
+
     @Value("${rabbitmq.routing.cita-agendada}")
     private String routingKeyCitaAgendada;
 
     @Value("${rabbitmq.routing.cita-cancelada}")
     private String routingKeyCitaCancelada;
+
+    @Value("${rabbitmq.routing.cita-reagendada}")
+    private String routingKeyCitaReagendada;
 
     @Bean
     public TopicExchange citasExchange() {
@@ -45,6 +51,11 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue citaReagendadaQueue() {
+        return new Queue(queueCitaReagendada, true);
+    }
+
+    @Bean
     public Binding citaAgendadaBinding() {
         return BindingBuilder
                 .bind(citaAgendadaQueue())
@@ -58,6 +69,14 @@ public class RabbitMQConfig {
                 .bind(citaCanceladaQueue())
                 .to(citasExchange())
                 .with(routingKeyCitaCancelada);
+    }
+
+    @Bean
+    public Binding citaReagendadaBinding() {
+        return BindingBuilder
+                .bind(citaReagendadaQueue())
+                .to(citasExchange())
+                .with(routingKeyCitaReagendada);
     }
 
     @Bean

@@ -94,6 +94,9 @@ public class RegisterController {
     private PersonaResponse personaExistente;
     private String dniVerificado;
     private boolean verificandoDni;
+    private boolean registroEnProgreso;
+    private boolean bloquearVerificacionDni;
+    private int verificacionDniGeneracion;
 
     @FXML
     public void initialize() {
@@ -151,7 +154,12 @@ public class RegisterController {
     }
 
     private void verificarDniAlSalirDelCampo() {
-        if (SessionManager.isRegisterFromAdminPanel() || verificandoDni || modoVincularUsuario) {
+        if (SessionManager.isRegisterFromAdminPanel()
+                || verificandoDni
+                || modoVincularUsuario
+                || registroEnProgreso
+                || bloquearVerificacionDni
+                || tieneDatosPersonalesIngresados()) {
             return;
         }
         if (!"PACIENTE".equals(cmbRol.getValue())) {
@@ -164,6 +172,7 @@ public class RegisterController {
         }
 
         verificandoDni = true;
+        final int generacion = ++verificacionDniGeneracion;
 
         Task<PersonaResponse> task = new Task<>() {
             @Override
@@ -174,6 +183,9 @@ public class RegisterController {
 
         task.setOnSucceeded(e -> {
             verificandoDni = false;
+            if (!debeAplicarResultadoVerificacionDni(generacion)) {
+                return;
+            }
             PersonaResponse persona = task.getValue();
             if (persona != null) {
                 mostrarModalPacienteExistente(persona, dni);
@@ -191,6 +203,23 @@ public class RegisterController {
         Thread worker = new Thread(task, "verificar-dni-worker");
         worker.setDaemon(true);
         worker.start();
+    }
+
+    private boolean debeAplicarResultadoVerificacionDni(int generacion) {
+        return generacion == verificacionDniGeneracion
+                && !bloquearVerificacionDni
+                && !registroEnProgreso
+                && !modoVincularUsuario
+                && !tieneDatosPersonalesIngresados();
+    }
+
+    private boolean tieneDatosPersonalesIngresados() {
+        return !PersonaFormSupport.normalizedName(txtPrimerNombre).isEmpty()
+                || !PersonaFormSupport.normalizedName(txtPrimerApellido).isEmpty()
+                || !PersonaFormSupport.trim(txtTelefono).isEmpty()
+                || cmbGenero.getValue() != null
+                || dateNacimiento.getValue() != null
+                || !PersonaFormSupport.trim(txtCorreo).isEmpty();
     }
 
     private void mostrarModalPacienteExistente(PersonaResponse persona, String dni) {
@@ -340,9 +369,13 @@ public class RegisterController {
             return;
         }
 
+        cancelarVerificacionDniPendiente();
+        bloquearVerificacionDni = true;
+
         String rol = cmbRol.getValue();
         String username = PersonaFormSupport.trim(txtUsername);
         String password = txtPassword.getText();
+        final boolean fueRegistroVinculado = modoVincularUsuario;
 
         setRegistrationInProgress(true);
 
@@ -390,15 +423,18 @@ public class RegisterController {
         };
 
         task.setOnSucceeded(e -> {
-            setRegistrationInProgress(false);
-            String mensaje = modoVincularUsuario
+            cancelarVerificacionDniPendiente();
+            String mensaje = fueRegistroVinculado
                     ? "Cuenta de usuario creada correctamente. Ya puede iniciar sesión."
                     : "Usuario registrado correctamente";
             showAlert("Éxito", mensaje, Alert.AlertType.INFORMATION);
             volverDespuesDeRegistro();
+            bloquearVerificacionDni = false;
+            setRegistrationInProgress(false);
         });
 
         task.setOnFailed(e -> {
+            bloquearVerificacionDni = false;
             setRegistrationInProgress(false);
             Throwable ex = task.getException();
             if (ex instanceof ApiClientException apiEx) {
@@ -494,7 +530,13 @@ public class RegisterController {
         return personaRequest;
     }
 
+    private void cancelarVerificacionDniPendiente() {
+        verificacionDniGeneracion++;
+        verificandoDni = false;
+    }
+
     private void setRegistrationInProgress(boolean inProgress) {
+        registroEnProgreso = inProgress;
         btnRegistrarse.setDisable(inProgress);
         btnVolver.setDisable(inProgress);
         if (inProgress) {

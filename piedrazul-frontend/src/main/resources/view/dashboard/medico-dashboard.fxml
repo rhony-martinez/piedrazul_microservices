@@ -29,8 +29,9 @@
                     onAction="#handleLogout"
                     styleClass="logout-button"/>
 
-            <StackPane styleClass="icon-box">
+            <StackPane fx:id="notificationBell" styleClass="icon-box">
                 <Label text="🔔" styleClass="notification-icon"/>
+                <Label fx:id="lblNotificationBadge" styleClass="notification-badge" StackPane.alignment="TOP_RIGHT"/>
             </StackPane>
 
         </HBox>
