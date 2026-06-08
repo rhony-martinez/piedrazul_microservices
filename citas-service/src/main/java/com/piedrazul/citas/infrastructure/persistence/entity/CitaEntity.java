@@ -38,7 +38,8 @@ public class CitaEntity {
     private Long medicoId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "especialidad", nullable = false, length = 30)
+    @Column(name = "especialidad", nullable = false, length = 30,
+            columnDefinition = "varchar(30) default 'GENERAL'")
     private EspecialidadMedica especialidad;
 
     @Column(name = "creado_por", nullable = false)

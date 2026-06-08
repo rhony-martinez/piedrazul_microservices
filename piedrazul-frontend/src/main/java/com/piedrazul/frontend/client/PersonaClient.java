@@ -27,22 +27,52 @@ public class PersonaClient {
     public Long crearPersona(CrearPersonaRequest request) {
         try {
             String body = objectMapper.writeValueAsString(request);
-            AuthenticatedHttpClient.Response resp = AuthenticatedHttpClient.post(personasBaseUrl(), body);
+
+            System.out.println("================================");
+            System.out.println("URL: " + personasBaseUrl());
+            System.out.println("BODY: " + body);
+            System.out.println("================================");
+
+            AuthenticatedHttpClient.Response resp =
+                    AuthenticatedHttpClient.post(personasBaseUrl(), body);
+
+            System.out.println("STATUS: " + resp.getStatusCode());
+            System.out.println("RESPONSE: " + resp.getBody());
 
             JsonNode json = objectMapper.readTree(resp.getBody());
+
             if (!json.has("id")) {
                 throw new RuntimeException("Respuesta sin 'id': " + resp.getBody());
             }
+
             return json.get("id").asLong();
 
         } catch (AuthenticatedHttpClient.HttpException e) {
-            ApiErrorParser.ParsedApiError parsed = ApiErrorParser.parse(e.getResponseBody());
+
+            System.out.println("================================");
+            System.out.println("ERROR HTTP");
+            System.out.println("URL: " + personasBaseUrl());
+            System.out.println("BODY ENVIADO: ");
+
+            try {
+                System.out.println(objectMapper.writeValueAsString(request));
+            } catch (Exception ignored) {
+            }
+
+            System.out.println("STATUS: " + e.getStatusCode());
+            System.out.println("RESPONSE: " + e.getResponseBody());
+            System.out.println("================================");
+
+            ApiErrorParser.ParsedApiError parsed =
+                    ApiErrorParser.parse(e.getResponseBody());
+
             throw new ApiClientException(parsed, e);
+
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException("Error en PersonaClient: " + e.getMessage(), e);
         }
     }
-
     public void compensarRegistroFallido(Long personaId) {
         try {
             AuthenticatedHttpClient.delete(personasBaseUrl() + "/" + personaId + "/registro-fallido");

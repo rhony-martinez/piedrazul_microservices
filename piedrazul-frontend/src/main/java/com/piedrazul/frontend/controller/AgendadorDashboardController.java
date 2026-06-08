@@ -37,4 +37,13 @@ public class AgendadorDashboardController {
                 "Historial"
         );
     }
+
+    @FXML
+    private void handleReportes() {
+        SceneManager.switchScene(
+                "/view/dashboard/reportesView.fxml",
+                lblBienvenida,
+                "PIEDRAZUL - Reportes"
+        );
+    }
 }

@@ -85,9 +85,19 @@
                                 styleClass="dashboard-main-button"
                                 onAction="#handleConfigurarFestivos"/>
 
-                        <Button text="CONFIGURACIÓN DE HORARIOS"
+                        <Button text="CONFIGURACIÓN DE&#10;HORARIOS"
                                 styleClass="dashboard-main-button"
                                 onAction="#handleConfiguracionHorarios"/>
+
+                    </HBox>
+
+                    <!-- Fila reportes -->
+                    <HBox alignment="CENTER"
+                          styleClass="main-actions-row">
+
+                        <Button text="REPORTES"
+                                styleClass="dashboard-main-button"
+                                onAction="#handleReportes"/>
 
                     </HBox>
 
