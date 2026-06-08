@@ -51,6 +51,7 @@ public class AgendarCitaManualController {
     );
 
     @FXML private Label lblBienvenida;
+    @FXML private Label lblGuiaAgendamiento;
     @FXML private Label lblPasoActual;
     @FXML private Label lblSlotsGuia;
     @FXML private Label lblSlotsEstado;
@@ -81,6 +82,10 @@ public class AgendarCitaManualController {
     @FXML private Label errTelefono;
     @FXML private Label errDni;
     @FXML private Label errCorreo;
+    @FXML private Label lblMedicoTitulo;
+    @FXML private VBox panelSelectorMedico;
+    @FXML private VBox panelMedicoFijo;
+    @FXML private Label lblMedicoFijo;
     @FXML private ComboBox<String> cmbEspecialidad;
     @FXML private ComboBox<MedicoResponse> cmbMedicos;
     @FXML private DatePicker dpFecha;
@@ -103,22 +108,37 @@ public class AgendarCitaManualController {
     private String especialidadSeleccionada;
     private MedicoResponse medicoSeleccionado;
     private LocalDateTime slotSeleccionado;
-    private Long agendadorId;
+    private boolean modoMedico;
+    private Long creadorId;
 
     @FXML
     public void initialize() {
-        if (!SessionManager.isLoggedIn() || !SessionManager.hasRole("AGENDADOR")) {
+        modoMedico = SessionManager.isAgendarManualComoMedico();
+
+        boolean esAgendador = SessionManager.hasRole("AGENDADOR");
+        boolean esMedico = SessionManager.hasRole("MEDICO_TERAPISTA");
+        boolean rolPermitido = modoMedico ? esMedico : esAgendador;
+
+        if (!SessionManager.isLoggedIn() || !rolPermitido) {
+            SessionManager.endAgendarManualComoMedico();
             SessionManager.clear();
             SceneManager.showLogin("/view/auth_register/loginView.fxml", btnAgendar);
             return;
         }
 
-        agendadorId = SessionPersonaResolver.resolverPersonaId();
+        creadorId = SessionPersonaResolver.resolverPersonaId();
         String username = SessionManager.getUsername();
         if (username != null && !username.isBlank()) {
-            lblBienvenida.setText("Agendamiento Manual - " + username);
+            String rolEtiqueta = modoMedico ? "Médico" : "Agendador";
+            lblBienvenida.setText("Agendamiento Manual - " + rolEtiqueta + " " + username);
         }
-        if (agendadorId == null) {
+        if (modoMedico) {
+            lblGuiaAgendamiento.setText(
+                    "Registre una cita para su paciente. Usted será el médico que atiende la consulta."
+            );
+            lblMedicoTitulo.setText("Médico");
+            configurarModoMedico();
+        } else if (creadorId == null) {
             mostrarEstadoGeneral(
                     "Su cuenta de agendador no tiene una persona vinculada. "
                             + "Solicite al administrador que revise su usuario antes de agendar citas.",
@@ -156,10 +176,12 @@ public class AgendarCitaManualController {
         cmbEspecialidad.valueProperty().addListener((obs, oldVal, newVal) -> {
             especialidadSeleccionada = newVal;
             ocultarError(errEspecialidad);
-            medicoSeleccionado = null;
-            cmbMedicos.getSelectionModel().clearSelection();
+            if (!modoMedico) {
+                medicoSeleccionado = null;
+                cmbMedicos.getSelectionModel().clearSelection();
+                aplicarFiltroMedicos();
+            }
             limpiarEstadoGeneral();
-            aplicarFiltroMedicos();
             cargarSlots();
             actualizarGuia();
         });
@@ -191,11 +213,62 @@ public class AgendarCitaManualController {
             }
         });
 
-        cmbEspecialidad.setItems(FXCollections.observableArrayList(ESPECIALIDADES));
+        if (!modoMedico) {
+            cmbEspecialidad.setItems(FXCollections.observableArrayList(ESPECIALIDADES));
+        }
         cargarFestivos();
         cargarPacientes();
-        cargarMedicos();
+        if (!modoMedico) {
+            cargarMedicos();
+        }
         actualizarGuia();
+    }
+
+    private void configurarModoMedico() {
+        panelSelectorMedico.setVisible(false);
+        panelSelectorMedico.setManaged(false);
+        panelMedicoFijo.setVisible(true);
+        panelMedicoFijo.setManaged(true);
+
+        if (creadorId == null) {
+            mostrarEstadoGeneral(
+                    "Su cuenta de médico no tiene una persona vinculada. "
+                            + "Solicite al administrador que revise su usuario antes de agendar citas.",
+                    "agendar-status-warning"
+            );
+            return;
+        }
+
+        try {
+            todosLosMedicos = medicoClient.obtenerMedicos();
+            medicoSeleccionado = todosLosMedicos.stream()
+                    .filter(m -> creadorId.equals(m.getPersonaId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (medicoSeleccionado == null) {
+                mostrarEstadoGeneral(
+                        "No se encontró su perfil de médico en el sistema.",
+                        "agendar-status-error"
+                );
+                return;
+            }
+
+            lblMedicoFijo.setText("Dr(a). " + medicoSeleccionado.getPrimerNombre() + " "
+                    + medicoSeleccionado.getPrimerApellido() + " — Médico #" + medicoSeleccionado.getPersonaId());
+
+            List<String> especialidadesMedico = medicoSeleccionado.getEspecialidades();
+            if (especialidadesMedico == null || especialidadesMedico.isEmpty()) {
+                cmbEspecialidad.setItems(FXCollections.observableArrayList("GENERAL"));
+            } else {
+                cmbEspecialidad.setItems(FXCollections.observableArrayList(especialidadesMedico));
+            }
+        } catch (Exception e) {
+            mostrarEstadoGeneral(
+                    "No se pudo cargar su perfil de médico: " + e.getMessage(),
+                    "agendar-status-error"
+            );
+        }
     }
 
     private void configurarFormularioNuevoPaciente() {
@@ -374,14 +447,14 @@ public class AgendarCitaManualController {
             lblPasoActual.setText("Paso 1: Complete los datos del nuevo paciente");
         } else if (especialidadSeleccionada == null) {
             lblPasoActual.setText("Paso 2: Seleccione la especialidad");
-        } else if (medicoSeleccionado == null) {
+        } else if (!modoMedico && medicoSeleccionado == null) {
             lblPasoActual.setText("Paso 3: Seleccione el médico");
         } else if (dpFecha.getValue() == null) {
-            lblPasoActual.setText("Paso 4: Seleccione la fecha");
+            lblPasoActual.setText(modoMedico ? "Paso 3: Seleccione la fecha" : "Paso 4: Seleccione la fecha");
         } else if (slotSeleccionado == null) {
-            lblPasoActual.setText("Paso 5: Seleccione la hora");
+            lblPasoActual.setText(modoMedico ? "Paso 4: Seleccione la hora" : "Paso 5: Seleccione la hora");
         } else {
-            lblPasoActual.setText("Paso 6: Confirme la cita");
+            lblPasoActual.setText(modoMedico ? "Paso 5: Confirme la cita" : "Paso 6: Confirme la cita");
         }
     }
 
@@ -406,8 +479,15 @@ public class AgendarCitaManualController {
         }
 
         if (medicoSeleccionado == null) {
-            mostrarError(errMedico, "Debe seleccionar un médico.");
-            marcarInputInvalido(cmbMedicos, true);
+            if (modoMedico) {
+                mostrarEstadoGeneral(
+                        "No se pudo identificar su perfil de médico.",
+                        "agendar-status-error"
+                );
+            } else {
+                mostrarError(errMedico, "Debe seleccionar un médico.");
+                marcarInputInvalido(cmbMedicos, true);
+            }
             valido = false;
         }
 
@@ -434,24 +514,25 @@ public class AgendarCitaManualController {
             return;
         }
 
-        Long idAgendador = agendadorId != null ? agendadorId : SessionPersonaResolver.resolverPersonaId();
-        if (idAgendador == null) {
+        Long idCreador = creadorId != null ? creadorId : SessionPersonaResolver.resolverPersonaId();
+        if (idCreador == null) {
+            String perfil = modoMedico ? "médico" : "agendador";
             mostrarEstadoGeneral(
-                    "No se pudo identificar su perfil de agendador. "
+                    "No se pudo identificar su perfil de " + perfil + ". "
                             + "Cierre sesión e ingrese nuevamente, o contacte al administrador.",
                     "agendar-status-error"
             );
             return;
         }
-        agendadorId = idAgendador;
+        creadorId = idCreador;
 
         setAgendamientoEnProgreso(true);
 
-        final Long agendadorIdFinal = idAgendador;
+        final Long creadorIdFinal = idCreador;
         CrearCitaAutonomaRequest requestBase = new CrearCitaAutonomaRequest(
                 null,
                 medicoSeleccionado.getPersonaId(),
-                agendadorIdFinal,
+                creadorIdFinal,
                 slotSeleccionado,
                 especialidadSeleccionada,
                 motivo
@@ -644,11 +725,20 @@ public class AgendarCitaManualController {
     }
 
     private void volverAlDashboard() {
-        SceneManager.switchScene(
-                "/view/dashboard/agendador-dashboard.fxml",
-                btnVolver,
-                "PIEDRAZUL - Dashboard Agendador"
-        );
+        if (modoMedico) {
+            SessionManager.endAgendarManualComoMedico();
+            SceneManager.switchScene(
+                    "/view/dashboard/medico-dashboard.fxml",
+                    btnVolver,
+                    "PIEDRAZUL - Dashboard Médico"
+            );
+        } else {
+            SceneManager.switchScene(
+                    "/view/dashboard/agendador-dashboard.fxml",
+                    btnVolver,
+                    "PIEDRAZUL - Dashboard Agendador"
+            );
+        }
     }
 
     private void limpiarValidaciones() {

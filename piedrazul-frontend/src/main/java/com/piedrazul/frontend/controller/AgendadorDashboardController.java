@@ -49,6 +49,7 @@ public class AgendadorDashboardController {
 
     @FXML
     private void handleAgendarCita() {
+        SessionManager.endAgendarManualComoMedico();
         SceneManager.switchScene(
                 "/view/dashboard/agendar-cita-manual.fxml",
                 lblBienvenida,

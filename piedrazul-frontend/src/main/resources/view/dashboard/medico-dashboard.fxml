@@ -66,6 +66,7 @@
                           styleClass="main-actions-row">
 
                         <Button text="AGENDAR CITA"
+                                onAction="#handleAgendarCita"
                                 styleClass="dashboard-main-button"/>
 
                         <Button text="MIS CITAS"

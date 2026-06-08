@@ -87,7 +87,7 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/api/pacientes").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/personas/**", "/api/pacientes/**").authenticated()
                         .pathMatchers("/api/personas/**", "/api/pacientes/**")
-                            .hasAnyRole("ADMINISTRADOR", "AGENDADOR")
+                            .hasAnyRole("ADMINISTRADOR", "AGENDADOR", "MEDICO_TERAPISTA")
 
                         // --- Medicos ---
                         // POST publico por la misma razon de auto-registro (un usuario que se

@@ -34,7 +34,8 @@
                     <Label fx:id="lblBienvenida"
                            text="Agendamiento Manual de Citas"
                            styleClass="agendar-welcome-title"/>
-                    <Label text="Como agendador, puede registrar una cita para cualquier paciente con el médico y horario que corresponda."
+                    <Label fx:id="lblGuiaAgendamiento"
+                           text="Como agendador, puede registrar una cita para cualquier paciente con el médico y horario que corresponda."
                            styleClass="agendar-guide-text"
                            wrapText="true"
                            textAlignment="CENTER"/>
@@ -170,8 +171,8 @@
                                    visible="false" managed="false"/>
                         </VBox>
 
-                        <Label text="Médico *" styleClass="agendar-field-label" GridPane.rowIndex="3"/>
-                        <VBox spacing="4" GridPane.rowIndex="3" GridPane.columnIndex="1">
+                        <Label fx:id="lblMedicoTitulo" text="Médico *" styleClass="agendar-field-label" GridPane.rowIndex="3"/>
+                        <VBox fx:id="panelSelectorMedico" spacing="4" GridPane.rowIndex="3" GridPane.columnIndex="1">
                             <ComboBox fx:id="cmbMedicos"
                                       promptText="— Seleccione un médico —"
                                       prefWidth="400"
@@ -179,6 +180,11 @@
                                       styleClass="agendar-input"/>
                             <Label fx:id="errMedico" styleClass="agendar-field-error"
                                    visible="false" managed="false"/>
+                        </VBox>
+                        <VBox fx:id="panelMedicoFijo" spacing="4"
+                              visible="false" managed="false"
+                              GridPane.rowIndex="3" GridPane.columnIndex="1">
+                            <Label fx:id="lblMedicoFijo" styleClass="agendar-field-hint" wrapText="true"/>
                         </VBox>
 
                         <Label text="Fecha *" styleClass="agendar-field-label" GridPane.rowIndex="4"/>

@@ -41,6 +41,9 @@ public final class SessionManager {
     /** true cuando el registro se abrio desde el panel del administrador (no desde login). */
     private static volatile boolean registerFromAdminPanel;
 
+    /** true cuando el agendamiento manual se abrio desde el dashboard del medico. */
+    private static volatile boolean agendarManualComoMedico;
+
     private SessionManager() {
     }
 
@@ -66,6 +69,7 @@ public final class SessionManager {
             claims = null;
         }
         registerFromAdminPanel = false;
+        agendarManualComoMedico = false;
     }
 
     public static void beginRegisterFromAdminPanel() {
@@ -78,6 +82,18 @@ public final class SessionManager {
 
     public static void endRegisterFromAdminPanel() {
         registerFromAdminPanel = false;
+    }
+
+    public static void beginAgendarManualComoMedico() {
+        agendarManualComoMedico = true;
+    }
+
+    public static boolean isAgendarManualComoMedico() {
+        return agendarManualComoMedico;
+    }
+
+    public static void endAgendarManualComoMedico() {
+        agendarManualComoMedico = false;
     }
 
     public static boolean hasRole(String role) {

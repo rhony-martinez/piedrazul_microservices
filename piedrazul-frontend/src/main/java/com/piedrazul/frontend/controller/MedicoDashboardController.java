@@ -37,4 +37,14 @@ public class MedicoDashboardController {
                 "PIEDRAZUL - Mis Citas"
         );
     }
+
+    @FXML
+    private void handleAgendarCita() {
+        SessionManager.beginAgendarManualComoMedico();
+        SceneManager.switchScene(
+                "/view/dashboard/agendar-cita-manual.fxml",
+                lblBienvenida,
+                "PIEDRAZUL - Agendar Cita Manual"
+        );
+    }
 }
