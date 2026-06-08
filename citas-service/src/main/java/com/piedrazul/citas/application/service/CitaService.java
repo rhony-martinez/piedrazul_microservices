@@ -7,6 +7,7 @@ import com.piedrazul.citas.application.port.incoming.*;
 import com.piedrazul.citas.application.port.outgoing.*;
 import com.piedrazul.citas.domain.exception.*;
 import com.piedrazul.citas.domain.model.*;
+import com.piedrazul.citas.domain.policy.CitaProgramadaUnicaPolicy;
 import com.piedrazul.citas.domain.valueobjects.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -162,6 +163,10 @@ public class CitaService implements CancelarCitaUseCase,
             DisponibilidadSnapshot disponibilidad
     ) {
         validarHorarioLibre(citaOriginal.getMedicoId(), citaOriginal.getPacienteId(), nuevaFechaHora);
+
+        CitaProgramadaUnicaPolicy.validar(
+                citaRepository.existeCitaProgramadaByPacienteId(citaOriginal.getPacienteId())
+        );
 
         if (!disponibilidad.estaDisponible(citaOriginal.getMedicoId(), nuevaFechaHora)) {
             throw new DisponibilidadNoDisponibleException("Nuevo horario no disponible");

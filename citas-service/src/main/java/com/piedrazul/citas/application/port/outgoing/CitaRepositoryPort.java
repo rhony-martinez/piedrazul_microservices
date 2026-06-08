@@ -55,4 +55,6 @@ public interface CitaRepositoryPort {
                         LocalDateTime fin);
 
         boolean existeConsultaGeneralAtendidaByPacienteId(PacienteId pacienteId);
+
+        boolean existeCitaProgramadaByPacienteId(PacienteId pacienteId);
 }

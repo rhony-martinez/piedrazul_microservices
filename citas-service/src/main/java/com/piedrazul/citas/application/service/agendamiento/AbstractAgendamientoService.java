@@ -7,6 +7,7 @@ import com.piedrazul.citas.application.port.outgoing.*;
 import com.piedrazul.citas.domain.exception.*;
 import com.piedrazul.citas.domain.factory.CitaBuilderFactory;
 import com.piedrazul.citas.domain.model.*;
+import com.piedrazul.citas.domain.policy.CitaProgramadaUnicaPolicy;
 import com.piedrazul.citas.domain.policy.ConsultaGeneralPolicy;
 import com.piedrazul.citas.domain.valueobjects.*;
 import com.piedrazul.citas.application.service.singleton.ConfiguracionManager;
@@ -57,6 +58,10 @@ public abstract class AbstractAgendamientoService {
         ConsultaGeneralPolicy.validarAgendamiento(
                 request.getEspecialidad(),
                 citaRepository.existeConsultaGeneralAtendidaByPacienteId(pacienteId)
+        );
+
+        CitaProgramadaUnicaPolicy.validar(
+                citaRepository.existeCitaProgramadaByPacienteId(pacienteId)
         );
 
         if (request.getEspecialidad() == null) {

@@ -155,6 +155,11 @@ public class CitaRepositoryImpl implements CitaRepositoryPort {
         return springDataCitaRepository.existeConsultaGeneralAtendidaByPacienteId(pacienteId.value());
     }
 
+    @Override
+    public boolean existeCitaProgramadaByPacienteId(PacienteId pacienteId) {
+        return springDataCitaRepository.existeCitaProgramadaByPacienteId(pacienteId.value());
+    }
+
     private static UUID toUuid(CitaId citaId) {
         return citaId.value();
     }

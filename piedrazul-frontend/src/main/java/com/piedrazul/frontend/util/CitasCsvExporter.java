@@ -63,7 +63,7 @@ public final class CitasCsvExporter {
                 }
                 columnas.add(escapar(EspecialidadLabels.etiqueta(cita.getEspecialidad())));
                 columnas.add(escapar(valor(cita.getEstado())));
-                columnas.add(escapar(resolverMotivo(cita)));
+                columnas.add(escapar(CitaMotivoUtil.resolverMotivo(cita)));
                 writer.write(String.join(",", columnas));
                 writer.write(System.lineSeparator());
             }
@@ -80,16 +80,6 @@ public final class CitasCsvExporter {
             return "\"" + value.replace("\"", "\"\"") + "\"";
         }
         return value;
-    }
-
-    private static String resolverMotivo(CitaResponse cita) {
-        if (cita.getMotivoAgendamiento() != null && !cita.getMotivoAgendamiento().isBlank()) {
-            return cita.getMotivoAgendamiento();
-        }
-        if (cita.getMotivoCancelacion() != null && !cita.getMotivoCancelacion().isBlank()) {
-            return cita.getMotivoCancelacion();
-        }
-        return "-";
     }
 
     private static String formatearFecha(CitaResponse cita) {

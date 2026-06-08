@@ -6,6 +6,7 @@ import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
 import com.piedrazul.frontend.util.CitaEstadoAcciones;
 import com.piedrazul.frontend.util.CitaGestionHelper;
+import com.piedrazul.frontend.util.CitaMotivoUtil;
 import com.piedrazul.frontend.util.CitasCsvExporter;
 import com.piedrazul.frontend.util.CitasExcelExporter;
 import com.piedrazul.frontend.util.CitasExportMessages;
@@ -128,7 +129,7 @@ public class HistorialCitasController {
         CitaEstadoAcciones.configurarColumnaEstado(colEstado);
 
         colMotivo.setCellValueFactory(data ->
-                new SimpleStringProperty(resolverMotivo(data.getValue())));
+                new SimpleStringProperty(CitaMotivoUtil.resolverMotivo(data.getValue())));
     }
 
     private void configurarFiltros() {
@@ -215,16 +216,6 @@ public class HistorialCitasController {
             return false;
         }
         return true;
-    }
-
-    private String resolverMotivo(CitaResponse cita) {
-        if (cita.getMotivoAgendamiento() != null && !cita.getMotivoAgendamiento().isBlank()) {
-            return cita.getMotivoAgendamiento();
-        }
-        if (cita.getMotivoCancelacion() != null && !cita.getMotivoCancelacion().isBlank()) {
-            return cita.getMotivoCancelacion();
-        }
-        return "-";
     }
 
     private LocalDateTime parseFechaHora(CitaResponse cita) {

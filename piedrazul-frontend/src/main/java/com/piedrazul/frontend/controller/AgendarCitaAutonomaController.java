@@ -7,6 +7,7 @@ import com.piedrazul.frontend.dto.request.CrearCitaAutonomaRequest;
 import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.CitaProgramadaPolicy;
 import com.piedrazul.frontend.util.ConsultaGeneralPolicy;
 import com.piedrazul.frontend.util.EspecialidadLabels;
 import com.piedrazul.frontend.util.SessionPersonaResolver;
@@ -76,7 +77,7 @@ public class AgendarCitaAutonomaController {
 
         tablaSlots.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             slotSeleccionado = newVal;
-            btnAgendar.setDisable(newVal == null);
+            actualizarBotonAgendar();
             ocultarError(errSlot);
             if (newVal != null) {
                 ocultarEstadoSlots();
@@ -191,11 +192,21 @@ public class AgendarCitaAutonomaController {
             }
         }
 
-        if (!ConsultaGeneralPolicy.tieneConsultaGeneralAtendida(historialPaciente)) {
+        if (CitaProgramadaPolicy.tieneCitaProgramada(historialPaciente)) {
+            mostrarEstadoGeneral(CitaProgramadaPolicy.mensajeBloqueo(), "agendar-status-warning");
+        } else if (!ConsultaGeneralPolicy.tieneConsultaGeneralAtendida(historialPaciente)) {
             mostrarEstadoGeneral(ConsultaGeneralPolicy.mensajeRestriccion(), "agendar-status-warning");
         }
 
+        actualizarBotonAgendar();
         aplicarFiltroMedicos();
+    }
+
+    private void actualizarBotonAgendar() {
+        btnAgendar.setDisable(
+                slotSeleccionado == null
+                        || CitaProgramadaPolicy.tieneCitaProgramada(historialPaciente)
+        );
     }
 
     private void cargarFestivos() {
@@ -377,6 +388,9 @@ public class AgendarCitaAutonomaController {
                     "agendar-status-error"
             );
             valido = false;
+        } else if (CitaProgramadaPolicy.tieneCitaProgramada(historialPaciente)) {
+            mostrarEstadoGeneral(CitaProgramadaPolicy.mensajeBloqueo(), "agendar-status-error");
+            valido = false;
         }
 
         if (!valido) {
@@ -539,6 +553,9 @@ public class AgendarCitaAutonomaController {
         }
         if (mensaje.contains("Consulta General") || mensaje.contains("Medicina General")) {
             return ConsultaGeneralPolicy.mensajeRestriccion();
+        }
+        if (mensaje.contains("cita programada") || mensaje.contains("reagendada pendiente")) {
+            return CitaProgramadaPolicy.mensajeBloqueo();
         }
 
         return mensaje;

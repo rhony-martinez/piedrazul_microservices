@@ -10,6 +10,7 @@ import com.piedrazul.frontend.dto.response.PersonaResponse;
 import com.piedrazul.frontend.session.SessionManager;
 import com.piedrazul.frontend.util.CitaEstadoAcciones;
 import com.piedrazul.frontend.util.CitaGestionHelper;
+import com.piedrazul.frontend.util.CitaMotivoUtil;
 import com.piedrazul.frontend.util.CitasCsvExporter;
 import com.piedrazul.frontend.util.CitasExcelExporter;
 import com.piedrazul.frontend.util.CitasExportMessages;
@@ -137,7 +138,7 @@ public class MisCitasMedicoController {
         CitaEstadoAcciones.configurarColumnaEstado(colEstado);
 
         colMotivo.setCellValueFactory(data ->
-                new SimpleStringProperty(resolverMotivo(data.getValue())));
+                new SimpleStringProperty(CitaMotivoUtil.resolverMotivo(data.getValue())));
     }
 
     private void configurarResaltadoFilas() {
@@ -279,16 +280,6 @@ public class MisCitasMedicoController {
                         lblProximaCita.getStyleClass().add("proxima-cita-label-activa");
                     }
                 });
-    }
-
-    private String resolverMotivo(CitaResponse cita) {
-        if (cita.getMotivoAgendamiento() != null && !cita.getMotivoAgendamiento().isBlank()) {
-            return cita.getMotivoAgendamiento();
-        }
-        if (cita.getMotivoCancelacion() != null && !cita.getMotivoCancelacion().isBlank()) {
-            return cita.getMotivoCancelacion();
-        }
-        return "-";
     }
 
     private boolean esCancelada(CitaResponse cita) {

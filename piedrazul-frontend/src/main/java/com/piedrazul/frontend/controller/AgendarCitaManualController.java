@@ -14,6 +14,7 @@ import com.piedrazul.frontend.dto.response.PacienteResponse;
 import com.piedrazul.frontend.dto.response.PersonaResponse;
 import com.piedrazul.frontend.session.SessionManager;
 import com.piedrazul.frontend.util.ApiClientException;
+import com.piedrazul.frontend.util.CitaProgramadaPolicy;
 import com.piedrazul.frontend.util.ConsultaGeneralPolicy;
 import com.piedrazul.frontend.util.EspecialidadLabels;
 import com.piedrazul.frontend.util.FormFieldHelper;
@@ -323,7 +324,10 @@ public class AgendarCitaManualController {
             }
         }
 
-        if (pacienteSeleccionado != null
+        if (pacienteSeleccionado != null && !registrandoNuevoPaciente
+                && CitaProgramadaPolicy.tieneCitaProgramada(historialPaciente)) {
+            mostrarEstadoGeneral(CitaProgramadaPolicy.mensajeBloqueo(), "agendar-status-warning");
+        } else if (pacienteSeleccionado != null
                 && !ConsultaGeneralPolicy.tieneConsultaGeneralAtendida(historialPaciente)) {
             if (permitidas.isEmpty()) {
                 mostrarEstadoGeneral(
@@ -540,6 +544,10 @@ public class AgendarCitaManualController {
             valido = false;
         } else if (registrandoNuevoPaciente) {
             valido &= validarFormularioNuevoPaciente();
+        } else if (CitaProgramadaPolicy.tieneCitaProgramada(historialPaciente)) {
+            mostrarError(errPaciente, CitaProgramadaPolicy.mensajeBloqueo());
+            marcarInputInvalido(cmbPacientes, true);
+            valido = false;
         }
 
         if (especialidadSeleccionada == null || especialidadSeleccionada.isBlank()) {
@@ -926,6 +934,9 @@ public class AgendarCitaManualController {
         }
         if (mensaje.contains("Consulta General") || mensaje.contains("Medicina General")) {
             return ConsultaGeneralPolicy.mensajeRestriccion();
+        }
+        if (mensaje.contains("cita programada") || mensaje.contains("reagendada pendiente")) {
+            return CitaProgramadaPolicy.mensajeBloqueo();
         }
         return mensaje;
     }

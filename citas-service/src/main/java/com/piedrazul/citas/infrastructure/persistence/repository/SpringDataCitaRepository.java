@@ -115,4 +115,12 @@ public interface SpringDataCitaRepository extends JpaRepository<CitaEntity, UUID
     AND c.estado = 'ATENDIDA'
     """)
     boolean existeConsultaGeneralAtendidaByPacienteId(@Param("pacienteId") Long pacienteId);
+
+    @Query("""
+    SELECT COUNT(c) > 0
+    FROM CitaEntity c
+    WHERE c.pacienteId = :pacienteId
+    AND c.estado IN ('PROGRAMADA', 'REAGENDADA')
+    """)
+    boolean existeCitaProgramadaByPacienteId(@Param("pacienteId") Long pacienteId);
 }
