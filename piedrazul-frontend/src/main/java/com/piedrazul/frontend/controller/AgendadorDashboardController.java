@@ -46,4 +46,14 @@ public class AgendadorDashboardController {
                 "PIEDRAZUL - Reportes"
         );
     }
+
+    @FXML
+    private void handleAgendarCita() {
+        SceneManager.switchScene(
+                "/view/dashboard/agendar-cita-manual.fxml",
+                lblBienvenida,
+                "PIEDRAZUL - Agendar Cita Manual"
+        );
+    }
+
 }
