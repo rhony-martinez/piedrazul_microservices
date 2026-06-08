@@ -443,12 +443,21 @@ public class RegisterController {
     private void asegurarPacienteRegistrado(Long personaId) {
         try {
             pacienteClient.crearPaciente(personaId);
-        } catch (RuntimeException e) {
-            String mensaje = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
-            if (!mensaje.contains("ya está registrada como paciente")) {
+        } catch (Exception e) {
+            if (!esPacienteYaRegistrado(e)) {
                 throw e;
             }
         }
+    }
+
+    private boolean esPacienteYaRegistrado(Throwable error) {
+        String mensaje = error.getMessage() == null ? "" : error.getMessage();
+        if (error instanceof ApiClientException apiEx && apiEx.getParsedError() != null) {
+            mensaje = mensaje + " " + apiEx.getParsedError().message();
+        }
+        String normalizado = mensaje.toLowerCase();
+        return normalizado.contains("ya está registrada como paciente")
+                || normalizado.contains("ya registrada como paciente");
     }
 
     private void crearUsuario(

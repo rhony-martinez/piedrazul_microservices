@@ -1,5 +1,7 @@
 package com.piedrazul.personas.application.service;
 
+import com.piedrazul.personas.application.exception.PacienteYaRegistradoException;
+import com.piedrazul.personas.application.exception.PersonaNoEncontradaException;
 import com.piedrazul.personas.domain.model.Paciente;
 import com.piedrazul.personas.domain.model.Persona;
 import com.piedrazul.personas.domain.repository.IPacienteRepository;
@@ -26,11 +28,12 @@ public class RegistrarPacienteService {
 
         // Validar que la persona existe
         Persona persona = personaRepository.buscarPorId(request.getPersonaId())
-                .orElseThrow(() -> new RuntimeException("Persona no encontrada con ID: " + request.getPersonaId()));
+                .orElseThrow(() -> new PersonaNoEncontradaException(
+                        "Persona no encontrada con ID: " + request.getPersonaId()
+                ));
 
-        // Validar que no sea ya un paciente
         if (pacienteRepository.existsByPersonaId(request.getPersonaId())) {
-            throw new RuntimeException("La persona ya está registrada como paciente");
+            throw new PacienteYaRegistradoException("La persona ya está registrada como paciente");
         }
 
         // Crear paciente
