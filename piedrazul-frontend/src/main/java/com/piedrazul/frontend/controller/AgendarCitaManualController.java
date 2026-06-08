@@ -7,12 +7,14 @@ import com.piedrazul.frontend.client.PacienteClient;
 import com.piedrazul.frontend.client.PersonaClient;
 import com.piedrazul.frontend.dto.request.CrearCitaAutonomaRequest;
 import com.piedrazul.frontend.dto.request.CrearPersonaRequest;
+import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
 import com.piedrazul.frontend.dto.response.PacienteListItem;
 import com.piedrazul.frontend.dto.response.PacienteResponse;
 import com.piedrazul.frontend.dto.response.PersonaResponse;
 import com.piedrazul.frontend.session.SessionManager;
 import com.piedrazul.frontend.util.ApiClientException;
+import com.piedrazul.frontend.util.ConsultaGeneralPolicy;
 import com.piedrazul.frontend.util.EspecialidadLabels;
 import com.piedrazul.frontend.util.FormFieldHelper;
 import com.piedrazul.frontend.util.PersonaFormSupport;
@@ -110,6 +112,7 @@ public class AgendarCitaManualController {
     private LocalDateTime slotSeleccionado;
     private boolean modoMedico;
     private Long creadorId;
+    private List<CitaResponse> historialPaciente = List.of();
 
     @FXML
     public void initialize() {
@@ -167,6 +170,7 @@ public class AgendarCitaManualController {
             pacienteSeleccionado = newVal;
             registrandoNuevoPaciente = newVal != null && newVal.esNuevoPaciente();
             actualizarPanelNuevoPaciente();
+            actualizarHistorialYEspecialidades();
             ocultarError(errPaciente);
             limpiarEstadoGeneral();
             cargarSlots();
@@ -257,17 +261,83 @@ public class AgendarCitaManualController {
             lblMedicoFijo.setText("Dr(a). " + medicoSeleccionado.getPrimerNombre() + " "
                     + medicoSeleccionado.getPrimerApellido() + " — Médico #" + medicoSeleccionado.getPersonaId());
 
-            List<String> especialidadesMedico = medicoSeleccionado.getEspecialidades();
-            if (especialidadesMedico == null || especialidadesMedico.isEmpty()) {
-                cmbEspecialidad.setItems(FXCollections.observableArrayList("GENERAL"));
-            } else {
-                cmbEspecialidad.setItems(FXCollections.observableArrayList(especialidadesMedico));
-            }
+            aplicarEspecialidadesPermitidas();
         } catch (Exception e) {
             mostrarEstadoGeneral(
                     "No se pudo cargar su perfil de médico: " + e.getMessage(),
                     "agendar-status-error"
             );
+        }
+    }
+
+    private void actualizarHistorialYEspecialidades() {
+        if (pacienteSeleccionado == null) {
+            historialPaciente = List.of();
+            aplicarEspecialidadesPermitidas();
+            return;
+        }
+
+        if (registrandoNuevoPaciente) {
+            historialPaciente = List.of();
+            aplicarEspecialidadesPermitidas();
+            return;
+        }
+
+        try {
+            historialPaciente = citaClient.listarPorPaciente(pacienteSeleccionado.getPersonaId());
+        } catch (Exception e) {
+            historialPaciente = List.of();
+        }
+        aplicarEspecialidadesPermitidas();
+    }
+
+    private List<String> obtenerEspecialidadesBase() {
+        if (modoMedico && medicoSeleccionado != null) {
+            List<String> especialidadesMedico = medicoSeleccionado.getEspecialidades();
+            if (especialidadesMedico == null || especialidadesMedico.isEmpty()) {
+                return List.of("GENERAL");
+            }
+            return especialidadesMedico;
+        }
+        return ESPECIALIDADES;
+    }
+
+    private void aplicarEspecialidadesPermitidas() {
+        List<String> permitidas = ConsultaGeneralPolicy.filtrarEspecialidadesDisponibles(
+                obtenerEspecialidadesBase(),
+                historialPaciente
+        );
+
+        String seleccionActual = cmbEspecialidad.getValue();
+        cmbEspecialidad.setItems(FXCollections.observableArrayList(permitidas));
+
+        if (seleccionActual != null && permitidas.contains(seleccionActual)) {
+            cmbEspecialidad.setValue(seleccionActual);
+            especialidadSeleccionada = seleccionActual;
+        } else {
+            cmbEspecialidad.getSelectionModel().clearSelection();
+            especialidadSeleccionada = null;
+            if (permitidas.size() == 1) {
+                cmbEspecialidad.setValue(permitidas.getFirst());
+                especialidadSeleccionada = permitidas.getFirst();
+            }
+        }
+
+        if (pacienteSeleccionado != null
+                && !ConsultaGeneralPolicy.tieneConsultaGeneralAtendida(historialPaciente)) {
+            if (permitidas.isEmpty()) {
+                mostrarEstadoGeneral(
+                        "Este paciente debe atender primero una Consulta General, "
+                                + "pero el médico seleccionado no atiende Medicina General.",
+                        "agendar-status-warning"
+                );
+            } else if (permitidas.size() == 1 && "GENERAL".equals(permitidas.getFirst())) {
+                mostrarEstadoGeneral(ConsultaGeneralPolicy.mensajeRestriccion(), "agendar-status-warning");
+            }
+        }
+
+        if (!modoMedico) {
+            aplicarFiltroMedicos();
         }
     }
 
@@ -474,6 +544,10 @@ public class AgendarCitaManualController {
 
         if (especialidadSeleccionada == null || especialidadSeleccionada.isBlank()) {
             mostrarError(errEspecialidad, "Debe seleccionar una especialidad.");
+            marcarInputInvalido(cmbEspecialidad, true);
+            valido = false;
+        } else if (!ConsultaGeneralPolicy.especialidadPermitida(especialidadSeleccionada, historialPaciente)) {
+            mostrarError(errEspecialidad, ConsultaGeneralPolicy.mensajeRestriccion());
             marcarInputInvalido(cmbEspecialidad, true);
             valido = false;
         }
@@ -849,6 +923,9 @@ public class AgendarCitaManualController {
         }
         if (mensaje.contains("usuario creador") || mensaje.contains("usuarioCreadorId")) {
             return "No se pudo identificar al agendador. Cierre sesión e ingrese nuevamente.";
+        }
+        if (mensaje.contains("Consulta General") || mensaje.contains("Medicina General")) {
+            return ConsultaGeneralPolicy.mensajeRestriccion();
         }
         return mensaje;
     }

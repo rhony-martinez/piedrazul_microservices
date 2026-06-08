@@ -107,4 +107,13 @@ public interface SpringDataCitaRepository extends JpaRepository<CitaEntity, Stri
             LocalDateTime inicio,
             LocalDateTime fin
     );
+
+    @Query("""
+    SELECT COUNT(c) > 0
+    FROM CitaEntity c
+    WHERE c.pacienteId = :pacienteId
+    AND c.especialidad = 'GENERAL'
+    AND c.estado = 'ATENDIDA'
+    """)
+    boolean existeConsultaGeneralAtendidaByPacienteId(@Param("pacienteId") Long pacienteId);
 }

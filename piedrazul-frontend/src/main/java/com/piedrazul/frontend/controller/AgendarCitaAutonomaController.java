@@ -4,9 +4,12 @@ import com.piedrazul.frontend.client.CitaClient;
 import com.piedrazul.frontend.client.ConfiguracionClient;
 import com.piedrazul.frontend.client.MedicoClient;
 import com.piedrazul.frontend.dto.request.CrearCitaAutonomaRequest;
+import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.ConsultaGeneralPolicy;
 import com.piedrazul.frontend.util.EspecialidadLabels;
+import com.piedrazul.frontend.util.SessionPersonaResolver;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -61,6 +64,7 @@ public class AgendarCitaAutonomaController {
     private MedicoResponse medicoSeleccionado;
     private LocalDateTime slotSeleccionado;
     private Long pacienteId;
+    private List<CitaResponse> historialPaciente = List.of();
 
     @FXML
     public void initialize() {
@@ -118,7 +122,6 @@ public class AgendarCitaAutonomaController {
             }
         });
 
-        cmbEspecialidad.setItems(FXCollections.observableArrayList(ESPECIALIDADES));
         cargarFestivos();
         configurarBienvenida();
         cargarMedicos();
@@ -131,6 +134,9 @@ public class AgendarCitaAutonomaController {
         }
 
         pacienteId = SessionManager.getPersonaId();
+        if (pacienteId == null) {
+            pacienteId = SessionPersonaResolver.resolverPersonaId();
+        }
         String username = SessionManager.getUsername();
 
         if (username != null && !username.isBlank()) {
@@ -143,7 +149,53 @@ public class AgendarCitaAutonomaController {
                             + "Solicite al administrador que vincule su cuenta antes de agendar.",
                     "agendar-status-warning"
             );
+            return;
         }
+
+        cargarHistorialYEspecialidades();
+    }
+
+    private void cargarHistorialYEspecialidades() {
+        if (pacienteId == null) {
+            historialPaciente = List.of();
+            cmbEspecialidad.setItems(FXCollections.observableArrayList(ESPECIALIDADES));
+            return;
+        }
+
+        try {
+            historialPaciente = citaClient.listarPorPaciente(pacienteId);
+        } catch (Exception e) {
+            historialPaciente = List.of();
+        }
+        aplicarEspecialidadesPermitidas();
+    }
+
+    private void aplicarEspecialidadesPermitidas() {
+        List<String> permitidas = ConsultaGeneralPolicy.filtrarEspecialidadesDisponibles(
+                ESPECIALIDADES,
+                historialPaciente
+        );
+
+        String seleccionActual = cmbEspecialidad.getValue();
+        cmbEspecialidad.setItems(FXCollections.observableArrayList(permitidas));
+
+        if (seleccionActual != null && permitidas.contains(seleccionActual)) {
+            cmbEspecialidad.setValue(seleccionActual);
+            especialidadSeleccionada = seleccionActual;
+        } else {
+            cmbEspecialidad.getSelectionModel().clearSelection();
+            especialidadSeleccionada = null;
+            if (permitidas.size() == 1) {
+                cmbEspecialidad.setValue(permitidas.getFirst());
+                especialidadSeleccionada = permitidas.getFirst();
+            }
+        }
+
+        if (!ConsultaGeneralPolicy.tieneConsultaGeneralAtendida(historialPaciente)) {
+            mostrarEstadoGeneral(ConsultaGeneralPolicy.mensajeRestriccion(), "agendar-status-warning");
+        }
+
+        aplicarFiltroMedicos();
     }
 
     private void cargarFestivos() {
@@ -287,6 +339,10 @@ public class AgendarCitaAutonomaController {
 
         if (especialidadSeleccionada == null || especialidadSeleccionada.isBlank()) {
             mostrarError(errEspecialidad, "Debe seleccionar el tipo de consulta.");
+            marcarInputInvalido(cmbEspecialidad, true);
+            valido = false;
+        } else if (!ConsultaGeneralPolicy.especialidadPermitida(especialidadSeleccionada, historialPaciente)) {
+            mostrarError(errEspecialidad, ConsultaGeneralPolicy.mensajeRestriccion());
             marcarInputInvalido(cmbEspecialidad, true);
             valido = false;
         }
@@ -480,6 +536,9 @@ public class AgendarCitaAutonomaController {
         }
         if (mensaje.contains("no atiende la especialidad")) {
             return "El médico seleccionado no atiende ese tipo de consulta. Elija otro médico o especialidad.";
+        }
+        if (mensaje.contains("Consulta General") || mensaje.contains("Medicina General")) {
+            return ConsultaGeneralPolicy.mensajeRestriccion();
         }
 
         return mensaje;

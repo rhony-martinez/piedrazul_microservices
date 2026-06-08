@@ -148,4 +148,9 @@ public class CitaRepositoryImpl implements CitaRepositoryPort {
                 .map(mapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public boolean existeConsultaGeneralAtendidaByPacienteId(PacienteId pacienteId) {
+        return springDataCitaRepository.existeConsultaGeneralAtendidaByPacienteId(pacienteId.value());
+    }
 }

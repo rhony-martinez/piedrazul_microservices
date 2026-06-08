@@ -53,4 +53,6 @@ public interface CitaRepositoryPort {
         List<Cita> findByPacienteIdAndFecha(PacienteId pacienteId,
                         LocalDateTime inicio,
                         LocalDateTime fin);
+
+        boolean existeConsultaGeneralAtendidaByPacienteId(PacienteId pacienteId);
 }
