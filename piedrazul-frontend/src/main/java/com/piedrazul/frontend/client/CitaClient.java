@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.request.CrearCitaAutonomaRequest;
+import com.piedrazul.frontend.dto.request.MarcarAsistenciaRequest;
+import com.piedrazul.frontend.dto.request.ReagendarCitaRequest;
 import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.http.AuthenticatedHttpClient;
 import com.piedrazul.frontend.util.ApiErrorParser;
@@ -67,6 +69,45 @@ public class  CitaClient {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("Error al crear la cita: " + e.getMessage(), e);
+        }
+    }
+
+    public CitaResponse cancelarCita(String citaId, String motivo) {
+        try {
+            String url = citasBaseUrl() + "/" + citaId + "/cancelar?motivo="
+                    + java.net.URLEncoder.encode(motivo, java.nio.charset.StandardCharsets.UTF_8);
+            AuthenticatedHttpClient.Response resp = AuthenticatedHttpClient.put(url, "");
+            return objectMapper.readValue(resp.getBody(), CitaResponse.class);
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            throw apiException("Error cancelando cita", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al cancelar la cita: " + e.getMessage(), e);
+        }
+    }
+
+    public CitaResponse reagendarCita(ReagendarCitaRequest request) {
+        try {
+            String body = objectMapper.writeValueAsString(request);
+            AuthenticatedHttpClient.Response resp =
+                    AuthenticatedHttpClient.put(citasBaseUrl() + "/reagendar", body);
+            return objectMapper.readValue(resp.getBody(), CitaResponse.class);
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            throw apiException("Error reagendando cita", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al reagendar la cita: " + e.getMessage(), e);
+        }
+    }
+
+    public CitaResponse marcarAsistencia(MarcarAsistenciaRequest request) {
+        try {
+            String body = objectMapper.writeValueAsString(request);
+            AuthenticatedHttpClient.Response resp =
+                    AuthenticatedHttpClient.put(citasBaseUrl() + "/asistencia", body);
+            return objectMapper.readValue(resp.getBody(), CitaResponse.class);
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            throw apiException("Error registrando asistencia", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al registrar la asistencia: " + e.getMessage(), e);
         }
     }
 

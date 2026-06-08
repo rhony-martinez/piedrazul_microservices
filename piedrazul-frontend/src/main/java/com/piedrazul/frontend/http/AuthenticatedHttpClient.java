@@ -64,6 +64,11 @@ public final class AuthenticatedHttpClient {
         return execute("PUT", url, jsonBody, "application/json");
     }
 
+    /** PUT sin cuerpo (p. ej. cancelar cita por query params). */
+    public static Response putWithoutBody(String url) {
+        return execute("PUT", url, null, null);
+    }
+
     public static Response delete(String url) {
         return execute("DELETE", url, null, null);
     }

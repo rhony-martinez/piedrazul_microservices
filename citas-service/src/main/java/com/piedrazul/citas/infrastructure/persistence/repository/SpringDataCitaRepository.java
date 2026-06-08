@@ -8,11 +8,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface SpringDataCitaRepository extends JpaRepository<CitaEntity, String> {
-    Optional<CitaEntity> findById(String id);
+public interface SpringDataCitaRepository extends JpaRepository<CitaEntity, UUID> {
 
     @Query("""
     SELECT COUNT(c) > 0
@@ -37,7 +36,7 @@ public interface SpringDataCitaRepository extends JpaRepository<CitaEntity, Stri
     boolean existsCitaActivaByMedicoIdAndFechaHoraExcluding(
             @Param("medicoId") Long medicoId,
             @Param("fechaHora") LocalDateTime fechaHora,
-            @Param("citaId") String citaId
+            @Param("citaId") UUID citaId
     );
 
     @Query("""
@@ -63,7 +62,7 @@ public interface SpringDataCitaRepository extends JpaRepository<CitaEntity, Stri
     boolean existsCitaActivaByPacienteIdAndFechaHoraExcluding(
             @Param("pacienteId") Long pacienteId,
             @Param("fechaHora") LocalDateTime fechaHora,
-            @Param("citaId") String citaId
+            @Param("citaId") UUID citaId
     );
 
     @Query("""

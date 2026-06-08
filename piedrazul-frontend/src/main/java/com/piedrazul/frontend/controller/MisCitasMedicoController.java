@@ -8,6 +8,8 @@ import com.piedrazul.frontend.dto.response.PacienteListItem;
 import com.piedrazul.frontend.dto.response.PacienteResponse;
 import com.piedrazul.frontend.dto.response.PersonaResponse;
 import com.piedrazul.frontend.session.SessionManager;
+import com.piedrazul.frontend.util.CitaEstadoAcciones;
+import com.piedrazul.frontend.util.CitaGestionHelper;
 import com.piedrazul.frontend.util.CitasCsvExporter;
 import com.piedrazul.frontend.util.CitasExcelExporter;
 import com.piedrazul.frontend.util.CitasExportMessages;
@@ -39,6 +41,11 @@ public class MisCitasMedicoController {
     @FXML private DatePicker dpFechaFin;
     @FXML private Label lblProximaCita;
     @FXML private Label lblLeyendaProxima;
+    @FXML private Label lblGestionHint;
+    @FXML private Button btnMarcarAtendida;
+    @FXML private Button btnMarcarNoAsistida;
+    @FXML private Button btnReagendar;
+    @FXML private Button btnCancelar;
     @FXML private Button btnVolver;
     @FXML private TableView<CitaResponse> tablaCitas;
 
@@ -51,6 +58,7 @@ public class MisCitasMedicoController {
 
     private Long medicoId;
     private String proximaCitaId;
+    private CitaGestionHelper gestionHelper;
 
     private final CitaClient citaClient = new CitaClient();
     private final PacienteClient pacienteClient = new PacienteClient();
@@ -64,11 +72,27 @@ public class MisCitasMedicoController {
             return;
         }
 
+        gestionHelper = new CitaGestionHelper(tablaCitas, this::buscarCitas);
+
         configurarEstilosVentana();
         configurarColumnas();
         configurarResaltadoFilas();
+        configurarGestionCitas();
         cargarPacientes();
         buscarCitas();
+    }
+
+    private void configurarGestionCitas() {
+        tablaCitas.getSelectionModel().selectedItemProperty().addListener((obs, anterior, seleccionada) ->
+                gestionHelper.configurarSeleccion(
+                        seleccionada,
+                        btnCancelar,
+                        btnReagendar,
+                        btnMarcarAtendida,
+                        btnMarcarNoAsistida,
+                        lblGestionHint
+                )
+        );
     }
 
     private void configurarEstilosVentana() {
@@ -110,6 +134,7 @@ public class MisCitasMedicoController {
                 ));
 
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
+        CitaEstadoAcciones.configurarColumnaEstado(colEstado);
 
         colMotivo.setCellValueFactory(data ->
                 new SimpleStringProperty(resolverMotivo(data.getValue())));
@@ -311,6 +336,26 @@ public class MisCitasMedicoController {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+
+    @FXML
+    private void marcarAtendida() {
+        gestionHelper.marcarAtendida(tablaCitas.getSelectionModel().getSelectedItem());
+    }
+
+    @FXML
+    private void marcarNoAsistida() {
+        gestionHelper.marcarNoAsistida(tablaCitas.getSelectionModel().getSelectedItem());
+    }
+
+    @FXML
+    private void reagendarCita() {
+        gestionHelper.reagendar(tablaCitas.getSelectionModel().getSelectedItem());
+    }
+
+    @FXML
+    private void cancelarCita() {
+        gestionHelper.cancelar(tablaCitas.getSelectionModel().getSelectedItem());
     }
 
     @FXML

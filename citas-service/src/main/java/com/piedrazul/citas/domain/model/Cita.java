@@ -1,10 +1,13 @@
 package com.piedrazul.citas.domain.model;
 
-import com.piedrazul.citas.domain.exception.*;
+import com.piedrazul.citas.domain.state.EstadoCitaContext;
+import com.piedrazul.citas.domain.state.EstadoCitaState;
+import com.piedrazul.citas.domain.state.EstadoCitaStateFactory;
 import com.piedrazul.citas.domain.valueobjects.*;
 import java.time.LocalDateTime;
 
-public class Cita {
+public class Cita implements EstadoCitaContext {
+
     private final CitaId id;
     private final PacienteId pacienteId;
     private final MedicoId medicoId;
@@ -12,6 +15,7 @@ public class Cita {
     private final UsuarioId creadoPor;
     private LocalDateTime fechaHora;
     private EstadoCita estado;
+    private EstadoCitaState comportamiento;
     private String motivoAgendamiento;
     private String motivoCancelacion;
     private LocalDateTime fechaAsistencia;
@@ -27,11 +31,10 @@ public class Cita {
         this.creadoPor = creadoPor;
         this.fechaHora = fechaHora;
         this.motivoAgendamiento = motivoAgendamiento;
-        this.estado = EstadoCita.PROGRAMADA;
+        inicializarEstado(EstadoCita.PROGRAMADA);
         this.audit = AuditMetadata.crear();
     }
 
-    // Constructor privado para reconstruir desde BD
     private Cita(CitaId id, PacienteId pacienteId, MedicoId medicoId,
                  EspecialidadMedica especialidad, UsuarioId creadoPor, LocalDateTime fechaHora,
                  EstadoCita estado, String motivoAgendamiento, String motivoCancelacion,
@@ -42,14 +45,13 @@ public class Cita {
         this.especialidad = especialidad;
         this.creadoPor = creadoPor;
         this.fechaHora = fechaHora;
-        this.estado = estado;
         this.motivoAgendamiento = motivoAgendamiento;
         this.motivoCancelacion = motivoCancelacion;
         this.fechaAsistencia = fechaAsistencia;
         this.audit = audit;
+        inicializarEstado(estado);
     }
 
-    // Factory method para reconstruir desde base de datos
     public static Cita reconstruir(CitaId id, PacienteId pacienteId, MedicoId medicoId,
                                    EspecialidadMedica especialidad, UsuarioId creadoPor,
                                    LocalDateTime fechaHora, EstadoCita estado,
@@ -63,75 +65,64 @@ public class Cita {
                 estado, motivoAgendamiento, motivoCancelacion, fechaAsistencia, audit);
     }
 
-    // Cancelar cita
-    public void cancelar(String motivo) {
-        if (!this.estado.puedeCancelarse()) {
-            throw new CitaNoCancelableException(
-                    String.format("No se puede cancelar una cita en estado: %s", this.estado.getDescripcion())
-            );
-        }
-        this.estado = EstadoCita.CANCELADA;
+    private void inicializarEstado(EstadoCita nuevoEstado) {
+        this.estado = nuevoEstado;
+        this.comportamiento = EstadoCitaStateFactory.of(nuevoEstado);
+    }
+
+    @Override
+    public void aplicarEstado(EstadoCita nuevoEstado) {
+        inicializarEstado(nuevoEstado);
+        this.audit.actualizar();
+    }
+
+    @Override
+    public void establecerFechaHora(LocalDateTime fechaHora) {
+        this.fechaHora = fechaHora;
+        this.audit.actualizar();
+    }
+
+    @Override
+    public void establecerMotivoCancelacion(String motivo) {
         this.motivoCancelacion = motivo;
         this.audit.actualizar();
     }
 
-    // Reagendar cita
+    @Override
+    public void establecerFechaAsistencia(LocalDateTime fechaAsistencia) {
+        this.fechaAsistencia = fechaAsistencia;
+        this.audit.actualizar();
+    }
+
+    public void cancelar(String motivo) {
+        comportamiento.cancelar(this, motivo);
+    }
+
     public void reagendar(LocalDateTime nuevaFechaHora, DisponibilidadSnapshot disponibilidad) {
-        if (!this.estado.puedeReagendarse()) {
-            throw new CitaNoReagendableException(
-                    String.format("Solo se pueden reagendar citas confirmadas, estado actual: %s",
-                            this.estado.getDescripcion())
-            );
-        }
-
-        if (!disponibilidad.estaDisponible(this.medicoId, nuevaFechaHora)) {
-            throw new DisponibilidadNoDisponibleException("Nuevo horario no disponible");
-        }
-
-        this.fechaHora = nuevaFechaHora;
-        this.estado = EstadoCita.REAGENDADA;
-        this.audit.actualizar();
+        comportamiento.reagendarEnMismaCita(this, nuevaFechaHora, disponibilidad);
     }
 
-    // Marcar como atendida
+    public boolean reagendamientoCreaNuevaCita() {
+        return comportamiento.puedeReagendarCreandoNuevaCita();
+    }
+
     public void marcarComoAtendida() {
-        if (this.estado != EstadoCita.CONFIRMADA && this.estado != EstadoCita.REAGENDADA) {
-            throw new CitaNoMarcableException(
-                    String.format("Solo se pueden marcar como atendidas citas confirmadas o reagendadas, estado actual: %s",
-                            this.estado.getDescripcion())
-            );
-        }
-        this.estado = EstadoCita.ATENDIDA;
-        this.fechaAsistencia = LocalDateTime.now();
-        this.audit.actualizar();
+        comportamiento.marcarComoAtendida(this);
     }
 
-    // Marcar como no asistida
     public void marcarComoNoAsistida() {
-        if (this.estado != EstadoCita.CONFIRMADA && this.estado != EstadoCita.REAGENDADA) {
-            throw new CitaNoMarcableException(
-                    String.format("Solo se pueden marcar como no asistidas citas confirmadas o reagendadas, estado actual: %s",
-                            this.estado.getDescripcion())
-            );
-        }
-
-        // Verificar que la fecha de la cita ya pasó
-        if (this.fechaHora.isAfter(LocalDateTime.now())) {
-            throw new CitaNoMarcableException("No se puede marcar como no asistida una cita futura");
-        }
-
-        this.estado = EstadoCita.NO_ASISTIDA;
-        this.fechaAsistencia = LocalDateTime.now();
-        this.audit.actualizar();
+        comportamiento.marcarComoNoAsistida(this);
     }
 
-    // Getters
     public CitaId getId() { return id; }
     public PacienteId getPacienteId() { return pacienteId; }
+    @Override
     public MedicoId getMedicoId() { return medicoId; }
     public EspecialidadMedica getEspecialidad() { return especialidad; }
     public UsuarioId getCreadoPor() { return creadoPor; }
+    @Override
     public LocalDateTime getFechaHora() { return fechaHora; }
+    @Override
     public EstadoCita getEstado() { return estado; }
     public String getMotivoAgendamiento() { return motivoAgendamiento; }
     public String getMotivoCancelacion() { return motivoCancelacion; }

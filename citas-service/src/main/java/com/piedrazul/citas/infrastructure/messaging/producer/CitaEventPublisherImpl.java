@@ -51,8 +51,9 @@ public class CitaEventPublisherImpl implements CitaEventPublisherPort {
                 cita.getEstado().getDescripcion()
         );
 
-        rabbitTemplate.convertAndSend(citasExchange, routingKeyAgendada, event);
-        log.info("Evento CITA_AGENDADA publicado exitosamente");
+        publicarEvento("CITA_AGENDADA", () ->
+                rabbitTemplate.convertAndSend(citasExchange, routingKeyAgendada, event)
+        );
     }
 
     @Override
@@ -69,8 +70,9 @@ public class CitaEventPublisherImpl implements CitaEventPublisherPort {
                 cita.getMotivoCancelacion()
         );
 
-        rabbitTemplate.convertAndSend(citasExchange, routingKeyCancelada, event);
-        log.info("Evento CITA_CANCELADA publicado exitosamente");
+        publicarEvento("CITA_CANCELADA", () ->
+                rabbitTemplate.convertAndSend(citasExchange, routingKeyCancelada, event)
+        );
     }
 
     @Override
@@ -90,8 +92,23 @@ public class CitaEventPublisherImpl implements CitaEventPublisherPort {
                 cita.getFechaHora()
         );
 
-        rabbitTemplate.convertAndSend(citasExchange, routingKeyReagendada, event);
-        log.info("Evento CITA_REAGENDADA publicado exitosamente");
+        publicarEvento("CITA_REAGENDADA", () ->
+                rabbitTemplate.convertAndSend(citasExchange, routingKeyReagendada, event)
+        );
+    }
+
+    private void publicarEvento(String tipoEvento, Runnable accion) {
+        try {
+            accion.run();
+            log.info("Evento {} publicado exitosamente", tipoEvento);
+        } catch (Exception e) {
+            log.warn(
+                    "No se pudo publicar el evento {}. La operación de la cita se completó, "
+                            + "pero no se envió notificación: {}",
+                    tipoEvento,
+                    e.getMessage()
+            );
+        }
     }
 
     private String nombrePaciente(PacienteSnapshot paciente) {

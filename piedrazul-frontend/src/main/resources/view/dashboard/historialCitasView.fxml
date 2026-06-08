@@ -104,6 +104,41 @@
                           -fx-font-weight: bold;
                           -fx-text-fill: #37474f;"/>
 
+                        <VBox spacing="10" styleClass="cita-gestion-panel">
+                                <Label text="Gestionar cita seleccionada"
+                                       style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #37474f;"/>
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                        <Button fx:id="btnMarcarAtendida"
+                                                text="MARCAR ATENDIDA"
+                                                onAction="#marcarAtendida"
+                                                disable="true"
+                                                prefHeight="40"
+                                                style="-fx-background-color: #2e7d32; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;"/>
+                                        <Button fx:id="btnMarcarNoAsistida"
+                                                text="MARCAR NO ASISTIDA"
+                                                onAction="#marcarNoAsistida"
+                                                disable="true"
+                                                prefHeight="40"
+                                                style="-fx-background-color: #6a1b9a; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;"/>
+                                        <Button fx:id="btnReagendar"
+                                                text="REAGENDAR"
+                                                onAction="#reagendarCita"
+                                                disable="true"
+                                                prefHeight="40"
+                                                style="-fx-background-color: #f57f17; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;"/>
+                                        <Button fx:id="btnCancelar"
+                                                text="CANCELAR"
+                                                onAction="#cancelarCita"
+                                                disable="true"
+                                                prefHeight="40"
+                                                style="-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand;"/>
+                                </HBox>
+                                <Label fx:id="lblGestionHint"
+                                       text="Seleccione una cita para ver las acciones disponibles."
+                                       styleClass="cita-gestion-hint"
+                                       wrapText="true"/>
+                        </VBox>
+
                         <TableView fx:id="tablaCitas"
                                    VBox.vgrow="ALWAYS"
                                    style="-fx-background-radius: 12;

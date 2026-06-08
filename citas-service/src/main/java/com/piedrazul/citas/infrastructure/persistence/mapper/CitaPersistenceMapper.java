@@ -43,7 +43,7 @@ public class CitaPersistenceMapper {
                         : EspecialidadMedica.GENERAL,
                 UsuarioId.of(entity.getCreadoPor()),
                 entity.getFechaHora(),
-                EstadoCita.valueOf(entity.getEstado()),
+                EstadoCita.fromPersisted(entity.getEstado()),
                 entity.getMotivoAgendamiento(),
                 entity.getMotivoCancelacion(),
                 entity.getFechaAsistencia(),

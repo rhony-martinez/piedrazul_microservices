@@ -72,28 +72,14 @@ public class CitaService implements CancelarCitaUseCase,
                 .orElseThrow(() -> new DisponibilidadNoDisponibleException(
                         "No hay disponibilidad configurada para el médico"));
 
-        // Capturamos la fecha original antes de mutar el agregado,
-        // para poder publicarla en el evento de reagendamiento.
-        LocalDateTime fechaHoraOriginal = cita.getFechaHora();
         LocalDateTime nuevaFechaHora = request.getNuevaFechaHora();
+        validarNuevoHorario(cita, nuevaFechaHora, cita.getId());
 
-        if (citaRepository.existsCitaActivaByMedicoIdAndFechaHoraExcluding(
-                cita.getMedicoId(), nuevaFechaHora, cita.getId())) {
-            throw new DisponibilidadNoDisponibleException(
-                    "El médico ya tiene una cita agendada en el horario seleccionado");
+        if (cita.reagendamientoCreaNuevaCita()) {
+            return crearCitaSeguimientoDesdeAtendida(cita, nuevaFechaHora, disponibilidad);
         }
 
-        if (citaRepository.existsCitaActivaByPacienteIdAndFechaHoraExcluding(
-                cita.getPacienteId(), nuevaFechaHora, cita.getId())) {
-            throw new PacienteNoDisponibleException(
-                    "El paciente ya tiene una cita agendada en el horario seleccionado");
-        }
-
-        if (configuracionManager.obtenerConfiguracion().esFestivo(nuevaFechaHora.toLocalDate())) {
-            throw new DisponibilidadNoDisponibleException(
-                    "La fecha seleccionada es un día festivo y no está disponible para agendamiento");
-        }
-
+        LocalDateTime fechaHoraOriginal = cita.getFechaHora();
         cita.reagendar(nuevaFechaHora, disponibilidad);
 
         Cita citaActualizada = citaRepository.save(cita);
@@ -168,6 +154,75 @@ public class CitaService implements CancelarCitaUseCase,
                     return mapper.toResponse(cita, paciente, medico);
                 })
                 .toList();
+    }
+
+    private CitaResponse crearCitaSeguimientoDesdeAtendida(
+            Cita citaOriginal,
+            LocalDateTime nuevaFechaHora,
+            DisponibilidadSnapshot disponibilidad
+    ) {
+        validarHorarioLibre(citaOriginal.getMedicoId(), citaOriginal.getPacienteId(), nuevaFechaHora);
+
+        if (!disponibilidad.estaDisponible(citaOriginal.getMedicoId(), nuevaFechaHora)) {
+            throw new DisponibilidadNoDisponibleException("Nuevo horario no disponible");
+        }
+
+        Cita nuevaCita = new Cita(
+                CitaId.generate(),
+                citaOriginal.getPacienteId(),
+                citaOriginal.getMedicoId(),
+                citaOriginal.getEspecialidad(),
+                citaOriginal.getCreadoPor(),
+                nuevaFechaHora,
+                citaOriginal.getMotivoAgendamiento()
+        );
+
+        Cita guardada = citaRepository.save(nuevaCita);
+        log.info("Nueva cita creada desde cita atendida {} -> {}",
+                citaOriginal.getId(), guardada.getId());
+
+        PacienteSnapshot paciente = pacienteSnapshotRepository.findById(citaOriginal.getPacienteId()).orElse(null);
+        MedicoSnapshot medico = medicoSnapshotRepository.findById(citaOriginal.getMedicoId()).orElse(null);
+
+        eventPublisher.publicarCitaAgendada(guardada, paciente, medico);
+
+        return mapper.toResponse(guardada, paciente, medico);
+    }
+
+    private void validarHorarioLibre(MedicoId medicoId, PacienteId pacienteId, LocalDateTime nuevaFechaHora) {
+        if (citaRepository.existsCitaActivaByMedicoIdAndFechaHora(medicoId, nuevaFechaHora)) {
+            throw new DisponibilidadNoDisponibleException(
+                    "El médico ya tiene una cita agendada en el horario seleccionado");
+        }
+
+        if (citaRepository.existsCitaActivaByPacienteIdAndFechaHora(pacienteId, nuevaFechaHora)) {
+            throw new PacienteNoDisponibleException(
+                    "El paciente ya tiene una cita agendada en el horario seleccionado");
+        }
+
+        if (configuracionManager.obtenerConfiguracion().esFestivo(nuevaFechaHora.toLocalDate())) {
+            throw new DisponibilidadNoDisponibleException(
+                    "La fecha seleccionada es un día festivo y no está disponible para agendamiento");
+        }
+    }
+
+    private void validarNuevoHorario(Cita cita, LocalDateTime nuevaFechaHora, CitaId citaIdExcluir) {
+        if (citaRepository.existsCitaActivaByMedicoIdAndFechaHoraExcluding(
+                cita.getMedicoId(), nuevaFechaHora, citaIdExcluir)) {
+            throw new DisponibilidadNoDisponibleException(
+                    "El médico ya tiene una cita agendada en el horario seleccionado");
+        }
+
+        if (citaRepository.existsCitaActivaByPacienteIdAndFechaHoraExcluding(
+                cita.getPacienteId(), nuevaFechaHora, citaIdExcluir)) {
+            throw new PacienteNoDisponibleException(
+                    "El paciente ya tiene una cita agendada en el horario seleccionado");
+        }
+
+        if (configuracionManager.obtenerConfiguracion().esFestivo(nuevaFechaHora.toLocalDate())) {
+            throw new DisponibilidadNoDisponibleException(
+                    "La fecha seleccionada es un día festivo y no está disponible para agendamiento");
+        }
     }
 
     private List<Cita> filtrarPorRangoFechas(List<Cita> citas, LocalDate fechaInicio, LocalDate fechaFin) {
