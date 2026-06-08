@@ -85,7 +85,7 @@
                                 styleClass="dashboard-main-button"
                                 onAction="#handleConfigurarFestivos"/>
 
-                        <Button text="CONFIGURACIÓN DE HORARIOS"
+                        <Button text="CONFIGURACIÓN DE&#10;HORARIOS"
                                 styleClass="dashboard-main-button"
                                 onAction="#handleConfiguracionHorarios"/>
 
