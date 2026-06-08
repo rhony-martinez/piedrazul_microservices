@@ -4,6 +4,7 @@ import com.piedrazul.frontend.client.CitaClient;
 import com.piedrazul.frontend.client.MedicoClient;
 import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
+import com.piedrazul.frontend.util.CitasCsvExporter;
 import com.piedrazul.frontend.util.CitasExcelExporter;
 import com.piedrazul.frontend.util.CitasExportMessages;
 import com.piedrazul.frontend.util.EspecialidadLabels;
@@ -29,7 +30,6 @@ public class HistorialCitasController {
     @FXML private ComboBox<MedicoResponse> cmbMedicos;
     @FXML private DatePicker dpFechaInicio;
     @FXML private DatePicker dpFechaFin;
-    @FXML private Button btnExportar;
     @FXML private Button btnVolver;
     @FXML private TableView<CitaResponse> tablaCitas;
 
@@ -125,6 +125,7 @@ public class HistorialCitasController {
         }
     }
 
+    @FXML
     private void buscarCitas() {
         LocalDate fechaInicio = dpFechaInicio.getValue();
         LocalDate fechaFin = dpFechaFin.getValue();
@@ -149,27 +150,46 @@ public class HistorialCitasController {
     }
 
     @FXML
-    private void exportarCitas() {
+    private void exportarCitasExcel() {
+        if (!validarDatosExportacion()) {
+            return;
+        }
+        try {
+            CitasExcelExporter.exportar(tablaCitas.getItems(), true, "historial_citas_agendador");
+            mostrarInformacion(CitasExportMessages.EXITO);
+        } catch (Exception e) {
+            mostrarError(CitasExportMessages.ERROR);
+        }
+    }
+
+    @FXML
+    private void exportarCitasCsv() {
+        if (!validarDatosExportacion()) {
+            return;
+        }
+        try {
+            CitasCsvExporter.exportar(tablaCitas.getItems(), true, "historial_citas_agendador");
+            mostrarInformacion(CitasExportMessages.EXITO);
+        } catch (Exception e) {
+            mostrarError(CitasExportMessages.ERROR);
+        }
+    }
+
+    private boolean validarDatosExportacion() {
         LocalDate fechaInicio = dpFechaInicio.getValue();
         LocalDate fechaFin = dpFechaFin.getValue();
 
         if (RangoFechasUtil.esRangoInvalido(fechaInicio, fechaFin)) {
             mostrarAdvertencia(RangoFechasUtil.MSG_RANGO_INVALIDO);
-            return;
+            return false;
         }
 
         List<CitaResponse> citas = tablaCitas.getItems();
         if (citas == null || citas.isEmpty()) {
             mostrarAdvertencia(CitasExportMessages.SIN_DATOS);
-            return;
+            return false;
         }
-
-        try {
-            CitasExcelExporter.exportar(citas, true, "historial_citas_agendador");
-            mostrarInformacion(CitasExportMessages.EXITO);
-        } catch (Exception e) {
-            mostrarError(CitasExportMessages.ERROR);
-        }
+        return true;
     }
 
     private String resolverMotivo(CitaResponse cita) {
