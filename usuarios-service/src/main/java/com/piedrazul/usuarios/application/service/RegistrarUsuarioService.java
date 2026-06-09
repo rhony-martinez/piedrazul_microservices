@@ -87,10 +87,11 @@ public class RegistrarUsuarioService {
         attributes.put("persona_id", String.valueOf(personaId));
 
         UUID keycloakUserId = keycloakAdminClient.crearUsuario(
-                usernameNormalizado, email, firstName, lastName, attributes);
+                usernameNormalizado, email, firstName, lastName, attributes, password);
 
         try {
             keycloakAdminClient.setPasswordPermanente(keycloakUserId, password);
+            keycloakAdminClient.limpiarAccionesRequeridas(keycloakUserId);
             keycloakAdminClient.asignarRealmRoles(keycloakUserId, roles);
 
             return persistirLocal(usuarioId, keycloakUserId, usernameNormalizado, personaId);

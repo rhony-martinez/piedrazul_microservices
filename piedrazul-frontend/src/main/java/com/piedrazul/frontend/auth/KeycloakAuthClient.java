@@ -118,6 +118,11 @@ public class KeycloakAuthClient {
             String errorDesc = nodeText(node, "error_description");
 
             if ("invalid_grant".equals(errorCode)) {
+                String lowerDesc = errorDesc.toLowerCase();
+                if (lowerDesc.contains("not fully set up")) {
+                    return "La cuenta aun no esta lista para iniciar sesion. "
+                            + "Vuelva a registrarse o contacte al administrador.";
+                }
                 if ("login".equals(operation)) {
                     return "Usuario o contrasena incorrectos.";
                 }

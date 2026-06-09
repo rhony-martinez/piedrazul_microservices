@@ -29,11 +29,14 @@ application.properties
 application.yml
 application-*.properties
 !application-example.properties
+!**/application-docker.properties
 application-*.yml
+!**/application-docker.yml
 
 # Variables de entorno
 .env
 .env.*
+!.env.example
 
 # =========================
 # 🔹 BASE DE DATOS
