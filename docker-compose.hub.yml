@@ -25,6 +25,22 @@ services:
     networks:
       - piedrazul-net
 
+  postgres-db-init:
+    image: postgres:16-alpine
+    container_name: piedrazul-postgres-db-init
+    entrypoint: ["/bin/sh", "-c", "tr -d '\\r' < /scripts/ensure-databases.sh | sh"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-piedrazul}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-db_piedrazul}
+      PGHOST: postgres
+    volumes:
+      - ./docker/postgres/ensure-databases.sh:/scripts/ensure-databases.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - piedrazul-net
+
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: piedrazul-rabbitmq
@@ -62,8 +78,8 @@ services:
     volumes:
       - ./docker/keycloak/piedrazul-realm.json:/opt/keycloak/data/import/piedrazul-realm.json:ro
     depends_on:
-      postgres:
-        condition: service_healthy
+      postgres-db-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/8080'"]
       interval: 15s
@@ -132,8 +148,8 @@ services:
     ports:
       - "8082:8082"
     depends_on:
-      postgres:
-        condition: service_healthy
+      postgres-db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     healthcheck:
@@ -156,8 +172,8 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      postgres:
-        condition: service_healthy
+      postgres-db-init:
+        condition: service_completed_successfully
       keycloak:
         condition: service_healthy
       keycloak-init:
@@ -185,8 +201,8 @@ services:
     ports:
       - "8083:8083"
     depends_on:
-      postgres:
-        condition: service_healthy
+      postgres-db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
     healthcheck:
@@ -203,11 +219,15 @@ services:
     container_name: piedrazul-notifications-service
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      POSTGRES_USER: ${POSTGRES_USER:-piedrazul}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-db_piedrazul}
       RABBITMQ_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
     ports:
       - "8084:8084"
     depends_on:
+      postgres-db-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
       citas-service:
