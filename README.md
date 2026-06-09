@@ -7,8 +7,9 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-AMQP-FF6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
 [![JavaFX](https://img.shields.io/badge/JavaFX-21-8B5CF6?logo=openjdk&logoColor=white)](https://openjfx.io/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docs.docker.com/compose/)
 
-> Plataforma distribuida para la gestión de procesos clínicos: usuarios, pacientes, médicos, citas y notificaciones. Incluye autenticación centralizada con **Keycloak**, un **API Gateway** con autorización por roles y un cliente de escritorio **JavaFX**.
+> Plataforma distribuida para la gestión de procesos clínicos: usuarios, pacientes, médicos, citas y notificaciones. Incluye autenticación centralizada con **Keycloak**, un **API Gateway** con autorización por roles, **stack completo en Docker Compose** y un cliente de escritorio **JavaFX**.
 
 ---
 
@@ -27,6 +28,7 @@ El repositorio documenta un trabajo de ingeniería de software con **arquitectur
 | Agendamiento manual, autónomo y reagendamiento | `citas-service` con reglas de negocio (solapamiento, 24 h, festivos) |
 | Notificaciones ante cambios de citas | `notifications-service` consumiendo eventos RabbitMQ |
 | Punto de entrada único y control de acceso | `api-gateway` validando JWT y aplicando matriz de roles |
+| Despliegue reproducible del stack | Docker Compose con healthchecks y configuración automatizada |
 | Interfaz operativa para distintos perfiles | Cliente JavaFX con flujos por rol |
 
 ### Funcionalidades por rol
@@ -54,6 +56,9 @@ El repositorio documenta un trabajo de ingeniería de software con **arquitectur
 | Identidad | Keycloak (OIDC) | Login, roles, JWT, Admin API |
 | Documentación API | SpringDoc OpenAPI (Swagger UI) | Contratos REST en servicios backend |
 | Build | Maven 3.9+ | Compilación y empaquetado por módulo |
+| Contenedores | Docker + Docker Compose | Stack completo: infra, Keycloak, microservicios |
+| Imágenes | Multi-stage Dockerfile (Maven → JRE Alpine) | Build reproducible por servicio Spring Boot |
+| Publicación | Docker Hub (`docker/push-images.ps1`) | Distribución de imágenes precompiladas |
 
 ### Frontend y herramientas
 
@@ -62,8 +67,9 @@ El repositorio documenta un trabajo de ingeniería de software con **arquitectur
 | UI de escritorio | JavaFX 21 + FXML | Pantallas por rol, flujos de registro y citas |
 | Serialización | Jackson / Gson | Consumo de APIs REST |
 | Reportes | Apache POI, OpenPDF | Exportación de datos clínicos |
-| Pruebas | JUnit 5, Spring Boot Test | Tests unitarios (p. ej. 49 tests en dominio de citas) |
-| Infra local | Docker (Keycloak), scripts shell | Configuración reproducible del realm |
+| Pruebas | JUnit 5, Spring Boot Test | Tests unitarios (p. ej. 65 tests en dominio de `citas-service`) |
+| Orquestación local | `docker-compose.yml` | Infra + backend en contenedores con healthchecks |
+| Consumo remoto | `docker-compose.hub.yml` | Levantar stack desde imágenes publicadas en Docker Hub |
 
 ---
 
@@ -73,41 +79,30 @@ El repositorio documenta un trabajo de ingeniería de software con **arquitectur
 
 ```mermaid
 flowchart TB
-    subgraph Cliente
+    subgraph Host["Host (fuera de Docker)"]
         FX[piedrazul-frontend<br/>JavaFX]
     end
 
-    subgraph Seguridad
-        KC[Keycloak<br/>:8080]
-    end
+    subgraph Compose["Docker Compose — red piedrazul-net"]
+        subgraph Infra
+            PG[(PostgreSQL :5432)]
+            MQ[(RabbitMQ :5672)]
+        end
 
-    subgraph Perimetro
-        GW[api-gateway<br/>:8085<br/>JWT + roles]
-    end
-
-    subgraph Microservicios
-        US[usuarios-service<br/>:8081]
-        PS[personas-service<br/>:8082]
-        CS[citas-service<br/>:8083]
-        NS[notifications-service<br/>:8084]
-    end
-
-    subgraph Infraestructura
-        PG[(PostgreSQL)]
-        MQ[(RabbitMQ)]
+        KC[Keycloak :8080]
+        GW[api-gateway :8085]
+        US[usuarios-service :8081]
+        PS[personas-service :8082]
+        CS[citas-service :8083]
+        NS[notifications-service :8084]
     end
 
     FX -->|OIDC login / refresh| KC
     FX -->|Bearer JWT| GW
     GW --> US & PS & CS & NS
-    US --> PG
-    PS --> PG
-    CS --> PG
-    NS --> PG
-    PS -->|eventos| MQ
-    CS -->|eventos| MQ
-    MQ -->|consume| CS
-    MQ -->|consume| NS
+    US & PS & CS & NS --> PG
+    PS & CS & NS --> MQ
+    MQ --> CS & NS
     US -->|Admin API| KC
 ```
 
@@ -116,33 +111,56 @@ flowchart TB
 - **Microservicios desacoplados** — Cada servicio tiene su base de datos y responsabilidad acotada.
 - **Gateway perimétrico** — Un único punto valida JWT y autoriza por rol antes de enrutar.
 - **Comunicación híbrida** — REST síncrono para operaciones de usuario; RabbitMQ asíncrono para propagación de cambios.
-- **DDD + Hexagonal en `citas-service`** — Dominio rico, puertos/adaptadores, snapshots como capa anticorrupción.
+- **DDD + Hexagonal en `citas-service`** — Dominio rico con patrón **State** en el ciclo de vida de citas, puertos/adaptadores y snapshots como capa anticorrupción.
 - **Identity Provider externo** — Keycloak centraliza credenciales, roles y emisión de tokens.
 
 ### Estructura del repositorio
 
 ```text
 piedrazul_microservices/
-├── api-gateway/              Punto de entrada, JWT, autorización por rol
-├── usuarios-service/         Registro + enlace con Keycloak Admin API
-├── personas-service/         Personas, pacientes, médicos, disponibilidad
-├── citas-service/            Citas, configuración, festivos (DDD + hexagonal)
-├── notifications-service/    Notificaciones por eventos RabbitMQ
-├── piedrazul-frontend/       Cliente JavaFX
-├── docker/keycloak/          Realm, mappers y scripts de configuración
+├── docker-compose.yml        Stack completo (build local + infra)
+├── docker-compose.hub.yml    Stack desde imágenes Docker Hub (sin build)
+├── .env.example              Variables para Docker Compose
+├── api-gateway/              Gateway + Dockerfile
+├── usuarios-service/         Registro + Keycloak Admin API + Dockerfile
+├── personas-service/         Personas, pacientes, médicos + Dockerfile
+├── citas-service/            Citas (DDD + hexagonal) + Dockerfile
+├── notifications-service/    Notificaciones RabbitMQ + Dockerfile
+├── piedrazul-frontend/       Cliente JavaFX (corre en el host)
+├── docker/
+│   ├── keycloak/             Realm JSON, mappers, seed de usuarios de prueba
+│   ├── postgres/             Scripts de creación de bases de datos
+│   └── push-images.ps1       Publicar imágenes en Docker Hub
 └── README.md
 ```
 
 ### Patrones de diseño aplicados
 
+#### Patrones GoF (Gang of Four)
+
+| Patrón | Módulo | Clases principales | Propósito |
+|---|---|---|---|
+| **Builder** | `citas-service` | `CitaBuilder`, `CitaManualBuilder`, `CitaAutonomaBuilder` | Construcción fluida y validada del agregado `Cita` |
+| **Factory Method** | `citas-service` | `CitaBuilderFactory`, `CitaManualFactory`, `CitaAutonomaFactory` | Elegir el builder según agendamiento manual o autónomo |
+| **Factory** | `citas-service` | `EstadoCitaStateFactory` | Resolver el objeto `EstadoCitaState` a partir del enum `EstadoCita` |
+| **State** | `citas-service` | `EstadoCitaState`, `ProgramadaState`, `ReagendadaState`, `AtendidaState`, `CanceladaState`, `NoAsistidaState`, `EstadoCitaContext` | Ciclo de vida de la cita: cancelar, reagendar y marcar asistencia según el estado actual |
+| **Singleton** | `citas-service` | `ConfiguracionManager` | Instancia única con caché en memoria de la configuración del sistema |
+| **Singleton** | `piedrazul-frontend` | `SessionManager` | Sesión global de usuario, tokens JWT y refresh transparente |
+| **Template Method** | `citas-service` | `AbstractAgendamientoService` | Algoritmo común de `crearCita()` con hook `validarTipoAgendamiento()` |
+| **Decorator** | `piedrazul-frontend` | `CitaComponent`, `CitaBase`, `CitaDecorator`, `PrioridadAltaDecorator`, `RecordatorioDecorator` | Enriquecer la presentación visual de citas en la UI sin modificar el componente base |
+
+> Los estados concretos (`ProgramadaState`, etc.) usan una **instancia única** (`INSTANCE`) por tipo — combinación habitual de **State** + **Singleton** por estado.
+
+#### Patrones arquitectónicos y de dominio
+
 | Patrón | Dónde | Propósito |
 |---|---|---|
 | API Gateway | `api-gateway` | Punto de entrada, seguridad centralizada |
 | Event-driven / Pub-Sub | RabbitMQ | Sincronización de snapshots y notificaciones |
-| Builder / Factory / Template Method | `citas-service` | Construcción y agendamiento de citas |
-| Decorator | `piedrazul-frontend` | Extensión del flujo de citas (prioridad, recordatorios) |
-| Ports & Adapters (Hexagonal) | `citas-service` | Aislar dominio de JPA, REST y mensajería |
-| Saga / compensación | Registro E2E | Rollback si falla un paso del alta de usuario |
+| Ports & Adapters (Hexagonal) | `citas-service` (y demás servicios) | Aislar dominio de JPA, REST y mensajería |
+| Repository | Microservicios | `*RepositoryPort` + `*RepositoryImpl` — persistencia desacoplada |
+| Policy (reglas de dominio) | `citas-service`, `piedrazul-frontend` | `CitaProgramadaUnicaPolicy`, `ConsultaGeneralPolicy` — reglas encapsuladas |
+| Saga / compensación | Registro E2E | `CompensarRegistroFallidoService`, `RegisterController` — rollback si falla un paso del alta |
 
 ---
 
@@ -154,77 +172,259 @@ Este repositorio permite a estudiantes y desarrolladores junior demostrar, con c
 - Integración de **OAuth2/OIDC** y **JWT** con API Gateway y cliente desktop.
 - Modelado de **reglas de negocio** (validación de solapamiento, restricciones de autoservicio, festivos).
 - Uso de **mensajería asíncrona** para desacoplar servicios y notificar eventos de dominio.
-- Aplicación de **DDD**, arquitectura hexagonal y patrones GoF en contexto productivo.
+- Aplicación de **DDD**, arquitectura hexagonal y patrones GoF (**Builder**, **Factory**, **State**, **Singleton**, **Template Method**, **Decorator**) en contexto productivo.
 - Desarrollo de **APIs REST** documentadas con OpenAPI y consumidas desde JavaFX.
 - Prácticas de **configuración por entorno**, smoke tests y troubleshooting de sistemas distribuidos.
+- **Containerización** con Docker Compose: healthchecks, perfiles Spring `docker`, jobs de inicialización y publicación en Docker Hub.
 
 ---
 
 ## Requisitos del sistema
 
+El proyecto ofrece **dos formas de ejecutar el backend**:
+
+| Modo | Cuándo usarlo | Qué necesitas instalar |
+|---|---|---|
+| **Docker Compose** (recomendado) | Desarrollo en equipo, demos, evaluación rápida | Docker Desktop / Engine + Docker Compose v2, JDK 21 + Maven solo para el frontend |
+| **Maven en el host** | Depurar un microservicio aislado o trabajar sin Docker | JDK 21, Maven, PostgreSQL, RabbitMQ y Keycloak instalados localmente |
+
 ### Software necesario
 
-| Requisito | Versión recomendada | Obligatorio |
-|---|---|---|
-| JDK | 21 (algunos módulos usan 17) | Sí |
-| Maven | 3.9+ | Sí |
-| PostgreSQL | 14+ | Sí |
-| RabbitMQ | 3.x | Sí |
-| Keycloak | 24+ (puerto 8080) | Sí |
-| Git | Cualquier versión reciente | Sí |
-| Docker | Opcional (scripts en `docker/keycloak/`) | No |
+| Requisito | Versión recomendada | Docker Compose | Maven en host |
+|---|---|---|---|
+| Docker + Compose | v2+ | **Sí** | No |
+| JDK | 21 (algunos módulos usan 17) | Solo frontend | Sí |
+| Maven | 3.9+ | Solo frontend | Sí |
+| PostgreSQL | 16 (imagen Alpine en Compose) | Incluido en Compose | Sí |
+| RabbitMQ | 3.13 (imagen management en Compose) | Incluido en Compose | Sí |
+| Keycloak | 26.0 (imagen oficial en Compose) | Incluido en Compose | Sí |
+| Git | Cualquier versión reciente | Sí | Sí |
 
 ### Hardware sugerido (desarrollo local)
 
 - **CPU:** 4 núcleos o más
-- **RAM:** 8 GB mínimo (16 GB recomendado con todos los servicios levantados)
-- **Disco:** ~2 GB para dependencias Maven y bases de datos locales
+- **RAM:** 8 GB mínimo (16 GB recomendado con Docker Compose y todos los contenedores)
+- **Disco:** ~4 GB (imágenes Docker + dependencias Maven)
 
 ### Puertos utilizados
 
-| Componente | Puerto |
-|---|---|
-| Keycloak | 8080 |
-| api-gateway | 8085 |
-| usuarios-service | 8081 |
-| personas-service | 8082 |
-| citas-service | 8083 |
-| notifications-service | 8084 |
-| PostgreSQL | 5432 |
-| RabbitMQ | 5672 |
+| Componente | Puerto | Notas |
+|---|---|---|
+| Keycloak | 8080 | Admin Console: http://localhost:8080/admin |
+| api-gateway | 8085 | Punto de entrada del frontend |
+| usuarios-service | 8081 | Expuesto para depuración directa |
+| personas-service | 8082 | Swagger: http://localhost:8082/swagger-ui/index.html |
+| citas-service | 8083 | Swagger: http://localhost:8083/swagger-ui/index.html |
+| notifications-service | 8084 | |
+| PostgreSQL | 5432 | Volumen persistente `piedrazul-postgres-data` |
+| RabbitMQ AMQP | 5672 | |
+| RabbitMQ Management UI | 15672 | http://localhost:15672 (guest/guest por defecto) |
 
 ---
 
 ## Inicio rápido
 
-1. Clonar el repositorio e instalar los requisitos previos.
-2. Configurar Keycloak (realm `piedrazul`, clientes y roles) — [guía paso a paso](#configuración-de-keycloak-paso-a-paso).
-3. Crear las bases de datos PostgreSQL por servicio.
-4. Levantar microservicios en orden: `personas` → `usuarios` → `citas` → `notifications` → `api-gateway`.
-5. Ejecutar el frontend: `cd piedrazul-frontend && mvn clean javafx:run`.
-6. Verificar con smoke tests: [sección de verificación](#verificación-y-smoke-tests).
+### Opción A — Docker Compose (recomendada)
 
-> La sección [Documentación técnica](#documentación-técnica-onboarding-del-equipo) contiene la guía completa de configuración, variables de entorno, matriz de autorización y resolución de problemas.
+Levanta infraestructura, Keycloak preconfigurado, los cinco microservicios y el seed de usuarios de prueba en un solo comando.
+
+```bash
+# 1. Clonar y configurar variables
+git clone <url-del-repositorio>
+cd piedrazul_microservices
+cp .env.example .env          # Linux/macOS
+# copy .env.example .env      # Windows
+
+# 2. Levantar el stack (primera vez construye las imágenes)
+docker compose up -d --build
+
+# 3. Esperar a que terminen los jobs de inicialización
+docker compose ps             # keycloak-init y stack-seed deben estar "exited (0)"
+
+# 4. Frontend en el host (apunta a localhost:8085 y localhost:8080)
+cd piedrazul-frontend
+mvn clean javafx:run
+```
+
+**Usuarios de prueba** (creados automáticamente por el realm + `stack-seed`):
+
+| Username | Rol | Contraseña |
+|---|---|---|
+| `admin.test` | ADMINISTRADOR | `Admin.123` |
+| `agendador.test` | AGENDADOR | `Agenda.123` |
+| `paciente.test` | PACIENTE | `Paciente.123` |
+| `medico.test` | MEDICO_TERAPISTA | `Medico.123` |
+
+Verificación rápida:
+
+```bash
+curl http://localhost:8085/actuator/health
+curl http://localhost:8080/realms/piedrazul
+```
+
+Detalle completo: [Despliegue con Docker](#despliegue-con-docker).
+
+### Opción B — Maven en el host (sin Docker)
+
+1. Instalar PostgreSQL, RabbitMQ y Keycloak localmente.
+2. Configurar Keycloak manualmente — [guía paso a paso](#configuración-de-keycloak-manual-paso-a-paso).
+3. Crear las bases de datos PostgreSQL por servicio.
+4. Levantar microservicios: `personas` → `usuarios` → `citas` → `notifications` → `api-gateway`.
+5. Ejecutar el frontend: `cd piedrazul-frontend && mvn clean javafx:run`.
+6. Verificar con [smoke tests](#verificación-y-smoke-tests).
+
+> La sección [Documentación técnica](#documentación-técnica-onboarding-del-equipo) contiene la guía completa de configuración manual, variables de entorno, matriz de autorización y resolución de problemas.
+
+---
+
+## Despliegue con Docker
+
+El repositorio incluye un **stack containerizado completo** que automatiza lo que antes requería instalación manual de PostgreSQL, RabbitMQ, Keycloak y arranque de cada microservicio en terminales separadas.
+
+### Archivos principales
+
+| Archivo | Propósito |
+|---|---|
+| `docker-compose.yml` | Build local de microservicios + infraestructura + inicialización |
+| `docker-compose.hub.yml` | Mismo stack usando imágenes ya publicadas en Docker Hub (sin build) |
+| `.env.example` | Plantilla de variables; copiar a `.env` antes de `docker compose up` |
+| `*/Dockerfile` | Build multi-stage (Maven compile → JRE Alpine) por microservicio |
+| `docker/push-images.ps1` | Script para construir y publicar imágenes en Docker Hub |
+
+### Servicios del Compose
+
+| Servicio | Tipo | Descripción |
+|---|---|---|
+| `postgres` | Infra | PostgreSQL 16; volumen persistente |
+| `postgres-db-init` | Job (one-shot) | Crea BDs: `piedrazul_usuarios`, `piedrazul_personas`, `piedrazul_citas`, `piedrazul_notifications`, `keycloak` |
+| `rabbitmq` | Infra | RabbitMQ 3.13 con consola de administración en `:15672` |
+| `keycloak` | Infra | Keycloak 26 importa `docker/keycloak/piedrazul-realm.json` |
+| `keycloak-init` | Job (one-shot) | Configura service account, user profile y protocol mappers |
+| `personas-service` | App | Perfil `docker`; healthcheck en `/actuator/health` |
+| `usuarios-service` | App | Perfil `docker`; conecta a Keycloak por red interna |
+| `citas-service` | App | Perfil `docker`; RabbitMQ y PostgreSQL por hostname Docker |
+| `notifications-service` | App | Perfil `docker`; depende de `citas-service` healthy |
+| `api-gateway` | App | Perfil `docker`; enruta a hostnames internos (`usuarios-service:8081`, etc.) |
+| `stack-seed` | Job (one-shot) | Crea personas de prueba y vincula `usuario_id` / `persona_id` en Keycloak |
+
+### Orden de arranque (automático)
+
+Docker Compose respeta `depends_on` con `condition: service_healthy` o `service_completed_successfully`:
+
+```text
+postgres → postgres-db-init → keycloak → keycloak-init
+         → rabbitmq → personas-service ─┐
+                                       ├→ usuarios-service ─┐
+         → citas-service ──────────────┤                    │
+         → notifications-service ──────┴────────────────────┼→ api-gateway → stack-seed
+```
+
+### Variables de entorno (`.env`)
+
+Copiar `.env.example` a `.env` y ajustar si es necesario:
+
+| Variable | Descripción | Valor por defecto |
+|---|---|---|
+| `DOCKERHUB_USER` | Namespace para etiquetar imágenes al hacer build | `piedrazul` |
+| `IMAGE_TAG` | Tag de imagen (build y consumo desde Hub) | `latest` |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` | Credenciales PostgreSQL compartidas | `piedrazul` / `db_piedrazul` |
+| `RABBITMQ_USER` / `RABBITMQ_PASSWORD` | Credenciales RabbitMQ | `guest` / `guest` |
+| `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` | Admin Console de Keycloak | `admin` / `admin` |
+| `PIEDRAZUL_KEYCLOAK_ADMIN_CLIENT_SECRET` | Secret de `piedrazul-admin-cli` | `piedrazul-admin-secret` |
+| `KEYCLOAK_ISSUER_URI` | Issuer público del JWT (visto por el frontend en el host) | `http://localhost:8080/realms/piedrazul` |
+
+> El Gateway usa **dos URLs de Keycloak**: `issuer-uri` apunta a `localhost` (para que el JWT del frontend sea válido) y `jwk-set-uri` apunta a `http://keycloak:8080/...` (resolución interna en la red Docker). Ver `application-docker.yml`.
+
+### Perfil Spring `docker`
+
+Cada microservicio activa `SPRING_PROFILES_ACTIVE=docker` en Compose y carga su configuración de contenedor:
+
+| Servicio | Archivo de perfil |
+|---|---|
+| api-gateway | `application-docker.yml` |
+| usuarios-service | `application-docker.properties` |
+| personas-service | `application-docker.properties` |
+| citas-service | `application-docker.properties` |
+| notifications-service | `application-docker.properties` |
+
+En este perfil los hostnames son los nombres de servicio Docker (`postgres`, `rabbitmq`, `keycloak`, `citas-service`, etc.), no `localhost`.
+
+### Comandos útiles
+
+```bash
+# Levantar todo (build + detacheado)
+docker compose up -d --build
+
+# Ver estado y healthchecks
+docker compose ps
+
+# Logs de un servicio
+docker compose logs -f api-gateway
+
+# Reconstruir un microservicio tras cambios de código
+docker compose up -d --build citas-service
+
+# Detener el stack (conserva el volumen de PostgreSQL)
+docker compose down
+
+# Detener y borrar volúmenes (reset completo de datos)
+docker compose down -v
+```
+
+### Consumir imágenes desde Docker Hub
+
+Si el equipo publicó imágenes con `docker/push-images.ps1`:
+
+```bash
+# .env debe tener DOCKERHUB_USER=<usuario-real> e IMAGE_TAG=<tag>
+docker compose -f docker-compose.hub.yml up -d
+```
+
+### Publicar imágenes en Docker Hub
+
+```powershell
+docker login
+$env:DOCKERHUB_USER = "tu-usuario"
+$env:IMAGE_TAG = "1.0.0"
+.\docker\push-images.ps1
+```
+
+Construye y publica: `api-gateway`, `usuarios-service`, `personas-service`, `citas-service` y `notifications-service`.
+
+### Frontend con stack Docker
+
+El cliente **JavaFX no está containerizado** (aplicación de escritorio). Corre en el host y usa por defecto:
+
+- Gateway: `http://localhost:8085`
+- Keycloak: `http://localhost:8080`
+
+No requiere cambios si los puertos del Compose están mapeados como en `docker-compose.yml`.
+
+### Keycloak con Docker vs configuración manual
+
+Con Docker Compose **no es necesario** seguir la [guía manual de Keycloak](#configuración-de-keycloak-manual-paso-a-paso): el realm, roles, clientes, usuarios `.test` y los jobs `keycloak-init` + `stack-seed` lo dejan listo. La guía manual sigue vigente para quien ejecute servicios con Maven en el host.
 
 ---
 
 ## Documentación técnica (onboarding del equipo)
 
-Guía detallada para que el entorno local funcione de forma consistente en todo el equipo: API Gateway, Keycloak, JWT y cada microservicio.
+Guía detallada de configuración y operación. **Para el backend, el camino recomendado es [Docker Compose](#despliegue-con-docker).** Las secciones siguientes documentan el despliegue manual con Maven en el host (Keycloak paso a paso, Gateway, JWT y cada microservicio) para depuración o entornos sin Docker.
 
 ### Tabla de contenidos
+
+> **Nota:** Si usas [Docker Compose](#despliegue-con-docker), la configuración manual de infraestructura (puntos 4–8) puede omitirse.
 
 1. [Visión general](#visión-general)
 2. [Arquitectura y flujo de autenticación](#arquitectura-y-flujo-de-autenticación)
 3. [Puertos y componentes](#puertos-y-componentes)
-4. [Requisitos previos](#requisitos-previos)
-5. [Configuración de Keycloak (paso a paso)](#configuración-de-keycloak-paso-a-paso)
+4. [Requisitos previos (Maven en host)](#requisitos-previos-maven-en-host)
+5. [Configuración de Keycloak manual (paso a paso)](#configuración-de-keycloak-manual-paso-a-paso)
 6. [Configuración del API Gateway](#configuración-del-api-gateway)
 7. [Configuración del frontend JavaFX](#configuración-del-frontend-javafx)
 8. [Configuración de usuarios-service (Keycloak Admin)](#configuración-de-usuarios-service-keycloak-admin)
 9. [Matriz de autorización del Gateway](#matriz-de-autorización-del-gateway)
 10. [Variables de entorno](#variables-de-entorno)
-11. [Ejecución local (orden recomendado)](#ejecución-local-orden-recomendado)
+11. [Ejecución local con Maven (sin Docker)](#ejecución-local-con-maven-sin-docker)
 12. [Verificación y smoke tests](#verificación-y-smoke-tests)
 13. [Obtener un JWT para pruebas](#obtener-un-jwt-para-pruebas)
 14. [Registro de usuarios (flujo E2E)](#registro-de-usuarios-flujo-e2e)
@@ -248,6 +448,7 @@ Guía detallada para que el entorno local funcione de forma consistente en todo 
 | **citas-service** | Ciclo de vida de citas y configuración del sistema. |
 | **notifications-service** | Notificaciones por eventos (RabbitMQ). |
 | **piedrazul-frontend** | Cliente JavaFX. Login directo contra Keycloak; APIs de negocio vía Gateway. |
+| **Docker Compose** | Orquesta infra + backend; frontend JavaFX corre en el host. |
 
 **Modelo de seguridad actual:** *gateway-perimétrico*.
 
@@ -321,21 +522,24 @@ Guía detallada para que el entorno local funcione de forma consistente en todo 
 | citas-service | 8083 | http://localhost:8083 |
 | notifications-service | 8084 | http://localhost:8084 |
 | PostgreSQL | 5432 | localhost:5432 |
-| RabbitMQ | 5672 | localhost:5672 |
+| RabbitMQ AMQP | 5672 | localhost:5672 |
+| RabbitMQ Management | **15672** | http://localhost:15672 |
 
 > **Nota:** Keycloak usa el 8080, por eso el Gateway está en **8085** (no en 8080 como en versiones anteriores del README).
 
+> **Con Docker Compose:** todos estos componentes se levantan automáticamente. Ver [Despliegue con Docker](#despliegue-con-docker).
+
 ---
 
-## Requisitos previos
+## Requisitos previos (Maven en host)
 
-Instalar en la máquina de desarrollo:
+Aplica solo si **no** usas Docker Compose. Instalar en la máquina de desarrollo:
 
 - **JDK 21** recomendado (algunos módulos usan Java 17)
 - **Maven 3.9+**
 - **PostgreSQL**
 - **RabbitMQ**
-- **Keycloak** (instalación local o contenedor en puerto 8080)
+- **Keycloak** (instalación local en puerto 8080)
 - **Git**
 
 Cuenta de administrador de Keycloak (por defecto en instalación local):
@@ -343,11 +547,15 @@ Cuenta de administrador de Keycloak (por defecto en instalación local):
 - URL admin: http://localhost:8080/admin
 - Usuario/contraseña: los que configuraste al instalar Keycloak
 
+> **Alternativa recomendada:** con `docker compose up -d --build` no necesitas instalar PostgreSQL, RabbitMQ ni Keycloak en el host. Solo JDK + Maven para el frontend.
+
 ---
 
-## Configuración de Keycloak (paso a paso)
+## Configuración de Keycloak manual (paso a paso)
 
-Todo el equipo debe usar el **mismo realm** y los **mismos clientes**. Sigue estos pasos en el Admin Console de Keycloak.
+> **¿Usas Docker Compose?** Omite esta sección. El realm se importa desde `docker/keycloak/piedrazul-realm.json` y `keycloak-init` aplica mappers y service account automáticamente.
+
+Todo el equipo debe usar el **mismo realm** y los **mismos clientes**. Sigue estos pasos en el Admin Console de Keycloak **solo en despliegue manual (Maven en host)**.
 
 ### 1. Crear el realm `piedrazul`
 
@@ -517,9 +725,11 @@ Este cliente **no** lo usa el frontend. Lo usa `usuarios-service` para crear usu
 
 ### 9. (Opcional) Usuarios de prueba manuales para smoke tests
 
-Si quieres correr el script `smoke-test-jwt.ps1`, crea estos usuarios en Keycloak (**Users** → **Create user**):
+> **Con Docker Compose** estos usuarios ya existen en `piedrazul-realm.json` con contraseñas `Admin.123`, `Agenda.123`, `Paciente.123` y `Medico.123`. Ver [Inicio rápido](#inicio-rápido).
 
-| Username | Rol | Password sugerida |
+Si quieres correr el script `smoke-test-jwt.ps1` en setup **manual**, crea estos usuarios en Keycloak (**Users** → **Create user**):
+
+| Username | Rol | Password sugerida (manual) |
 |---|---|---|
 | `admin.test` | ADMINISTRADOR | `Abc123*` |
 | `agendador.test` | AGENDADOR | `Abc123*` |
@@ -817,7 +1027,21 @@ Resumen de `SecurityConfig.java` (estado actual):
 
 ## Variables de entorno
 
-Referencia consolidada para todo el stack:
+### Docker Compose (archivo `.env`)
+
+Ver tabla completa en [Despliegue con Docker](#variables-de-entorno-env). Resumen:
+
+| Variable | Descripción |
+|---|---|
+| `DOCKERHUB_USER` | Namespace de imágenes al build/publicar |
+| `IMAGE_TAG` | Etiqueta de imagen |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` | Credenciales PostgreSQL |
+| `RABBITMQ_USER` / `RABBITMQ_PASSWORD` | Credenciales RabbitMQ |
+| `KEYCLOAK_ADMIN` / `KEYCLOAK_ADMIN_PASSWORD` | Admin Console Keycloak |
+| `PIEDRAZUL_KEYCLOAK_ADMIN_CLIENT_SECRET` | Secret de `piedrazul-admin-cli` |
+| `KEYCLOAK_ISSUER_URI` | Issuer público del JWT |
+
+### Maven en host y frontend
 
 | Variable | Componente | Descripción | Ejemplo |
 |---|---|---|---|
@@ -827,7 +1051,7 @@ Referencia consolidada para todo el stack:
 | `PIEDRAZUL_KEYCLOAK_REALM` | frontend | Realm | `piedrazul` |
 | `PIEDRAZUL_KEYCLOAK_CLIENT_ID` | frontend | Cliente público OIDC | `piedrazul-frontend` |
 | `PIEDRAZUL_KEYCLOAK_ADMIN_CLIENT_SECRET` | usuarios-service | Secret de `piedrazul-admin-cli` | *(obtener de Keycloak)* |
-| `PIEDRAZUL_TEST_PASSWORD` | smoke test | Password de usuarios `.test` | `Abc123*` |
+| `PIEDRAZUL_TEST_PASSWORD` | smoke test | Password de usuarios `.test` (setup manual) | `Abc123*` |
 
 Ejemplo de sesión PowerShell antes de arrancar servicios:
 
@@ -839,7 +1063,9 @@ $env:PIEDRAZUL_KEYCLOAK_ADMIN_CLIENT_SECRET = "tu-secret-aqui"
 
 ---
 
-## Ejecución local (orden recomendado)
+## Ejecución local con Maven (sin Docker)
+
+> **Recomendación:** usar [Docker Compose](#despliegue-con-docker) salvo que necesites depurar un servicio aislado en el IDE.
 
 ### 1. Infraestructura
 
@@ -906,10 +1132,14 @@ curl -i -X POST http://localhost:8085/api/usuarios -H "Content-Type: application
 
 ### Script automatizado (PowerShell)
 
+> **Contraseñas con Docker:** los usuarios `.test` del realm usan `Admin.123`, `Paciente.123`, etc. (ver [Inicio rápido](#inicio-rápido)). El script por defecto espera `Abc123*` del setup manual.
+
 ```powershell
 cd api-gateway\scripts
 .\smoke-test-jwt.ps1
-# o con password custom:
+# Con Docker Compose:
+.\smoke-test-jwt.ps1 -Password 'Paciente.123'
+# Setup manual:
 .\smoke-test-jwt.ps1 -Password 'Abc123*'
 # o:
 $env:PIEDRAZUL_TEST_PASSWORD = 'Abc123*'; .\smoke-test-jwt.ps1
@@ -1025,7 +1255,7 @@ Eventos publicados hacia `citas-service`: paciente/médico creado o actualizado,
 
 ### `citas-service`
 
-Microservicio con **DDD + arquitectura hexagonal** (ver sección dedicada más abajo).
+Microservicio con **DDD + arquitectura hexagonal** y patrones GoF: **Builder**, **Factory**, **State**, **Singleton**, **Template Method** (ver [Arquitectura DDD de citas-service](#arquitectura-ddd-de-citas-service)).
 
 | Área | Rutas principales |
 |---|---|
@@ -1061,11 +1291,57 @@ Cliente JavaFX. **Todas** las APIs de negocio pasan por el Gateway (`http://loca
 | AGENDADOR | Dashboard, historial de citas |
 | ADMINISTRADOR | Configuración de parámetros y disponibilidades (crear/editar/eliminar), festivos, administración de usuarios, registro de staff |
 
-Patrones en frontend: **Decorator** en flujo de cita (`CitaBase`, `PrioridadAltaDecorator`, `RecordatorioDecorator`).
+Patrones en frontend:
+
+| Patrón | Clases | Uso |
+|---|---|---|
+| **Decorator** | `CitaBase`, `CitaDecorator`, `PrioridadAltaDecorator`, `RecordatorioDecorator` | Presentación de citas con color/descripción extendidos |
+| **Singleton** | `SessionManager` | Sesión, tokens Keycloak y claims JWT accesibles desde cualquier controller |
+| **Policy** | `CitaProgramadaPolicy`, `ConsultaGeneralPolicy` | Validaciones de negocio en el cliente antes de llamar al Gateway |
+| **Saga / compensación** | `RegisterController`, `PersonaClient` | Rollback de persona/paciente/médico si falla el registro E2E |
 
 ---
 
 ## Troubleshooting
+
+### Docker: un servicio queda en `starting` o `unhealthy`
+
+**Verificar:**
+
+```bash
+docker compose ps
+docker compose logs citas-service    # reemplazar por el servicio afectado
+```
+
+**Causas frecuentes:**
+
+- Primera build lenta: Maven dentro del Dockerfile puede tardar varios minutos.
+- `postgres-db-init` o `keycloak-init` no completaron: revisar `docker compose logs postgres-db-init keycloak-init`.
+- Puerto ocupado en el host (5432, 8080, 8085, etc.): detener el proceso conflictivo o cambiar el mapeo en `docker-compose.yml`.
+
+### Docker: `stack-seed` falló
+
+**Causa:** `api-gateway` o `keycloak-init` no estaban listos, o el Gateway devolvió error en rutas públicas de registro.
+
+**Solución:**
+
+```bash
+docker compose up stack-seed    # reejecutar solo el job de seed
+docker compose logs stack-seed
+```
+
+### Docker: JWT válido en frontend pero 401 en Gateway
+
+**Causa:** `KEYCLOAK_ISSUER_URI` en `.env` no coincide con el `iss` del token (`http://localhost:8080/realms/piedrazul`).
+
+**Solución:** no cambiar el issuer a hostnames internos (`keycloak:8080`); el frontend corre en el host y necesita `localhost`.
+
+### Docker: reset completo de datos
+
+```bash
+docker compose down -v
+docker compose up -d --build
+```
 
 ### Error: `Error en PersonaClient` al registrar (sin sesión)
 
@@ -1136,7 +1412,8 @@ Patrones en frontend: **Decorator** en flujo de cita (`CitaBase`, `PrioridadAlta
 | **Fase 4** | Defense in depth: OAuth2 Resource Server también en microservicios downstream |
 | **Fase 5** | Endurecer reglas de registro: POST `/api/usuarios` solo PACIENTE auto-registro; staff solo vía ADMIN |
 | **Futuro** | Migrar JavaFX de Direct Access Grant a Authorization Code + PKCE (más seguro para cliente público) |
-| **Futuro** | Actualizar `smoke-test-jwt.ps1` para eliminar prueba de `/api/auth/login` y reflejar POST públicos de registro |
+| **Futuro** | Actualizar `smoke-test-jwt.ps1` para eliminar prueba de `/api/auth/login`, alinear contraseñas con el realm Docker y reflejar POST públicos de registro |
+| **Futuro** | Script `push-images` equivalente en bash para Linux/macOS |
 
 ---
 
@@ -1146,8 +1423,9 @@ Resumen de evolución reciente del repositorio (además de la migración Keycloa
 
 | Área | Cambio |
 |---|---|
+| Docker | `docker-compose.yml` con stack completo, Dockerfiles multi-stage, perfil Spring `docker`, jobs `keycloak-init` / `stack-seed`, publicación en Docker Hub |
 | Seguridad | API Gateway en **8085**, JWT Keycloak, registro E2E sin `/api/auth/login` |
-| Citas | Refactor DDD/hexagonal: Factory inyectada, puerto de eventos completo, excepciones de dominio, eventos con datos reales |
+| Citas | Refactor DDD/hexagonal: **State** en ciclo de vida, Factory + Builder + Template Method, puerto de eventos completo, excepciones de dominio |
 | Agendamiento | Autónomo por especialidad, validación de solapamiento por paciente, slots con `pacienteId` |
 | Configuración | Festivos (admin), semanas de agendamiento, validación antes de editar/eliminar disponibilidades |
 | Personas | Especialidades en médicos, compensación `registro-fallido`, más eventos RabbitMQ |
@@ -1166,17 +1444,20 @@ El microservicio `citas-service` implementa **Domain-Driven Design** y **Arquite
 citas-service/
 `- src/main/java/com/piedrazul/citas/
    |- domain/                Reglas de negocio puras
-   |  |- model/              Cita, snapshots, configuración, festivos
+   |  |- model/              Cita (Context del State), snapshots, configuración
    |  |- valueobjects/       CitaId, PacienteId, MedicoId, UsuarioId
-   |  |- builder/            CitaBuilder (Builder Pattern)
-   |  |- factory/            CitaBuilderFactory + impls (Factory Pattern)
+   |  |- state/              EstadoCitaState + estados concretos (State Pattern)
+   |  |- builder/            CitaBuilder, CitaManualBuilder, CitaAutonomaBuilder
+   |  |- factory/            CitaBuilderFactory, CitaManualFactory, CitaAutonomaFactory, EstadoCitaStateFactory
+   |  |- policy/             CitaProgramadaUnicaPolicy, ConsultaGeneralPolicy
    |  `- exception/          Lenguaje ubicuo de errores
    |
    |- application/           Casos de uso / orquestación
    |  |- port/incoming/      Puertos de entrada (use cases)
    |  |- port/outgoing/      Puertos de salida
    |  |- service/            Implementación de casos de uso
-   |  |  `- agendamiento/    AbstractAgendamientoService (Template Method)
+   |  |  |- agendamiento/    AbstractAgendamientoService (Template Method)
+   |  |  `- singleton/        ConfiguracionManager (Singleton)
    |  |- dto/                Requests/responses de aplicación
    |  `- mapper/             Dominio -> respuesta API
    |
@@ -1221,10 +1502,35 @@ Consumers en `infrastructure/messaging/consumer/` sincronizan snapshots desde `p
 
 ### Patrones de diseño (requisito del curso)
 
-- **Builder** — `CitaManualBuilder`, `CitaAutonomaBuilder`: validan y construyen el agregado `Cita`.
-- **Factory** — `CitaManualFactory`, `CitaAutonomaFactory`: inyectadas en los servicios de agendamiento vía `CitaBuilderFactory`.
-- **Template Method** — `AbstractAgendamientoService.crearCita()`: algoritmo común; hooks por tipo (`validarTipoAgendamiento`, factory del builder).
-- **Singleton** — `ConfiguracionManager`: configuración en memoria del sistema.
+| Patrón | Implementación | Detalle |
+|---|---|---|
+| **Builder** | `CitaBuilder` → `CitaManualBuilder`, `CitaAutonomaBuilder` | API fluida (`conPaciente`, `paraFecha`, `build()`) con validaciones antes de materializar el agregado |
+| **Factory Method** | `CitaBuilderFactory` ← `CitaManualFactory`, `CitaAutonomaFactory` | Cada servicio de agendamiento inyecta la factory que corresponde a su tipo |
+| **Factory** | `EstadoCitaStateFactory.of(EstadoCita)` | Mapea el enum de persistencia al comportamiento State activo |
+| **State** | `EstadoCitaState` + 5 estados concretos; `Cita` implementa `EstadoCitaContext` | Delegación de `cancelar()`, `reagendar()`, `marcarComoAtendida()` al estado actual |
+| **Singleton** | `ConfiguracionManager` | Carga configuración al arranque (`@PostConstruct`) y la mantiene en caché |
+| **Template Method** | `AbstractAgendamientoService.crearCita()` | Pasos fijos (obtener snapshots, validar horario, construir, persistir, publicar evento); variación en `validarTipoAgendamiento()` |
+| **Decorator** | `piedrazul-frontend/decorator/*` | Composición de presentación de citas en calendario/listados |
+| **Policy** | `CitaProgramadaUnicaPolicy`, `ConsultaGeneralPolicy` | Reglas de negocio reutilizables invocadas desde servicios de agendamiento |
+
+#### Ciclo de vida de `Cita` (patrón State)
+
+```mermaid
+stateDiagram-v2
+    [*] --> PROGRAMADA
+    PROGRAMADA --> REAGENDADA: reagendar en misma cita
+    PROGRAMADA --> CANCELADA: cancelar
+    PROGRAMADA --> ATENDIDA: marcar asistencia (fecha pasada)
+    PROGRAMADA --> NO_ASISTIDA: marcar inasistencia (fecha pasada)
+    REAGENDADA --> CANCELADA: cancelar
+    REAGENDADA --> ATENDIDA: marcar asistencia
+    REAGENDADA --> NO_ASISTIDA: marcar inasistencia
+    ATENDIDA --> [*]: puede derivar en nueva cita (reagendamiento que crea cita nueva)
+    CANCELADA --> [*]
+    NO_ASISTIDA --> [*]
+```
+
+Estados finales: `CANCELADA`, `NO_ASISTIDA`. `ATENDIDA` permite agendar una nueva cita de seguimiento según `puedeReagendarCreandoNuevaCita()`.
 
 ### Excepciones de dominio y HTTP
 
@@ -1256,12 +1562,25 @@ Mapeo centralizado en `interfaces/rest/exception/GlobalExceptionHandler`.
 ```mermaid
 flowchart LR
     A[CitaController REST] --> B[CrearCitaManualService / CrearCitaAutonomaService]
-    B --> T[AbstractAgendamientoService]
+    B --> T[AbstractAgendamientoService.crearCita]
+    T --> P[Policy: consulta general / cita única]
     T --> F[CitaManualFactory / CitaAutonomaFactory]
-    F --> BD[CitaBuilder]
-    BD --> C[Agregado Cita]
+    F --> BD[CitaManualBuilder / CitaAutonomaBuilder]
+    BD --> C[Agregado Cita — estado PROGRAMADA]
+    C --> S[ProgramadaState via EstadoCitaStateFactory]
     T --> R[(PostgreSQL)]
     T --> Q[(RabbitMQ)]
+```
+
+### Flujo de transición de estado (State)
+
+```mermaid
+flowchart LR
+    API[PUT cancelar / reagendar / asistencia] --> UC[Caso de uso]
+    UC --> CITA[Cita.cancelar / reagendar / marcar...]
+    CITA --> ST[EstadoCitaState actual]
+    ST --> CTX[EstadoCitaContext — mutaciones controladas]
+    CTX --> NEW[EstadoCitaStateFactory.of nuevo estado]
 ```
 
 ### Configuración local (`application.properties`)
@@ -1277,9 +1596,9 @@ cd citas-service
 mvn test
 ```
 
-Suite actual: **49 tests** unitarios de dominio (agregado `Cita`, builders, value objects, snapshots).
+Suite actual: **65 tests** unitarios de dominio (agregado `Cita`, patrón **State**, builders, factories, policies, value objects, snapshots).
 
-Refactors recientes validados: uso real de Factory en agendamiento, contrato `publicarCitaReagendada` en el puerto, excepciones de dominio explícitas, eventos enriquecidos con snapshots.
+Refactors recientes validados: patrón **State** en ciclo de vida de citas, Factory inyectada en agendamiento, contrato `publicarCitaReagendada` en el puerto, excepciones de dominio explícitas, eventos enriquecidos con snapshots.
 
 ---
 
