@@ -4,6 +4,9 @@ import com.piedrazul.frontend.client.CitaClient;
 import com.piedrazul.frontend.client.MedicoClient;
 import com.piedrazul.frontend.dto.response.CitaResponse;
 import com.piedrazul.frontend.dto.response.MedicoResponse;
+import com.piedrazul.frontend.util.CitaEstadoAcciones;
+import com.piedrazul.frontend.util.CitaGestionHelper;
+import com.piedrazul.frontend.util.CitaMotivoUtil;
 import com.piedrazul.frontend.util.CitasCsvExporter;
 import com.piedrazul.frontend.util.CitasExcelExporter;
 import com.piedrazul.frontend.util.CitasExportMessages;
@@ -30,6 +33,11 @@ public class HistorialCitasController {
     @FXML private ComboBox<MedicoResponse> cmbMedicos;
     @FXML private DatePicker dpFechaInicio;
     @FXML private DatePicker dpFechaFin;
+    @FXML private Label lblGestionHint;
+    @FXML private Button btnMarcarAtendida;
+    @FXML private Button btnMarcarNoAsistida;
+    @FXML private Button btnReagendar;
+    @FXML private Button btnCancelar;
     @FXML private Button btnVolver;
     @FXML private TableView<CitaResponse> tablaCitas;
 
@@ -43,14 +51,31 @@ public class HistorialCitasController {
 
     private final CitaClient citaClient = new CitaClient();
     private final MedicoClient medicoClient = new MedicoClient();
+    private CitaGestionHelper gestionHelper;
 
     @FXML
     public void initialize() {
+        gestionHelper = new CitaGestionHelper(tablaCitas, this::buscarCitas);
+
         configurarEstilosVentana();
         configurarColumnas();
+        configurarGestionCitas();
         configurarFiltros();
         cargarMedicos();
         buscarCitas();
+    }
+
+    private void configurarGestionCitas() {
+        tablaCitas.getSelectionModel().selectedItemProperty().addListener((obs, anterior, seleccionada) ->
+                gestionHelper.configurarSeleccion(
+                        seleccionada,
+                        btnCancelar,
+                        btnReagendar,
+                        btnMarcarAtendida,
+                        btnMarcarNoAsistida,
+                        lblGestionHint
+                )
+        );
     }
 
     private void configurarEstilosVentana() {
@@ -101,9 +126,10 @@ public class HistorialCitasController {
 
         colEstado.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getEstado()));
+        CitaEstadoAcciones.configurarColumnaEstado(colEstado);
 
         colMotivo.setCellValueFactory(data ->
-                new SimpleStringProperty(resolverMotivo(data.getValue())));
+                new SimpleStringProperty(CitaMotivoUtil.resolverMotivo(data.getValue())));
     }
 
     private void configurarFiltros() {
@@ -192,16 +218,6 @@ public class HistorialCitasController {
         return true;
     }
 
-    private String resolverMotivo(CitaResponse cita) {
-        if (cita.getMotivoAgendamiento() != null && !cita.getMotivoAgendamiento().isBlank()) {
-            return cita.getMotivoAgendamiento();
-        }
-        if (cita.getMotivoCancelacion() != null && !cita.getMotivoCancelacion().isBlank()) {
-            return cita.getMotivoCancelacion();
-        }
-        return "-";
-    }
-
     private LocalDateTime parseFechaHora(CitaResponse cita) {
         if (cita.getFechaHora() == null || cita.getFechaHora().isBlank()) {
             return LocalDateTime.MIN;
@@ -246,6 +262,26 @@ public class HistorialCitasController {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+
+    @FXML
+    private void marcarAtendida() {
+        gestionHelper.marcarAtendida(tablaCitas.getSelectionModel().getSelectedItem());
+    }
+
+    @FXML
+    private void marcarNoAsistida() {
+        gestionHelper.marcarNoAsistida(tablaCitas.getSelectionModel().getSelectedItem());
+    }
+
+    @FXML
+    private void reagendarCita() {
+        gestionHelper.reagendar(tablaCitas.getSelectionModel().getSelectedItem());
+    }
+
+    @FXML
+    private void cancelarCita() {
+        gestionHelper.cancelar(tablaCitas.getSelectionModel().getSelectedItem());
     }
 
     @FXML

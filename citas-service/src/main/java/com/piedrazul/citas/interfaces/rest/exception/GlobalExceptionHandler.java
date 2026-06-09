@@ -150,6 +150,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    @ExceptionHandler(ConsultaGeneralRequeridaException.class)
+    public ResponseEntity<ErrorResponse> handleConsultaGeneralRequerida(ConsultaGeneralRequeridaException ex) {
+        log.warn("Consulta general requerida: {}", ex.getMessage());
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Consulta General Requerida")
+                .message(ex.getMessage())
+                .path(getPath())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();

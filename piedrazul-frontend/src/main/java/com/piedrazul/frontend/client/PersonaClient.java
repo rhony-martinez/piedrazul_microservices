@@ -12,7 +12,10 @@ import com.piedrazul.frontend.http.AuthenticatedHttpClient;
 import com.piedrazul.frontend.util.ApiClientException;
 import com.piedrazul.frontend.util.ApiErrorParser;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 
 public class PersonaClient {
 
@@ -78,6 +81,23 @@ public class PersonaClient {
             AuthenticatedHttpClient.delete(personasBaseUrl() + "/" + personaId + "/registro-fallido");
         } catch (Exception e) {
             System.err.println("No se pudo revertir persona " + personaId + ": " + e.getMessage());
+        }
+    }
+
+    public Optional<PersonaResponse> buscarPorDni(String dni) {
+        try {
+            String encoded = URLEncoder.encode(dni, StandardCharsets.UTF_8);
+            AuthenticatedHttpClient.Response resp =
+                    AuthenticatedHttpClient.get(personasBaseUrl() + "/dni/" + encoded);
+            return Optional.of(objectMapper.readValue(resp.getBody(), PersonaResponse.class));
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            if (e.getStatusCode() == 404) {
+                return Optional.empty();
+            }
+            ApiErrorParser.ParsedApiError parsed = ApiErrorParser.parse(e.getResponseBody());
+            throw new ApiClientException(parsed, e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error buscando persona por DNI: " + e.getMessage(), e);
         }
     }
 

@@ -2,6 +2,7 @@ package com.piedrazul.notifications.consumer;
 
 import com.piedrazul.notifications.dto.CitaAgendadaDTO;
 import com.piedrazul.notifications.dto.CitaCanceladaDTO;
+import com.piedrazul.notifications.dto.CitaReagendadaDTO;
 import com.piedrazul.notifications.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,9 @@ public class CitaEventConsumer {
 
     @Value("${rabbitmq.queue.cita-cancelada}")
     private String citaCanceladaQueue;
+
+    @Value("${rabbitmq.queue.cita-reagendada}")
+    private String citaReagendadaQueue;
 
     /**
      * ESCENARIO 1: Consumir eventos de citas agendadas desde RabbitMQ
@@ -50,5 +54,16 @@ public class CitaEventConsumer {
         log.info("========================================");
 
         notificationService.enviarNotificacionCitaCancelada(citaCancelada);
+    }
+
+    @RabbitListener(queues = "${rabbitmq.queue.cita-reagendada}")
+    public void consumirCitaReagendada(CitaReagendadaDTO citaReagendada) {
+        log.info("========================================");
+        log.info("📨 MENSAJE RECIBIDO DESDE RABBITMQ (REAGENDAMIENTO)");
+        log.info("   Queue: {}", citaReagendadaQueue);
+        log.info("   Event ID: {}", citaReagendada.getEventId());
+        log.info("========================================");
+
+        notificationService.enviarNotificacionCitaReagendada(citaReagendada);
     }
 }

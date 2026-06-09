@@ -6,10 +6,12 @@ import com.piedrazul.frontend.client.PersonaClient;
 import com.piedrazul.frontend.client.UsuarioClient;
 import com.piedrazul.frontend.dto.request.CrearPersonaRequest;
 import com.piedrazul.frontend.dto.request.CrearUsuarioRequest;
+import com.piedrazul.frontend.dto.response.PersonaResponse;
 import com.piedrazul.frontend.util.ApiClientException;
 import com.piedrazul.frontend.util.ApiErrorParser;
 import com.piedrazul.frontend.util.FormFieldHelper;
 import com.piedrazul.frontend.util.PersonaFormSupport;
+import com.piedrazul.frontend.util.PiedrazulDialog;
 import com.piedrazul.frontend.session.SessionManager;
 import com.piedrazul.frontend.util.SceneManager;
 import javafx.concurrent.Task;
@@ -56,11 +58,17 @@ public class RegisterController {
     @FXML private VBox panelEspecialidades;
     @FXML private VBox boxEspecialidades;
     @FXML private Label errEspecialidades;
+    @FXML private VBox panelRegistroCompleto;
+    @FXML private VBox panelVincularUsuario;
+    @FXML private Label lblVincularTitulo;
+    @FXML private Label lblVincularMensaje;
+    @FXML private Label lblTituloCuenta;
     @FXML private Label lblTitulo;
     @FXML private Label lblSubtitulo;
     @FXML private Label lblFormError;
     @FXML private Button btnRegistrarse;
     @FXML private Button btnVolver;
+    @FXML private Button btnCorregirDni;
 
     @FXML private Label errPrimerNombre;
     @FXML private Label errSegundoNombre;
@@ -81,6 +89,14 @@ public class RegisterController {
     private final MedicoClient medicoClient = new MedicoClient();
 
     private final Map<String, CheckBox> especialidadChecks = new LinkedHashMap<>();
+
+    private boolean modoVincularUsuario;
+    private PersonaResponse personaExistente;
+    private String dniVerificado;
+    private boolean verificandoDni;
+    private boolean registroEnProgreso;
+    private boolean bloquearVerificacionDni;
+    private int verificacionDniGeneracion;
 
     @FXML
     public void initialize() {
@@ -108,6 +124,16 @@ public class RegisterController {
         bindClearOnChange(dateNacimiento, errFechaNacimiento);
         bindClearOnChange(txtTelefono, errTelefono);
         bindClearOnChange(txtDni, errDni);
+        txtDni.focusedProperty().addListener((obs, estabaEnfocado, estaEnfocado) -> {
+            if (estabaEnfocado && !estaEnfocado) {
+                verificarDniAlSalirDelCampo();
+            }
+        });
+        txtDni.textProperty().addListener((obs, anterior, nuevo) -> {
+            if (modoVincularUsuario && (dniVerificado == null || !dniVerificado.equals(nuevo == null ? "" : nuevo.trim()))) {
+                desactivarModoVincularUsuario();
+            }
+        });
         bindClearOnChange(txtCorreo, errCorreo);
         bindClearOnChange(txtUsername, errUsername);
         bindClearOnChange(txtPassword, errPassword);
@@ -115,9 +141,163 @@ public class RegisterController {
 
         inicializarEspecialidades();
         configurarVisibilidadEspecialidades(cmbRol.getValue());
-        cmbRol.valueProperty().addListener((obs, anterior, nuevo) ->
-                configurarVisibilidadEspecialidades(nuevo)
+        cmbRol.valueProperty().addListener((obs, anterior, nuevo) -> {
+            if (modoVincularUsuario && !"PACIENTE".equals(nuevo)) {
+                desactivarModoVincularUsuario();
+            }
+            configurarVisibilidadEspecialidades(nuevo);
+        });
+
+        if (!SessionManager.isRegisterFromAdminPanel()) {
+            javafx.application.Platform.runLater(txtDni::requestFocus);
+        }
+    }
+
+    private void verificarDniAlSalirDelCampo() {
+        if (SessionManager.isRegisterFromAdminPanel()
+                || verificandoDni
+                || modoVincularUsuario
+                || registroEnProgreso
+                || bloquearVerificacionDni
+                || tieneDatosPersonalesIngresados()) {
+            return;
+        }
+        if (!"PACIENTE".equals(cmbRol.getValue())) {
+            return;
+        }
+
+        String dni = PersonaFormSupport.trim(txtDni);
+        if (dni.length() < 6) {
+            return;
+        }
+
+        verificandoDni = true;
+        final int generacion = ++verificacionDniGeneracion;
+
+        Task<PersonaResponse> task = new Task<>() {
+            @Override
+            protected PersonaResponse call() {
+                return personaClient.buscarPorDni(dni).orElse(null);
+            }
+        };
+
+        task.setOnSucceeded(e -> {
+            verificandoDni = false;
+            if (!debeAplicarResultadoVerificacionDni(generacion)) {
+                return;
+            }
+            PersonaResponse persona = task.getValue();
+            if (persona != null) {
+                mostrarModalPacienteExistente(persona, dni);
+            }
+        });
+
+        task.setOnFailed(e -> {
+            verificandoDni = false;
+            Throwable ex = task.getException();
+            if (ex != null) {
+                System.err.println("Error verificando DNI: " + ex.getMessage());
+            }
+        });
+
+        Thread worker = new Thread(task, "verificar-dni-worker");
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    private boolean debeAplicarResultadoVerificacionDni(int generacion) {
+        return generacion == verificacionDniGeneracion
+                && !bloquearVerificacionDni
+                && !registroEnProgreso
+                && !modoVincularUsuario
+                && !tieneDatosPersonalesIngresados();
+    }
+
+    private boolean tieneDatosPersonalesIngresados() {
+        return !PersonaFormSupport.normalizedName(txtPrimerNombre).isEmpty()
+                || !PersonaFormSupport.normalizedName(txtPrimerApellido).isEmpty()
+                || !PersonaFormSupport.trim(txtTelefono).isEmpty()
+                || cmbGenero.getValue() != null
+                || dateNacimiento.getValue() != null
+                || !PersonaFormSupport.trim(txtCorreo).isEmpty();
+    }
+
+    private void mostrarModalPacienteExistente(PersonaResponse persona, String dni) {
+        String nombre = persona.getNombreCompleto();
+        if (nombre == null || nombre.isBlank()) {
+            nombre = "registrado en el sistema";
+        }
+
+        PiedrazulDialog.showInfo(
+                txtDni,
+                "Ya está registrado",
+                "El DNI ingresado corresponde a " + nombre + ".\n\n"
+                        + "Sus datos personales ya están en el sistema. "
+                        + "Solo debe crear su usuario con nombre de usuario y contraseña para ingresar."
         );
+
+        activarModoVincularUsuario(persona, dni);
+    }
+
+    private void activarModoVincularUsuario(PersonaResponse persona, String dni) {
+        modoVincularUsuario = true;
+        personaExistente = persona;
+        dniVerificado = dni;
+
+        panelRegistroCompleto.setVisible(false);
+        panelRegistroCompleto.setManaged(false);
+
+        panelVincularUsuario.setVisible(true);
+        panelVincularUsuario.setManaged(true);
+
+        String nombre = persona.getNombreCompleto();
+        lblVincularTitulo.setText("Paciente encontrado: " + (nombre == null || nombre.isBlank() ? "DNI " + dni : nombre));
+        lblVincularMensaje.setText(
+                "Complete únicamente los datos de su cuenta (usuario y contraseña). "
+                        + "El rol quedará como Paciente."
+        );
+
+        lblTituloCuenta.setText("2. Crear su cuenta de acceso");
+        cmbRol.setValue("PACIENTE");
+        cmbRol.setDisable(true);
+        txtDni.setDisable(true);
+        btnRegistrarse.setText("Crear usuario");
+
+        limpiarErroresDatosPersonales();
+        clearFormError();
+    }
+
+    private void desactivarModoVincularUsuario() {
+        if (!modoVincularUsuario) {
+            return;
+        }
+
+        modoVincularUsuario = false;
+        personaExistente = null;
+        dniVerificado = null;
+
+        panelRegistroCompleto.setVisible(true);
+        panelRegistroCompleto.setManaged(true);
+
+        panelVincularUsuario.setVisible(false);
+        panelVincularUsuario.setManaged(false);
+
+        lblTituloCuenta.setText("4. Datos de cuenta");
+        cmbRol.setDisable(false);
+        txtDni.setDisable(false);
+        btnRegistrarse.setText("Registrarse");
+    }
+
+    private void limpiarErroresDatosPersonales() {
+        FormFieldHelper.clearFieldError(txtPrimerNombre, errPrimerNombre);
+        FormFieldHelper.clearFieldError(txtSegundoNombre, errSegundoNombre);
+        FormFieldHelper.clearFieldError(txtPrimerApellido, errPrimerApellido);
+        FormFieldHelper.clearFieldError(txtSegundoApellido, errSegundoApellido);
+        FormFieldHelper.clearFieldError(cmbGenero, errGenero);
+        FormFieldHelper.clearFieldError(dateNacimiento, errFechaNacimiento);
+        FormFieldHelper.clearFieldError(txtTelefono, errTelefono);
+        FormFieldHelper.clearFieldError(txtDni, errDni);
+        FormFieldHelper.clearFieldError(txtCorreo, errCorreo);
     }
 
     private void inicializarEspecialidades() {
@@ -189,22 +369,32 @@ public class RegisterController {
             return;
         }
 
-        CrearPersonaRequest personaRequest = buildPersonaRequest();
+        cancelarVerificacionDniPendiente();
+        bloquearVerificacionDni = true;
+
         String rol = cmbRol.getValue();
-        List<String> especialidades = ROL_MEDICO_TERAPISTA.equals(rol)
-                ? List.copyOf(obtenerEspecialidadesSeleccionadas())
-                : List.of();
         String username = PersonaFormSupport.trim(txtUsername);
         String password = txtPassword.getText();
-        String correo = PersonaFormSupport.trimOrNull(txtCorreo);
-        String firstName = PersonaFormSupport.normalizedName(txtPrimerNombre);
-        String lastName = PersonaFormSupport.normalizedName(txtPrimerApellido);
+        final boolean fueRegistroVinculado = modoVincularUsuario;
 
         setRegistrationInProgress(true);
 
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() {
+                if (modoVincularUsuario) {
+                    registrarUsuarioParaPersonaExistente(username, password);
+                    return null;
+                }
+
+                CrearPersonaRequest personaRequest = buildPersonaRequest();
+                List<String> especialidades = ROL_MEDICO_TERAPISTA.equals(rol)
+                        ? List.copyOf(obtenerEspecialidadesSeleccionadas())
+                        : List.of();
+                String correo = PersonaFormSupport.trimOrNull(txtCorreo);
+                String firstName = PersonaFormSupport.normalizedName(txtPrimerNombre);
+                String lastName = PersonaFormSupport.normalizedName(txtPrimerApellido);
+
                 Long personaId = null;
                 try {
                     personaId = personaClient.crearPersona(personaRequest);
@@ -215,16 +405,15 @@ public class RegisterController {
                         medicoClient.crearMedico(personaId, "MEDICO", especialidades);
                     }
 
-                    CrearUsuarioRequest usuarioRequest = new CrearUsuarioRequest();
-                    usuarioRequest.setPersonaId(personaId);
-                    usuarioRequest.setUsername(username);
-                    usuarioRequest.setPassword(password);
-                    usuarioRequest.setEmail(correo);
-                    usuarioRequest.setFirstName(firstName);
-                    usuarioRequest.setLastName(lastName);
-                    usuarioRequest.setRoles(List.of(rol));
-
-                    usuarioClient.crearUsuario(usuarioRequest);
+                    crearUsuario(
+                            personaId,
+                            username,
+                            password,
+                            correo,
+                            firstName,
+                            lastName,
+                            rol
+                    );
                     return null;
                 } catch (Exception e) {
                     revertirRegistro(personaId);
@@ -234,12 +423,18 @@ public class RegisterController {
         };
 
         task.setOnSucceeded(e -> {
-            setRegistrationInProgress(false);
-            showAlert("Éxito", "Usuario registrado correctamente", Alert.AlertType.INFORMATION);
+            cancelarVerificacionDniPendiente();
+            String mensaje = fueRegistroVinculado
+                    ? "Cuenta de usuario creada correctamente. Ya puede iniciar sesión."
+                    : "Usuario registrado correctamente";
+            showAlert("Éxito", mensaje, Alert.AlertType.INFORMATION);
             volverDespuesDeRegistro();
+            bloquearVerificacionDni = false;
+            setRegistrationInProgress(false);
         });
 
         task.setOnFailed(e -> {
+            bloquearVerificacionDni = false;
             setRegistrationInProgress(false);
             Throwable ex = task.getException();
             if (ex instanceof ApiClientException apiEx) {
@@ -262,6 +457,65 @@ public class RegisterController {
         worker.start();
     }
 
+    private void registrarUsuarioParaPersonaExistente(String username, String password) {
+        if (personaExistente == null || personaExistente.getId() == null) {
+            throw new IllegalStateException("No se encontró la persona asociada al DNI.");
+        }
+
+        Long personaId = personaExistente.getId();
+        asegurarPacienteRegistrado(personaId);
+
+        crearUsuario(
+                personaId,
+                username,
+                password,
+                personaExistente.getCorreo(),
+                personaExistente.getPrimerNombre(),
+                personaExistente.getPrimerApellido(),
+                "PACIENTE"
+        );
+    }
+
+    private void asegurarPacienteRegistrado(Long personaId) {
+        try {
+            pacienteClient.crearPaciente(personaId);
+        } catch (Exception e) {
+            if (!esPacienteYaRegistrado(e)) {
+                throw e;
+            }
+        }
+    }
+
+    private boolean esPacienteYaRegistrado(Throwable error) {
+        String mensaje = error.getMessage() == null ? "" : error.getMessage();
+        if (error instanceof ApiClientException apiEx && apiEx.getParsedError() != null) {
+            mensaje = mensaje + " " + apiEx.getParsedError().message();
+        }
+        String normalizado = mensaje.toLowerCase();
+        return normalizado.contains("ya está registrada como paciente")
+                || normalizado.contains("ya registrada como paciente");
+    }
+
+    private void crearUsuario(
+            Long personaId,
+            String username,
+            String password,
+            String correo,
+            String firstName,
+            String lastName,
+            String rol
+    ) {
+        CrearUsuarioRequest usuarioRequest = new CrearUsuarioRequest();
+        usuarioRequest.setPersonaId(personaId);
+        usuarioRequest.setUsername(username);
+        usuarioRequest.setPassword(password);
+        usuarioRequest.setEmail(correo);
+        usuarioRequest.setFirstName(firstName);
+        usuarioRequest.setLastName(lastName);
+        usuarioRequest.setRoles(List.of(rol));
+        usuarioClient.crearUsuario(usuarioRequest);
+    }
+
     private CrearPersonaRequest buildPersonaRequest() {
         CrearPersonaRequest personaRequest = new CrearPersonaRequest();
         personaRequest.setPrimerNombre(PersonaFormSupport.normalizedName(txtPrimerNombre));
@@ -276,16 +530,33 @@ public class RegisterController {
         return personaRequest;
     }
 
+    private void cancelarVerificacionDniPendiente() {
+        verificacionDniGeneracion++;
+        verificandoDni = false;
+    }
+
     private void setRegistrationInProgress(boolean inProgress) {
+        registroEnProgreso = inProgress;
         btnRegistrarse.setDisable(inProgress);
         btnVolver.setDisable(inProgress);
-        btnRegistrarse.setText(inProgress ? "Registrando..." : "Registrarse");
+        if (inProgress) {
+            btnRegistrarse.setText(modoVincularUsuario ? "Creando usuario..." : "Registrando...");
+        } else {
+            btnRegistrarse.setText(modoVincularUsuario ? "Crear usuario" : "Registrarse");
+        }
     }
 
     private void revertirRegistro(Long personaId) {
         if (personaId != null) {
             personaClient.compensarRegistroFallido(personaId);
         }
+    }
+
+    @FXML
+    private void handleCorregirDni() {
+        desactivarModoVincularUsuario();
+        txtDni.clear();
+        txtDni.requestFocus();
     }
 
     @FXML
@@ -346,6 +617,73 @@ public class RegisterController {
     }
 
     private boolean validateForm() {
+        boolean valid = true;
+
+        valid &= validarDni();
+
+        if (!modoVincularUsuario) {
+            valid &= validarDatosPersonales();
+        } else if (personaExistente == null) {
+            showFormError("No se pudo vincular el DNI. Verifíquelo e intente nuevamente.");
+            valid = false;
+        }
+
+        String username = PersonaFormSupport.trim(txtUsername);
+        if (username.isEmpty()) {
+            FormFieldHelper.showFieldError(txtUsername, errUsername, "Ingrese un usuario");
+            valid = false;
+        } else if (!USERNAME_PATTERN.matcher(username).matches()) {
+            FormFieldHelper.showFieldError(txtUsername, errUsername,
+                    "Use 3-50 caracteres: letras, números, punto o guion bajo");
+            valid = false;
+        }
+
+        String password = txtPassword.getText() == null ? "" : txtPassword.getText();
+        if (password.isBlank()) {
+            FormFieldHelper.showFieldError(txtPassword, errPassword, "Ingrese una contraseña");
+            valid = false;
+        } else if (password.length() < 6) {
+            FormFieldHelper.showFieldError(txtPassword, errPassword,
+                    "La contraseña debe tener al menos 6 caracteres");
+            valid = false;
+        }
+
+        if (cmbRol.getValue() == null) {
+            FormFieldHelper.showFieldError(cmbRol, errRol, "Seleccione un rol");
+            valid = false;
+        }
+
+        if (!modoVincularUsuario
+                && ROL_MEDICO_TERAPISTA.equals(cmbRol.getValue())
+                && obtenerEspecialidadesSeleccionadas().isEmpty()) {
+            CheckBox referencia = especialidadChecks.get(CODIGOS_ESPECIALIDAD.get(0));
+            FormFieldHelper.showFieldError(
+                    referencia,
+                    boxEspecialidades,
+                    errEspecialidades,
+                    "Seleccione al menos una especialidad"
+            );
+            valid = false;
+        }
+
+        return valid;
+    }
+
+    private boolean validarDni() {
+        String dni = PersonaFormSupport.trim(txtDni);
+        if (dni.isEmpty()) {
+            FormFieldHelper.showFieldError(txtDni, errDni, "Ingrese el DNI");
+            return false;
+        }
+        if (dni.length() < 6) {
+            FormFieldHelper.showFieldError(txtDni, errDni,
+                    "El DNI debe tener al menos 6 dígitos");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean validarDatosPersonales() {
         PersonaFormSupport.normalizeNameFields(
                 txtPrimerNombre,
                 txtSegundoNombre,
@@ -385,57 +723,10 @@ public class RegisterController {
             valid = false;
         }
 
-        String dni = PersonaFormSupport.trim(txtDni);
-        if (dni.isEmpty()) {
-            FormFieldHelper.showFieldError(txtDni, errDni, "Ingrese el DNI");
-            valid = false;
-        } else if (dni.length() < 6) {
-            FormFieldHelper.showFieldError(txtDni, errDni,
-                    "El DNI debe tener al menos 6 dígitos");
-            valid = false;
-        }
-
         String correo = PersonaFormSupport.trimOrNull(txtCorreo);
         if (correo != null && !EMAIL_PATTERN.matcher(correo).matches()) {
             FormFieldHelper.showFieldError(txtCorreo, errCorreo,
                     "Ingrese un correo válido. Ej: nombre@ejemplo.com");
-            valid = false;
-        }
-
-        String username = PersonaFormSupport.trim(txtUsername);
-        if (username.isEmpty()) {
-            FormFieldHelper.showFieldError(txtUsername, errUsername, "Ingrese un usuario");
-            valid = false;
-        } else if (!USERNAME_PATTERN.matcher(username).matches()) {
-            FormFieldHelper.showFieldError(txtUsername, errUsername,
-                    "Use 3-50 caracteres: letras, números, punto o guion bajo");
-            valid = false;
-        }
-
-        String password = txtPassword.getText() == null ? "" : txtPassword.getText();
-        if (password.isBlank()) {
-            FormFieldHelper.showFieldError(txtPassword, errPassword, "Ingrese una contraseña");
-            valid = false;
-        } else if (password.length() < 6) {
-            FormFieldHelper.showFieldError(txtPassword, errPassword,
-                    "La contraseña debe tener al menos 6 caracteres");
-            valid = false;
-        }
-
-        if (cmbRol.getValue() == null) {
-            FormFieldHelper.showFieldError(cmbRol, errRol, "Seleccione un rol");
-            valid = false;
-        }
-
-        if (ROL_MEDICO_TERAPISTA.equals(cmbRol.getValue())
-                && obtenerEspecialidadesSeleccionadas().isEmpty()) {
-            CheckBox referencia = especialidadChecks.get(CODIGOS_ESPECIALIDAD.get(0));
-            FormFieldHelper.showFieldError(
-                    referencia,
-                    boxEspecialidades,
-                    errEspecialidades,
-                    "Seleccione al menos una especialidad"
-            );
             valid = false;
         }
 
@@ -459,7 +750,9 @@ public class RegisterController {
 
         String message = parsed.message() == null ? "" : parsed.message().toLowerCase();
 
-        if (message.contains("dni")) {
+        if (message.contains("ya existe un usuario") || message.contains("usuario para ese personaid")) {
+            showFormError("Ya tiene una cuenta de usuario. Inicie sesión con su usuario y contraseña.");
+        } else if (message.contains("dni")) {
             FormFieldHelper.showFieldError(txtDni, errDni, parsed.message());
         } else if (message.contains("username") || message.contains("usuario")) {
             FormFieldHelper.showFieldError(txtUsername, errUsername, humanizeFieldError("username", parsed.message()));

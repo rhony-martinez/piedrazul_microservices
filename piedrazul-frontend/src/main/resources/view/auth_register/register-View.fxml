@@ -27,8 +27,30 @@
                        visible="false" managed="false" wrapText="true"
                        maxWidth="1000"/>
 
+                <VBox spacing="10" maxWidth="1000">
+                    <Label text="1. Identificación" styleClass="section-title"/>
+                    <Label text="Ingrese su DNI primero. Al salir del campo verificaremos si ya está registrado en el sistema."
+                           styleClass="hint-label" wrapText="true"/>
+
+                    <GridPane styleClass="form-grid" hgap="24" vgap="18">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="170" prefWidth="190" halignment="RIGHT"/>
+                            <ColumnConstraints minWidth="320" hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <Label text="DNI *" styleClass="label"/>
+                        <VBox spacing="4" GridPane.columnIndex="1">
+                            <TextField fx:id="txtDni" styleClass="input"
+                                       promptText="Solo números. Ej: 1234567890"/>
+                            <Label fx:id="errDni" styleClass="field-error"
+                                   visible="false" managed="false"/>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+
+                <VBox fx:id="panelRegistroCompleto" spacing="25">
                 <VBox spacing="10">
-                    <Label text="Datos personales" styleClass="section-title"/>
+                    <Label text="2. Datos personales" styleClass="section-title"/>
 
                     <GridPane styleClass="form-grid" hgap="24" vgap="18">
                         <columnConstraints>
@@ -92,7 +114,7 @@
                 </VBox>
 
                 <VBox spacing="10">
-                    <Label text="Datos de contacto" styleClass="section-title"/>
+                    <Label text="3. Datos de contacto" styleClass="section-title"/>
 
                     <GridPane styleClass="form-grid" hgap="24" vgap="18">
                         <columnConstraints>
@@ -108,16 +130,8 @@
                                    visible="false" managed="false"/>
                         </VBox>
 
-                        <Label text="DNI *" styleClass="label" GridPane.rowIndex="1"/>
+                        <Label text="Correo" styleClass="label" GridPane.rowIndex="1"/>
                         <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1">
-                            <TextField fx:id="txtDni" styleClass="input"
-                                       promptText="Solo números. Ej: 1234567890"/>
-                            <Label fx:id="errDni" styleClass="field-error"
-                                   visible="false" managed="false"/>
-                        </VBox>
-
-                        <Label text="Correo" styleClass="label" GridPane.rowIndex="2"/>
-                        <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="1">
                             <TextField fx:id="txtCorreo" styleClass="input"
                                        promptText="Opcional. Ej: correo@ejemplo.com"/>
                             <Label fx:id="errCorreo" styleClass="field-error"
@@ -126,9 +140,26 @@
 
                     </GridPane>
                 </VBox>
+                </VBox>
+
+                <VBox fx:id="panelVincularUsuario" spacing="8"
+                      styleClass="vincular-banner"
+                      visible="false" managed="false"
+                      maxWidth="1000">
+                    <Label fx:id="lblVincularTitulo"
+                           text="Paciente ya registrado"
+                           styleClass="vincular-banner-title"/>
+                    <Label fx:id="lblVincularMensaje"
+                           styleClass="vincular-banner-text"
+                           wrapText="true"/>
+                    <Button fx:id="btnCorregirDni"
+                            text="No soy esta persona — corregir DNI"
+                            onAction="#handleCorregirDni"
+                            styleClass="btn-secondary"/>
+                </VBox>
 
                 <VBox spacing="10">
-                    <Label text="Datos de cuenta" styleClass="section-title"/>
+                    <Label fx:id="lblTituloCuenta" text="4. Datos de cuenta" styleClass="section-title"/>
 
                     <GridPane styleClass="form-grid" hgap="24" vgap="18">
                         <columnConstraints>

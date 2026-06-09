@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.piedrazul.frontend.config.ApiConfig;
 import com.piedrazul.frontend.dto.response.PacienteResponse;
 import com.piedrazul.frontend.http.AuthenticatedHttpClient;
+import com.piedrazul.frontend.util.ApiClientException;
+import com.piedrazul.frontend.util.ApiErrorParser;
 
 import java.util.List;
 import java.util.Map;
@@ -21,7 +23,8 @@ public class PacienteClient {
             String body = objectMapper.writeValueAsString(Map.of("personaId", personaId));
             AuthenticatedHttpClient.post(pacientesBaseUrl(), body);
         } catch (AuthenticatedHttpClient.HttpException e) {
-            throw new RuntimeException("Error creando paciente: " + e.getResponseBody(), e);
+            ApiErrorParser.ParsedApiError parsed = ApiErrorParser.parse(e.getResponseBody());
+            throw new ApiClientException(parsed, e);
         } catch (Exception e) {
             throw new RuntimeException("Error en PacienteClient: " + e.getMessage(), e);
         }

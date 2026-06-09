@@ -33,6 +33,10 @@ public final class ApiErrorParser {
                     text(root, "error"),
                     simplify(raw)
             );
+            if (!fieldErrors.isEmpty() && ("Datos de entrada inválidos".equalsIgnoreCase(message)
+                    || "Error de Validación".equalsIgnoreCase(text(root, "error")))) {
+                message = message + ": " + String.join("; ", fieldErrors.values());
+            }
             return new ParsedApiError(message, fieldErrors);
         } catch (Exception ignored) {
             return new ParsedApiError(simplify(raw), Map.of());
@@ -40,18 +44,23 @@ public final class ApiErrorParser {
     }
 
     private static Map<String, String> extractFieldErrors(JsonNode root) {
-        JsonNode details = root.get("details");
-        if (details == null || !details.isObject()) {
-            return Map.of();
-        }
-
         Map<String, String> fieldErrors = new LinkedHashMap<>();
-        Iterator<Map.Entry<String, JsonNode>> fields = details.fields();
+        collectFieldErrors(root.get("details"), fieldErrors);
+        collectFieldErrors(root.get("validationErrors"), fieldErrors);
+        return fieldErrors.isEmpty()
+                ? Map.of()
+                : Collections.unmodifiableMap(fieldErrors);
+    }
+
+    private static void collectFieldErrors(JsonNode node, Map<String, String> target) {
+        if (node == null || !node.isObject()) {
+            return;
+        }
+        Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> entry = fields.next();
-            fieldErrors.put(entry.getKey(), entry.getValue().asText());
+            target.put(entry.getKey(), entry.getValue().asText());
         }
-        return Collections.unmodifiableMap(fieldErrors);
     }
 
     private static String extractJson(String raw) {

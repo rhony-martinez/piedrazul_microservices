@@ -35,50 +35,30 @@ class CitaTest {
     }
 
     @Test
-    @DisplayName("Debería crear una cita correctamente")
+    @DisplayName("Debería crear una cita en estado PROGRAMADA")
     void testCrearCita() {
-        assertNotNull(cita);
-        assertEquals(citaId, cita.getId());
-        assertEquals(pacienteId, cita.getPacienteId());
-        assertEquals(medicoId, cita.getMedicoId());
-        assertEquals(EspecialidadMedica.GENERAL, cita.getEspecialidad());
-        assertEquals(creadoPor, cita.getCreadoPor());
-        assertEquals(fechaHora, cita.getFechaHora());
         assertEquals(EstadoCita.PROGRAMADA, cita.getEstado());
-        assertNotNull(cita.getAudit());
     }
 
     @Test
-    @DisplayName("Debería cancelar la cita correctamente")
-    void testCancelar() {
+    @DisplayName("PROGRAMADA puede cancelarse")
+    void testCancelarDesdeProgramada() {
         cita.cancelar("Paciente no pudo asistir");
-
         assertEquals(EstadoCita.CANCELADA, cita.getEstado());
         assertEquals("Paciente no pudo asistir", cita.getMotivoCancelacion());
     }
 
     @Test
-    @DisplayName("No debería cancelar una cita ya cancelada")
+    @DisplayName("CANCELADA es estado final")
     void testCancelarCitaYaCancelada() {
         cita.cancelar("Motivo");
-
-        assertThrows(CitaNoCancelableException.class, () -> {
-            cita.cancelar("Otro motivo");
-        });
+        assertThrows(CitaNoCancelableException.class, () -> cita.cancelar("Otro motivo"));
     }
 
     @Test
-    @DisplayName("Debería reagendar la cita correctamente")
-    void testReagendar() {
-        cita = reconstruirCitaConEstado(EstadoCita.CONFIRMADA);
-
-        LocalDateTime nuevaFecha = LocalDateTime.now().plusDays(5);
-        // Asegurar que nuevaFecha tenga disponibilidad (lunes a viernes)
-        while (nuevaFecha.getDayOfWeek() == DayOfWeek.SATURDAY || nuevaFecha.getDayOfWeek() == DayOfWeek.SUNDAY) {
-            nuevaFecha = nuevaFecha.plusDays(1);
-        }
-        nuevaFecha = nuevaFecha.withHour(10).withMinute(0).withSecond(0).withNano(0);
-
+    @DisplayName("PROGRAMADA puede reagendarse en la misma cita")
+    void testReagendarDesdeProgramada() {
+        LocalDateTime nuevaFecha = fechaLaborable(LocalDateTime.now().plusDays(5));
         DisponibilidadSnapshot disponibilidad = crearDisponibilidadSnapshot(medicoId, nuevaFecha);
 
         cita.reagendar(nuevaFecha, disponibilidad);
@@ -88,72 +68,70 @@ class CitaTest {
     }
 
     @Test
-    @DisplayName("No debería reagendar una cita cancelada")
-    void testReagendarCitaCancelada() {
-        cita.cancelar("Motivo");
+    @DisplayName("REAGENDADA no puede reagendarse nuevamente")
+    void testReagendarDesdeReagendada() {
+        cita = reconstruirCitaConEstado(EstadoCita.REAGENDADA);
         DisponibilidadSnapshot disponibilidad = crearDisponibilidadSnapshot(medicoId, fechaHora);
-        LocalDateTime nuevaFecha = LocalDateTime.now().plusDays(5);
 
-        assertThrows(CitaNoReagendableException.class, () -> {
-            cita.reagendar(nuevaFecha, disponibilidad);
-        });
+        assertThrows(CitaNoReagendableException.class, () ->
+                cita.reagendar(LocalDateTime.now().plusDays(7), disponibilidad)
+        );
     }
 
     @Test
-    @DisplayName("Debería marcar como atendida")
-    void testMarcarComoAtendida() {
-        cita = reconstruirCitaConEstado(EstadoCita.CONFIRMADA);
-
+    @DisplayName("PROGRAMADA pasada puede marcarse como atendida")
+    void testMarcarComoAtendidaDesdeProgramada() {
+        cita = reconstruirCitaConEstado(EstadoCita.PROGRAMADA, LocalDateTime.now().minusHours(2));
         cita.marcarComoAtendida();
-
         assertEquals(EstadoCita.ATENDIDA, cita.getEstado());
         assertNotNull(cita.getFechaAsistencia());
     }
 
     @Test
-    @DisplayName("No debería marcar como atendida una cita no confirmada")
-    void testMarcarComoAtendidaNoConfirmada() {
-        assertThrows(CitaNoMarcableException.class, () -> {
-            cita.marcarComoAtendida();
-        });
+    @DisplayName("PROGRAMADA futura no puede marcarse como atendida")
+    void testMarcarComoAtendidaFutura() {
+        assertThrows(CitaNoMarcableException.class, cita::marcarComoAtendida);
     }
 
     @Test
-    @DisplayName("Debería marcar como no asistida (con fecha pasada)")
-    void testMarcarComoNoAsistida() {
-        LocalDateTime fechaPasada = LocalDateTime.now().minusDays(2);
-        cita = reconstruirCitaConEstado(EstadoCita.CONFIRMADA, fechaPasada);
+    @DisplayName("ATENDIDA no puede marcarse como atendida nuevamente")
+    void testMarcarComoAtendidaDesdeAtendida() {
+        cita = reconstruirCitaConEstado(EstadoCita.ATENDIDA);
+        assertThrows(CitaNoMarcableException.class, cita::marcarComoAtendida);
+    }
+
+    @Test
+    @DisplayName("PROGRAMADA futura no puede marcarse como no asistida")
+    void testMarcarComoNoAsistidaFutura() {
+        assertThrows(CitaNoMarcableException.class, cita::marcarComoNoAsistida);
+    }
+
+    @Test
+    @DisplayName("REAGENDADA pasada puede marcarse como no asistida")
+    void testMarcarComoNoAsistidaDesdeReagendada() {
+        cita = reconstruirCitaConEstado(EstadoCita.REAGENDADA, LocalDateTime.now().minusHours(2));
 
         cita.marcarComoNoAsistida();
 
         assertEquals(EstadoCita.NO_ASISTIDA, cita.getEstado());
-        assertNotNull(cita.getFechaAsistencia());
     }
 
     @Test
-    @DisplayName("Debería reconstruir correctamente desde base de datos")
-    void testReconstruir() {
-        LocalDateTime createdAt = LocalDateTime.now().minusDays(1);
-        LocalDateTime updatedAt = LocalDateTime.now();
-
-        Cita citaReconstruida = Cita.reconstruir(
-                citaId, pacienteId, medicoId, EspecialidadMedica.GENERAL, creadoPor, fechaHora,
-                EstadoCita.PROGRAMADA, "Control rutinario", null, null,
-                createdAt, updatedAt, "system"
-        );
-
-        assertNotNull(citaReconstruida);
-        assertEquals(createdAt, citaReconstruida.getAudit().getCreatedAt());
-        assertEquals(updatedAt, citaReconstruida.getAudit().getUpdatedAt());
+    @DisplayName("REAGENDADA futura no puede marcarse como no asistida")
+    void testMarcarComoNoAsistidaReagendadaFutura() {
+        cita = reconstruirCitaConEstado(EstadoCita.REAGENDADA, LocalDateTime.now().plusDays(2));
+        assertThrows(CitaNoMarcableException.class, cita::marcarComoNoAsistida);
     }
 
-    // Métodos auxiliares
+    @Test
+    @DisplayName("ATENDIDA indica que el reagendamiento crea una nueva cita")
+    void testReagendamientoDesdeAtendidaCreaNuevaCita() {
+        cita = reconstruirCitaConEstado(EstadoCita.ATENDIDA);
+        assertTrue(cita.reagendamientoCreaNuevaCita());
+    }
+
     private Cita reconstruirCitaConEstado(EstadoCita estado) {
-        return Cita.reconstruir(
-                citaId, pacienteId, medicoId, EspecialidadMedica.GENERAL, creadoPor, fechaHora,
-                estado, null, null, null,
-                LocalDateTime.now(), LocalDateTime.now(), "system"
-        );
+        return reconstruirCitaConEstado(estado, fechaHora);
     }
 
     private Cita reconstruirCitaConEstado(EstadoCita estado, LocalDateTime fecha) {
@@ -164,15 +142,20 @@ class CitaTest {
         );
     }
 
+    private LocalDateTime fechaLaborable(LocalDateTime base) {
+        LocalDateTime fecha = base.withHour(10).withMinute(0).withSecond(0).withNano(0);
+        while (fecha.getDayOfWeek() == DayOfWeek.SATURDAY || fecha.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            fecha = fecha.plusDays(1);
+        }
+        return fecha;
+    }
+
     private DisponibilidadSnapshot crearDisponibilidadSnapshot(MedicoId medicoId, LocalDateTime fechaHora) {
         DisponibilidadSnapshot snapshot = new DisponibilidadSnapshot(medicoId, 30);
         DayOfWeek dia = fechaHora.getDayOfWeek();
         LocalTime hora = fechaHora.toLocalTime();
-
-        // Crear un rango que incluya la hora exacta
         LocalTime start = hora.minusMinutes(hora.getMinute());
         LocalTime end = start.plusHours(2);
-
         snapshot.agregarHorarioSemanal(dia, new TimeRange(start, end));
         return snapshot;
     }

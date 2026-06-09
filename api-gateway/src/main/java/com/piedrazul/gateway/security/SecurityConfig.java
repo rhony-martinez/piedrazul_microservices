@@ -75,10 +75,11 @@ public class SecurityConfig {
                         // (ADMIN/AGENDADOR autenticado) cuando definamos el flujo final.
                         .pathMatchers(HttpMethod.POST, "/api/personas").permitAll()
                         .pathMatchers(HttpMethod.DELETE, "/api/personas/*/registro-fallido").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/personas/dni/**").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/pacientes").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/personas/**", "/api/pacientes/**").authenticated()
                         .pathMatchers("/api/personas/**", "/api/pacientes/**")
-                            .hasAnyRole("ADMINISTRADOR", "AGENDADOR")
+                            .hasAnyRole("ADMINISTRADOR", "AGENDADOR", "MEDICO_TERAPISTA")
 
                         // --- Medicos ---
                         // POST publico por la misma razon de auto-registro (un usuario que se

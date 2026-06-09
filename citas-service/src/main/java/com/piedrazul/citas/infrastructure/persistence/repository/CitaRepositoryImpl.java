@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -29,7 +30,7 @@ public class CitaRepositoryImpl implements CitaRepositoryPort {
 
     @Override
     public Optional<Cita> findById(CitaId id) {
-        return springDataCitaRepository.findById(id.toString())
+        return springDataCitaRepository.findById(id.value())
                 .map(mapper::toDomain);
     }
 
@@ -45,7 +46,7 @@ public class CitaRepositoryImpl implements CitaRepositoryPort {
             LocalDateTime fechaHora,
             CitaId citaId) {
         return springDataCitaRepository.existsCitaActivaByMedicoIdAndFechaHoraExcluding(
-                medicoId.value(), fechaHora, citaId.toString());
+                medicoId.value(), fechaHora, toUuid(citaId));
     }
 
     @Override
@@ -60,7 +61,7 @@ public class CitaRepositoryImpl implements CitaRepositoryPort {
             LocalDateTime fechaHora,
             CitaId citaId) {
         return springDataCitaRepository.existsCitaActivaByPacienteIdAndFechaHoraExcluding(
-                pacienteId.value(), fechaHora, citaId.toString());
+                pacienteId.value(), fechaHora, toUuid(citaId));
     }
 
     @Override
@@ -147,5 +148,19 @@ public class CitaRepositoryImpl implements CitaRepositoryPort {
                 .stream()
                 .map(mapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public boolean existeConsultaGeneralAtendidaByPacienteId(PacienteId pacienteId) {
+        return springDataCitaRepository.existeConsultaGeneralAtendidaByPacienteId(pacienteId.value());
+    }
+
+    @Override
+    public boolean existeCitaProgramadaByPacienteId(PacienteId pacienteId) {
+        return springDataCitaRepository.existeCitaProgramadaByPacienteId(pacienteId.value());
+    }
+
+    private static UUID toUuid(CitaId citaId) {
+        return citaId.value();
     }
 }

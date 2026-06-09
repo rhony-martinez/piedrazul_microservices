@@ -31,6 +31,19 @@ public class UsuarioClient {
         }
     }
 
+    public UsuarioResponse obtenerPorUsername(String username) {
+        try {
+            AuthenticatedHttpClient.Response resp =
+                    AuthenticatedHttpClient.get(BASE_URL + "/by-username/" + username);
+            return mapper.readValue(resp.getBody(), UsuarioResponse.class);
+        } catch (AuthenticatedHttpClient.HttpException e) {
+            ApiErrorParser.ParsedApiError parsed = ApiErrorParser.parse(e.getResponseBody());
+            throw new ApiClientException(parsed, e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error obteniendo usuario: " + e.getMessage(), e);
+        }
+    }
+
     public List<UsuarioResponse> listarUsuarios() {
         try {
             AuthenticatedHttpClient.Response resp = AuthenticatedHttpClient.get(BASE_URL);

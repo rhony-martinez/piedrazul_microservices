@@ -3,12 +3,16 @@ package com.piedrazul.notifications.service;
 import com.piedrazul.notifications.dto.CitaAgendadaDTO;
 import com.piedrazul.notifications.dto.CitaCanceladaDTO;
 import com.piedrazul.notifications.dto.NotificacionRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class NotificationService {
+
+    private final InAppNotificationService inAppNotificationService;
 
     /**
      * ESCENARIO 1: Notificación asíncrona (vía RabbitMQ)
@@ -71,6 +75,8 @@ public class NotificationService {
                 citaAgendada.getData().getCitaId());
         log.info("   Mensaje: \n{}", mensajeMedico);
 
+        inAppNotificationService.registrarCitaAgendada(citaAgendada);
+
         log.info("✅ NOTIFICACIONES ENVIADAS EXITOSAMENTE (ASÍNCRONO - ESCENARIO 1)");
         log.info("========================================");
     }
@@ -121,5 +127,21 @@ public class NotificationService {
         log.info("   Asunto: Cancelación de cita médica");
         log.info("   Mensaje: \n{}", mensaje);
         log.info("========================================");
+
+        inAppNotificationService.registrarCitaCancelada(citaCancelada);
+    }
+
+    public void enviarNotificacionCitaReagendada(com.piedrazul.notifications.dto.CitaReagendadaDTO citaReagendada) {
+        log.info("========================================");
+        log.info("📨 NOTIFICACIÓN DE REAGENDAMIENTO");
+        log.info("========================================");
+
+        if (citaReagendada.getData() != null) {
+            log.info("   Cita ID: {}", citaReagendada.getData().getCitaId());
+            log.info("   Nueva fecha: {}", citaReagendada.getData().getNuevaFechaHora());
+        }
+        log.info("========================================");
+
+        inAppNotificationService.registrarCitaReagendada(citaReagendada);
     }
 }
