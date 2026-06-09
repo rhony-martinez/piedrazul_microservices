@@ -1,12 +1,218 @@
-# Piedrazul Microservices
+# Piedrazul — Sistema de Gestión Clínica con Microservicios
 
-Sistema distribuido para la gestión de procesos clínicos: usuarios, personas (pacientes y médicos), citas y notificaciones, con una aplicación de escritorio **JavaFX** como cliente.
+[![Java](https://img.shields.io/badge/Java-17%20%7C%2021-orange?logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.1%20%E2%80%94%203.5-brightgreen?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud%20Gateway-2025.0-blue?logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud-gateway)
+[![Keycloak](https://img.shields.io/badge/Keycloak-OIDC%20%2F%20JWT-4D4D4D?logo=keycloak&logoColor=white)](https://www.keycloak.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-AMQP-FF6600?logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
+[![JavaFX](https://img.shields.io/badge/JavaFX-21-8B5CF6?logo=openjdk&logoColor=white)](https://openjfx.io/)
 
-Este documento es la **guía oficial de onboarding** para el equipo. Cubre la configuración del **API Gateway**, **Keycloak**, **JWT** y todos los componentes necesarios para que el entorno local funcione igual para todos.
+> Plataforma distribuida para la gestión de procesos clínicos: usuarios, pacientes, médicos, citas y notificaciones. Incluye autenticación centralizada con **Keycloak**, un **API Gateway** con autorización por roles y un cliente de escritorio **JavaFX**.
 
 ---
 
-## Tabla de contenidos
+## Sobre el proyecto
+
+**Piedrazul** es un sistema de información para centros de atención en salud que automatiza el ciclo de vida de las citas médicas y la administración de actores del dominio clínico (pacientes, médicos, agendadores y administradores).
+
+El repositorio documenta un trabajo de ingeniería de software con **arquitectura de microservicios**, **comunicación asíncrona por eventos**, **seguridad OAuth2/JWT** y **diseño orientado al dominio (DDD)** en el núcleo de negocio. Está pensado para servir como evidencia de experiencia práctica ante la industria: demuestra decisiones arquitectónicas, integración entre servicios, reglas de negocio no triviales y un producto funcional de extremo a extremo.
+
+### Problema que resuelve
+
+| Necesidad del dominio | Solución en Piedrazul |
+|---|---|
+| Registro y autenticación segura de usuarios | Keycloak como IdP + sincronización con `usuarios-service` |
+| Gestión de pacientes, médicos y disponibilidad | `personas-service` con API REST y publicación de eventos |
+| Agendamiento manual, autónomo y reagendamiento | `citas-service` con reglas de negocio (solapamiento, 24 h, festivos) |
+| Notificaciones ante cambios de citas | `notifications-service` consumiendo eventos RabbitMQ |
+| Punto de entrada único y control de acceso | `api-gateway` validando JWT y aplicando matriz de roles |
+| Interfaz operativa para distintos perfiles | Cliente JavaFX con flujos por rol |
+
+### Funcionalidades por rol
+
+| Rol | Capacidades en la aplicación |
+|---|---|
+| **PACIENTE** | Registro, agendamiento autónomo por especialidad/médico/slot, historial de citas |
+| **MEDICO_TERAPISTA** | Consulta de citas asignadas, gestión de disponibilidad |
+| **AGENDADOR** | Agendamiento manual, historial y consulta de pacientes |
+| **ADMINISTRADOR** | Configuración del sistema, festivos, disponibilidades, administración de usuarios |
+
+---
+
+## Stack tecnológico
+
+### Backend y arquitectura
+
+| Categoría | Tecnología | Uso en el proyecto |
+|---|---|---|
+| Lenguaje | Java 17 / 21 | Microservicios y cliente de escritorio |
+| Framework | Spring Boot 3.1 – 3.5 | REST APIs, JPA, seguridad, mensajería |
+| Gateway | Spring Cloud Gateway (WebFlux) | Enrutamiento, OAuth2 Resource Server, CORS |
+| Persistencia | PostgreSQL + Spring Data JPA | Base de datos por microservicio |
+| Mensajería | RabbitMQ + Spring AMQP | Eventos entre `personas`, `citas` y `notifications` |
+| Identidad | Keycloak (OIDC) | Login, roles, JWT, Admin API |
+| Documentación API | SpringDoc OpenAPI (Swagger UI) | Contratos REST en servicios backend |
+| Build | Maven 3.9+ | Compilación y empaquetado por módulo |
+
+### Frontend y herramientas
+
+| Categoría | Tecnología | Uso en el proyecto |
+|---|---|---|
+| UI de escritorio | JavaFX 21 + FXML | Pantallas por rol, flujos de registro y citas |
+| Serialización | Jackson / Gson | Consumo de APIs REST |
+| Reportes | Apache POI, OpenPDF | Exportación de datos clínicos |
+| Pruebas | JUnit 5, Spring Boot Test | Tests unitarios (p. ej. 49 tests en dominio de citas) |
+| Infra local | Docker (Keycloak), scripts shell | Configuración reproducible del realm |
+
+---
+
+## Arquitectura del sistema
+
+### Vista de contenedores
+
+```mermaid
+flowchart TB
+    subgraph Cliente
+        FX[piedrazul-frontend<br/>JavaFX]
+    end
+
+    subgraph Seguridad
+        KC[Keycloak<br/>:8080]
+    end
+
+    subgraph Perimetro
+        GW[api-gateway<br/>:8085<br/>JWT + roles]
+    end
+
+    subgraph Microservicios
+        US[usuarios-service<br/>:8081]
+        PS[personas-service<br/>:8082]
+        CS[citas-service<br/>:8083]
+        NS[notifications-service<br/>:8084]
+    end
+
+    subgraph Infraestructura
+        PG[(PostgreSQL)]
+        MQ[(RabbitMQ)]
+    end
+
+    FX -->|OIDC login / refresh| KC
+    FX -->|Bearer JWT| GW
+    GW --> US & PS & CS & NS
+    US --> PG
+    PS --> PG
+    CS --> PG
+    NS --> PG
+    PS -->|eventos| MQ
+    CS -->|eventos| MQ
+    MQ -->|consume| CS
+    MQ -->|consume| NS
+    US -->|Admin API| KC
+```
+
+### Principios arquitectónicos
+
+- **Microservicios desacoplados** — Cada servicio tiene su base de datos y responsabilidad acotada.
+- **Gateway perimétrico** — Un único punto valida JWT y autoriza por rol antes de enrutar.
+- **Comunicación híbrida** — REST síncrono para operaciones de usuario; RabbitMQ asíncrono para propagación de cambios.
+- **DDD + Hexagonal en `citas-service`** — Dominio rico, puertos/adaptadores, snapshots como capa anticorrupción.
+- **Identity Provider externo** — Keycloak centraliza credenciales, roles y emisión de tokens.
+
+### Estructura del repositorio
+
+```text
+piedrazul_microservices/
+├── api-gateway/              Punto de entrada, JWT, autorización por rol
+├── usuarios-service/         Registro + enlace con Keycloak Admin API
+├── personas-service/         Personas, pacientes, médicos, disponibilidad
+├── citas-service/            Citas, configuración, festivos (DDD + hexagonal)
+├── notifications-service/    Notificaciones por eventos RabbitMQ
+├── piedrazul-frontend/       Cliente JavaFX
+├── docker/keycloak/          Realm, mappers y scripts de configuración
+└── README.md
+```
+
+### Patrones de diseño aplicados
+
+| Patrón | Dónde | Propósito |
+|---|---|---|
+| API Gateway | `api-gateway` | Punto de entrada, seguridad centralizada |
+| Event-driven / Pub-Sub | RabbitMQ | Sincronización de snapshots y notificaciones |
+| Builder / Factory / Template Method | `citas-service` | Construcción y agendamiento de citas |
+| Decorator | `piedrazul-frontend` | Extensión del flujo de citas (prioridad, recordatorios) |
+| Ports & Adapters (Hexagonal) | `citas-service` | Aislar dominio de JPA, REST y mensajería |
+| Saga / compensación | Registro E2E | Rollback si falla un paso del alta de usuario |
+
+---
+
+## Competencias que evidencia este proyecto
+
+Este repositorio permite a estudiantes y desarrolladores junior demostrar, con código real, competencias valoradas en la industria:
+
+- Diseño e implementación de **arquitectura de microservicios** con bounded contexts.
+- Integración de **OAuth2/OIDC** y **JWT** con API Gateway y cliente desktop.
+- Modelado de **reglas de negocio** (validación de solapamiento, restricciones de autoservicio, festivos).
+- Uso de **mensajería asíncrona** para desacoplar servicios y notificar eventos de dominio.
+- Aplicación de **DDD**, arquitectura hexagonal y patrones GoF en contexto productivo.
+- Desarrollo de **APIs REST** documentadas con OpenAPI y consumidas desde JavaFX.
+- Prácticas de **configuración por entorno**, smoke tests y troubleshooting de sistemas distribuidos.
+
+---
+
+## Requisitos del sistema
+
+### Software necesario
+
+| Requisito | Versión recomendada | Obligatorio |
+|---|---|---|
+| JDK | 21 (algunos módulos usan 17) | Sí |
+| Maven | 3.9+ | Sí |
+| PostgreSQL | 14+ | Sí |
+| RabbitMQ | 3.x | Sí |
+| Keycloak | 24+ (puerto 8080) | Sí |
+| Git | Cualquier versión reciente | Sí |
+| Docker | Opcional (scripts en `docker/keycloak/`) | No |
+
+### Hardware sugerido (desarrollo local)
+
+- **CPU:** 4 núcleos o más
+- **RAM:** 8 GB mínimo (16 GB recomendado con todos los servicios levantados)
+- **Disco:** ~2 GB para dependencias Maven y bases de datos locales
+
+### Puertos utilizados
+
+| Componente | Puerto |
+|---|---|
+| Keycloak | 8080 |
+| api-gateway | 8085 |
+| usuarios-service | 8081 |
+| personas-service | 8082 |
+| citas-service | 8083 |
+| notifications-service | 8084 |
+| PostgreSQL | 5432 |
+| RabbitMQ | 5672 |
+
+---
+
+## Inicio rápido
+
+1. Clonar el repositorio e instalar los requisitos previos.
+2. Configurar Keycloak (realm `piedrazul`, clientes y roles) — [guía paso a paso](#configuración-de-keycloak-paso-a-paso).
+3. Crear las bases de datos PostgreSQL por servicio.
+4. Levantar microservicios en orden: `personas` → `usuarios` → `citas` → `notifications` → `api-gateway`.
+5. Ejecutar el frontend: `cd piedrazul-frontend && mvn clean javafx:run`.
+6. Verificar con smoke tests: [sección de verificación](#verificación-y-smoke-tests).
+
+> La sección [Documentación técnica](#documentación-técnica-onboarding-del-equipo) contiene la guía completa de configuración, variables de entorno, matriz de autorización y resolución de problemas.
+
+---
+
+## Documentación técnica (onboarding del equipo)
+
+Guía detallada para que el entorno local funcione de forma consistente en todo el equipo: API Gateway, Keycloak, JWT y cada microservicio.
+
+### Tabla de contenidos
 
 1. [Visión general](#visión-general)
 2. [Arquitectura y flujo de autenticación](#arquitectura-y-flujo-de-autenticación)
@@ -48,19 +254,6 @@ Este documento es la **guía oficial de onboarding** para el equipo. Cubre la co
 - El **Gateway** es el único componente que valida JWT y aplica reglas por rol.
 - Los microservicios downstream **confían** en el Gateway (no revalidan el token por ahora).
 - El frontend **no** llama a `/api/auth/login` (eliminado). Autenticación = Keycloak OIDC.
-
-### Arquitectura del repositorio
-
-```text
-piedrazul_microservices/
-|- api-gateway/              Punto de entrada, JWT, autorización por rol
-|- usuarios-service/         Registro + enlace con Keycloak Admin API
-|- personas-service/         Personas, pacientes, médicos, disponibilidad
-|- citas-service/            Citas, configuración, festivos (DDD + hexagonal)
-|- notifications-service/    Notificaciones por eventos RabbitMQ
-|- piedrazul-frontend/       Cliente JavaFX
-`- README.md
-```
 
 ---
 
@@ -1092,8 +1285,18 @@ Refactors recientes validados: uso real de Factory en agendamiento, contrato `pu
 
 ## Autores
 
-- Carlos Eduardo Dorado Joaqui
-- Rhony Daniel Martinez Benavides
-- Juan Esteban Moscoso Salazar
-- Andres Felipe Obando Quintero
-- Ronal Santiago Valdez Jurado
+Proyecto desarrollado en equipo como trabajo integrador de ingeniería de software:
+
+| Integrante |
+|---|
+| Carlos Eduardo Dorado Joaqui |
+| Rhony Daniel Martinez Benavides |
+| Juan Esteban Moscoso Salazar |
+| Andres Felipe Obando Quintero |
+| Ronal Santiago Valdez Jurado |
+
+---
+
+## Licencia y uso
+
+Este repositorio es material académico y de portafolio. Puede consultarse libremente como referencia de arquitectura, buenas prácticas y evidencia de experiencia en desarrollo de software empresarial.
